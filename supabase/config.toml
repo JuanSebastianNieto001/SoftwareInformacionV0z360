@@ -1,0 +1,12 @@
+# Configuración mínima para la CLI de Supabase (npx supabase ...).
+# El project_id se completa al ejecutar `npx supabase link --project-ref <ref>`
+# o `npx supabase init` (si lo regeneras, conserva el bloque de la función).
+
+project_id = "gestor-documental"
+
+[functions.purgar]
+# La función valida por sí misma el Authorization: Bearer <service_role>
+# o el header x-purga-secret. Desactivar la verificación del gateway
+# permite invocarla también con las claves nuevas (sb_secret_...), que
+# no son JWT.
+verify_jwt = false
