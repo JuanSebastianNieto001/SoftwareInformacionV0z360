@@ -287,6 +287,18 @@ export const TIPOS_SUGERENCIA = [
   "oportunidad_mejora",
 ] as const;
 
+/**
+ * Area o cargo desde el que se reporta. La lista es cerrada a proposito: con
+ * texto libre, "Asesor", "asesores" y "ASESOR" serian tres filas distintas al
+ * agrupar el analisis del 9.1.3.
+ */
+export const AREAS_REPORTE = [
+  "team_leader",
+  "asesor",
+  "administrativo",
+  "gerencia",
+] as const;
+
 export const ESTADOS_SUGERENCIA = [
   "recibida",
   "en_analisis",
@@ -308,11 +320,9 @@ const fechaOpcional = z.iso.date().nullish().transform((v) => v || null);
 /** Lo que escribe quien envía. Una vez guardado no se edita: es el hecho. */
 export const esquemaSugerencia = z.object({
   tipo: z.enum(TIPOS_SUGERENCIA),
-  proceso: z
-    .string()
-    .trim()
-    .min(2, "Indica el proceso o área a la que se refiere")
-    .max(120, "El proceso no puede superar 120 caracteres"),
+  proceso: z.enum(AREAS_REPORTE, {
+    message: "Selecciona el proceso o área de quien reporta",
+  }),
   ocurrido_en: fechaOpcional,
   descripcion: z
     .string()

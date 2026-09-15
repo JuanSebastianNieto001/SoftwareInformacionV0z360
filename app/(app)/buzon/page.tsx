@@ -4,7 +4,13 @@ import { FormularioSugerencia } from "@/components/formulario-sugerencia";
 import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ETIQUETA_ESTADO, ETIQUETA_TIPO, VARIANTE_ESTADO, radicado } from "@/lib/buzon";
+import {
+  ETIQUETA_ESTADO,
+  ETIQUETA_TIPO,
+  VARIANTE_ESTADO,
+  etiquetaArea,
+  radicado,
+} from "@/lib/buzon";
 import { formatearFecha } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
 
@@ -57,7 +63,7 @@ export default async function PaginaBuzon() {
                       </div>
                       <p className="text-sm font-medium">{ETIQUETA_TIPO[s.tipo]}</p>
                       <p className="text-xs text-muted-foreground">
-                        {s.proceso} · {formatearFecha(s.creado_en)}
+                        {etiquetaArea(s.proceso)} · {formatearFecha(s.creado_en)}
                       </p>
                       {s.respuesta_emisor && (
                         <p className="border-l-2 pl-2 text-xs text-muted-foreground">

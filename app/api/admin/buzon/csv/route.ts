@@ -1,6 +1,6 @@
 import { exigirAdminApi } from "@/lib/api-admin";
 import { respuestaError } from "@/lib/api-errores";
-import { ETIQUETA_ESTADO, ETIQUETA_TIPO, radicado } from "@/lib/buzon";
+import { ETIQUETA_ESTADO, ETIQUETA_TIPO, etiquetaArea, radicado } from "@/lib/buzon";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export async function GET() {
     "Radicado",
     "Tipo",
     "Estado",
-    "Proceso",
+    "Área de quien reporta",
     "Ocurrió",
     "Recibido",
     "Quién",
@@ -76,7 +76,7 @@ export async function GET() {
         radicado(s.consecutivo),
         ETIQUETA_TIPO[s.tipo],
         ETIQUETA_ESTADO[s.estado],
-        s.proceso,
+        etiquetaArea(s.proceso),
         fechaCsv(s.ocurrido_en),
         fechaHoraCsv(s.creado_en),
         s.emisor_nombre,

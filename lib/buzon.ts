@@ -24,6 +24,22 @@ export const AYUDA_TIPO: Record<TipoSugerencia, string> = {
   oportunidad_mejora: "Un proceso funciona, pero detectaste que puede dar más.",
 };
 
+/**
+ * Area o cargo de quien reporta. Se guardan claves y no etiquetas para poder
+ * cambiar el texto mostrado sin reescribir los registros ya enviados.
+ */
+export const ETIQUETA_AREA_REPORTE: Record<string, string> = {
+  team_leader: "Team leader",
+  asesor: "Asesor",
+  administrativo: "Administrativo",
+  gerencia: "Gerencia",
+};
+
+/** Etiqueta legible, tolerando cualquier valor fuera de la lista. */
+export function etiquetaArea(valor: string): string {
+  return ETIQUETA_AREA_REPORTE[valor] ?? valor;
+}
+
 export const ETIQUETA_ESTADO: Record<EstadoSugerencia, string> = {
   recibida: "Recibida",
   en_analisis: "En análisis",

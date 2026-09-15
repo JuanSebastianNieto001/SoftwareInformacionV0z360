@@ -17,9 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AYUDA_TIPO, ETIQUETA_TIPO } from "@/lib/buzon";
+import { AYUDA_TIPO, ETIQUETA_AREA_REPORTE, ETIQUETA_TIPO } from "@/lib/buzon";
 import { hoyIso } from "@/lib/formato";
-import { TIPOS_SUGERENCIA } from "@/lib/validaciones";
+import { AREAS_REPORTE, TIPOS_SUGERENCIA } from "@/lib/validaciones";
 import type { TipoSugerencia } from "@/lib/supabase/tipos";
 
 const VACIO = {
@@ -91,16 +91,30 @@ export function FormularioSugerencia() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="s-proceso">Proceso o área</Label>
-              <Input
-                id="s-proceso"
-                value={f.proceso}
-                onChange={(e) => set("proceso", e.target.value)}
-                placeholder="Comercial, Operaciones, Talento humano…"
-                maxLength={120}
-                required
+              <Label htmlFor="s-proceso">Proceso o área de quien reporta</Label>
+              {/*
+                Sin valor por defecto: Radix no admite un value vacío, así que
+                se pasa undefined para que salga el marcador de posición. Si no
+                se elige nada, el esquema lo rechaza con su propio mensaje. Un
+                valor preseleccionado acabaría firmando PQR con un cargo que
+                nadie miró.
+              */}
+              <Select
+                value={f.proceso || undefined}
+                onValueChange={(v) => set("proceso", v)}
                 disabled={pendiente}
-              />
+              >
+                <SelectTrigger id="s-proceso" className="w-full">
+                  <SelectValue placeholder="Selecciona…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AREAS_REPORTE.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {ETIQUETA_AREA_REPORTE[a]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="s-fecha">¿Cuándo ocurrió? (opcional)</Label>

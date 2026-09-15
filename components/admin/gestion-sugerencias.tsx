@@ -30,6 +30,7 @@ import {
   ETIQUETA_TIPO,
   TIPOS_CON_ACCION_CORRECTIVA,
   VARIANTE_ESTADO,
+  etiquetaArea,
   radicado,
 } from "@/lib/buzon";
 import { formatearFecha } from "@/lib/formato";
@@ -120,9 +121,9 @@ export function DialogoTratamiento({
           {/* Lo que escribió el emisor. Solo lectura, siempre: es la evidencia. */}
           <dl className="space-y-2 rounded-lg border bg-muted/40 p-3 text-sm">
             <div>
-              <dt className="text-xs font-medium text-muted-foreground">Proceso</dt>
+              <dt className="text-xs font-medium text-muted-foreground">Área de quien reporta</dt>
               <dd>
-                {s.proceso}
+                {etiquetaArea(s.proceso)}
                 {s.ocurrido_en ? ` · ocurrió el ${formatearFecha(s.ocurrido_en)}` : ""}
               </dd>
             </div>

@@ -13,7 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ETIQUETA_ESTADO, ETIQUETA_TIPO, VARIANTE_ESTADO, radicado } from "@/lib/buzon";
+import {
+  ETIQUETA_ESTADO,
+  ETIQUETA_TIPO,
+  VARIANTE_ESTADO,
+  etiquetaArea,
+  radicado,
+} from "@/lib/buzon";
 import { formatearFecha } from "@/lib/formato";
 import { exigirAdmin } from "@/lib/sesion";
 
@@ -63,7 +69,7 @@ export default async function PaginaBuzonAdmin() {
                 <TableRow>
                   <TableHead>Radicado</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead className="hidden md:table-cell">Proceso</TableHead>
+                  <TableHead className="hidden md:table-cell">Área</TableHead>
                   <TableHead className="hidden sm:table-cell">Quién</TableHead>
                   <TableHead className="hidden lg:table-cell">Recibido</TableHead>
                   <TableHead>Estado</TableHead>
@@ -78,7 +84,7 @@ export default async function PaginaBuzonAdmin() {
                     </TableCell>
                     <TableCell>{ETIQUETA_TIPO[c.tipo]}</TableCell>
                     <TableCell className="hidden max-w-40 truncate md:table-cell">
-                      {c.proceso}
+                      {etiquetaArea(c.proceso)}
                     </TableCell>
                     <TableCell className="hidden max-w-40 truncate sm:table-cell">
                       {c.emisor_nombre || c.emisor_email}
