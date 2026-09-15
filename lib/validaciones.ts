@@ -276,6 +276,101 @@ export const esquemaFiltrosAuditoria = z.object({
 export type FiltrosAuditoria = z.infer<typeof esquemaFiltrosAuditoria>;
 
 // ---------------------------------------------------------------------------
+// Buzón de sugerencias (ISO 9001:2015)
+// ---------------------------------------------------------------------------
+
+export const TIPOS_SUGERENCIA = [
+  "sugerencia",
+  "queja",
+  "felicitacion",
+  "no_conformidad",
+  "oportunidad_mejora",
+] as const;
+
+export const ESTADOS_SUGERENCIA = [
+  "recibida",
+  "en_analisis",
+  "en_accion",
+  "cerrada",
+  "rechazada",
+] as const;
+
+const textoOpcional = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, `No puede superar ${max} caracteres`)
+    .nullish()
+    .transform((v) => (v && v.length > 0 ? v : null));
+
+const fechaOpcional = z.iso.date().nullish().transform((v) => v || null);
+
+/** Lo que escribe quien envía. Una vez guardado no se edita: es el hecho. */
+export const esquemaSugerencia = z.object({
+  tipo: z.enum(TIPOS_SUGERENCIA),
+  proceso: z
+    .string()
+    .trim()
+    .min(2, "Indica el proceso o área a la que se refiere")
+    .max(120, "El proceso no puede superar 120 caracteres"),
+  ocurrido_en: fechaOpcional,
+  descripcion: z
+    .string()
+    .trim()
+    .min(20, "Describe el hecho con al menos 20 caracteres")
+    .max(4000, "La descripción no puede superar 4000 caracteres"),
+  impacto: z
+    .string()
+    .trim()
+    .min(5, "Indica a quién o a qué afecta")
+    .max(1000, "El impacto no puede superar 1000 caracteres"),
+  propuesta: textoOpcional(2000),
+  desea_respuesta: z.boolean().default(false),
+});
+
+export type DatosSugerencia = z.infer<typeof esquemaSugerencia>;
+
+/**
+ * Lo que registra el administrador al tratar el caso.
+ *
+ * El apartado 10.2 exige causa y acción para dar por cerrada una no
+ * conformidad, y trazabilidad para descartarla. La base lo impone con dos
+ * CHECK; esto lo repite antes de viajar para dar un mensaje entendible en
+ * lugar de un error de Postgres.
+ */
+export const esquemaTratamiento = z
+  .object({
+    id: uuid,
+    estado: z.enum(ESTADOS_SUGERENCIA),
+    responsable_id: uuid.nullish().transform((v) => v || null),
+    analisis_causa: textoOpcional(4000),
+    accion_tomada: textoOpcional(4000),
+    fecha_compromiso: fechaOpcional,
+    eficacia_verificada: z.boolean().nullish().transform((v) => v ?? null),
+    eficacia_nota: textoOpcional(2000),
+    respuesta_emisor: textoOpcional(4000),
+  })
+  .superRefine((d, ctx) => {
+    if (d.estado === "cerrada" && (!d.analisis_causa || !d.accion_tomada)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["analisis_causa"],
+        message:
+          "Para cerrar un caso hay que registrar la causa y la acción tomada (ISO 9001, 10.2).",
+      });
+    }
+    if (d.estado === "rechazada" && !d.respuesta_emisor) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["respuesta_emisor"],
+        message: "Para descartar un caso hay que dejar escrita la justificación.",
+      });
+    }
+  });
+
+export type DatosTratamiento = z.infer<typeof esquemaTratamiento>;
+
+// ---------------------------------------------------------------------------
 // Utilidad
 // ---------------------------------------------------------------------------
 

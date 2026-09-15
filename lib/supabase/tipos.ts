@@ -27,6 +27,19 @@ export type Accion =
   | "login";
 export type EstadoDocumento = "vigente" | "programado" | "vencido" | "purgado";
 
+export type TipoSugerencia =
+  | "sugerencia"
+  | "queja"
+  | "felicitacion"
+  | "no_conformidad"
+  | "oportunidad_mejora";
+export type EstadoSugerencia =
+  | "recibida"
+  | "en_analisis"
+  | "en_accion"
+  | "cerrada"
+  | "rechazada";
+
 export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13";
@@ -278,6 +291,99 @@ export type Database = {
           },
         ];
       };
+      sugerencias: {
+        Row: {
+          id: string;
+          consecutivo: number;
+          emisor_id: string | null;
+          emisor_email: string;
+          emisor_nombre: string;
+          tipo: TipoSugerencia;
+          proceso: string;
+          ocurrido_en: string | null;
+          descripcion: string;
+          impacto: string;
+          propuesta: string | null;
+          desea_respuesta: boolean;
+          estado: EstadoSugerencia;
+          responsable_id: string | null;
+          analisis_causa: string | null;
+          accion_tomada: string | null;
+          fecha_compromiso: string | null;
+          cerrada_en: string | null;
+          eficacia_verificada: boolean | null;
+          eficacia_nota: string | null;
+          respuesta_emisor: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          consecutivo?: never;
+          emisor_id: string;
+          emisor_email: string;
+          emisor_nombre?: string;
+          tipo: TipoSugerencia;
+          proceso: string;
+          ocurrido_en?: string | null;
+          descripcion: string;
+          impacto: string;
+          propuesta?: string | null;
+          desea_respuesta?: boolean;
+          estado?: EstadoSugerencia;
+          responsable_id?: string | null;
+          analisis_causa?: string | null;
+          accion_tomada?: string | null;
+          fecha_compromiso?: string | null;
+          cerrada_en?: string | null;
+          eficacia_verificada?: boolean | null;
+          eficacia_nota?: string | null;
+          respuesta_emisor?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: {
+          id?: string;
+          consecutivo?: never;
+          emisor_id?: string | null;
+          emisor_email?: string;
+          emisor_nombre?: string;
+          tipo?: TipoSugerencia;
+          proceso?: string;
+          ocurrido_en?: string | null;
+          descripcion?: string;
+          impacto?: string;
+          propuesta?: string | null;
+          desea_respuesta?: boolean;
+          estado?: EstadoSugerencia;
+          responsable_id?: string | null;
+          analisis_causa?: string | null;
+          accion_tomada?: string | null;
+          fecha_compromiso?: string | null;
+          cerrada_en?: string | null;
+          eficacia_verificada?: boolean | null;
+          eficacia_nota?: string | null;
+          respuesta_emisor?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sugerencias_emisor_id_fkey";
+            columns: ["emisor_id"];
+            isOneToOne: false;
+            referencedRelation: "perfiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sugerencias_responsable_id_fkey";
+            columns: ["responsable_id"];
+            isOneToOne: false;
+            referencedRelation: "perfiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       v_documentos_estado: {
@@ -366,6 +472,8 @@ export type Database = {
     Enums: {
       rol_global: RolGlobal;
       nivel_acceso: NivelAcceso;
+      tipo_sugerencia: TipoSugerencia;
+      estado_sugerencia: EstadoSugerencia;
     };
     CompositeTypes: Record<PropertyKey, never>;
   };
@@ -378,6 +486,7 @@ export type Area = Tablas["areas"]["Row"];
 export type PermisoArea = Tablas["permisos_area"]["Row"];
 export type Documento = Tablas["documentos"]["Row"];
 export type Acceso = Tablas["accesos"]["Row"];
+export type Sugerencia = Tablas["sugerencias"]["Row"];
 export type DocumentoConEstado =
   Database["public"]["Views"]["v_documentos_estado"]["Row"];
 export type FilaAuditoria = Database["public"]["Views"]["v_auditoria"]["Row"];

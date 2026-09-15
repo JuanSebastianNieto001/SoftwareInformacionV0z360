@@ -13,6 +13,8 @@ import {
   Upload,
   Users,
   ClipboardList,
+  Inbox,
+  MessageSquareText,
   Layers,
   KeySquare,
   Files,
@@ -44,6 +46,7 @@ type Item = { href: string; etiqueta: string; icono: typeof FolderOpen; exacto?:
 
 const PRINCIPALES: Item[] = [
   { href: "/", etiqueta: "Mis áreas", icono: FolderOpen, exacto: true },
+  { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText },
 ];
 
 const SUBIR: Item = { href: "/subir", etiqueta: "Subir documento", icono: Upload };
@@ -53,6 +56,7 @@ export const ITEMS_ADMIN: Item[] = [
   { href: "/admin/usuarios", etiqueta: "Usuarios", icono: Users },
   { href: "/admin/areas", etiqueta: "Áreas", icono: Layers },
   { href: "/admin/permisos", etiqueta: "Permisos", icono: KeySquare },
+  { href: "/admin/buzon", etiqueta: "Buzón", icono: Inbox },
   { href: "/admin/auditoria", etiqueta: "Auditoría", icono: ClipboardList },
 ];
 
