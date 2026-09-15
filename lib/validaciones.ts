@@ -70,11 +70,14 @@ const titulo = z
   .min(3, "El título debe tener al menos 3 caracteres")
   .max(200, "El título no puede superar 200 caracteres");
 
+// `nullish` y no `optional`: el cliente valida con estos mismos esquemas y envia
+// al servidor la salida ya transformada, donde el campo vacio es null. Si solo
+// aceptara undefined, el segundo parseo rechazaria su propia salida.
 const descripcion = z
   .string()
   .trim()
   .max(2000, "La descripción no puede superar 2000 caracteres")
-  .optional()
+  .nullish()
   .transform((v) => (v && v.length > 0 ? v : null));
 
 const etiquetas = z
@@ -205,7 +208,7 @@ export const esquemaArea = z.object({
     .string()
     .trim()
     .max(500, "La descripción no puede superar 500 caracteres")
-    .optional()
+    .nullish()
     .transform((v) => (v && v.length > 0 ? v : null)),
 });
 
@@ -232,7 +235,7 @@ export const esquemaUsuarioNuevo = z.object({
     .string()
     .trim()
     .max(120)
-    .optional()
+    .nullish()
     .transform((v) => (v && v.length > 0 ? v : null)),
   rol: z.enum(ROLES),
 });

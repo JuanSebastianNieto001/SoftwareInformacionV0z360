@@ -7,7 +7,7 @@ import { cambiarContrasena, cerrarSesion, type EstadoFormulario } from "@/app/ac
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputContrasena } from "@/components/ui/input-contrasena";
 import { Label } from "@/components/ui/label";
 
 const inicial: EstadoFormulario = { error: null };
@@ -36,10 +36,9 @@ export function FormularioContrasena({ obligatorio }: { obligatorio: boolean }) 
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Nueva contraseña</Label>
-            <Input
+            <InputContrasena
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               required
@@ -48,10 +47,9 @@ export function FormularioContrasena({ obligatorio }: { obligatorio: boolean }) 
 
           <div className="space-y-1.5">
             <Label htmlFor="confirmacion">Repite la contraseña</Label>
-            <Input
+            <InputContrasena
               id="confirmacion"
               name="confirmacion"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               required

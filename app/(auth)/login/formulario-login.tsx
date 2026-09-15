@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { InputContrasena } from "@/components/ui/input-contrasena";
 import { Label } from "@/components/ui/label";
 
 const inicial: EstadoFormulario = { error: null };
@@ -54,10 +55,9 @@ export function FormularioLogin({
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <InputContrasena
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
             />
