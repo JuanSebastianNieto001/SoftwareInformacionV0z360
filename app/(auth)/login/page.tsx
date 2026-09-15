@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FileText } from "lucide-react";
+import Image from "next/image";
 import { FormularioLogin } from "./formulario-login";
 
 export const metadata: Metadata = { title: "Iniciar sesión" };
@@ -17,24 +17,61 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
   const aviso = motivo ? MENSAJES[motivo] ?? null : null;
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-muted/40 px-4 py-10">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="size-5" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold leading-tight">Gestor Documental</h1>
-            <p className="text-sm text-muted-foreground">Acceso interno</p>
-          </div>
+    <main className="grid min-h-svh grid-rows-[200px_1fr] bg-card lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1">
+      {/* Panel de marca. En móvil se encoge a una franja superior: la imagen
+          ambienta, pero el formulario es lo que se viene a hacer. */}
+      <div className="relative flex items-end overflow-hidden p-6 sm:p-10 lg:p-12">
+        <Image
+          src="/marca/voz-fondo.png"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 1024px) 55vw, 100vw"
+          className="object-cover"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(13,43,78,0) 30%, rgba(13,43,78,0.85))",
+          }}
+        />
+        <div className="relative max-w-[440px] text-white">
+          <p className="text-xs font-semibold tracking-[0.12em] uppercase opacity-80">
+            Comunícate con VOZ360
+          </p>
+          <p className="mt-2.5 text-2xl leading-tight font-semibold sm:text-[34px]">
+            Conecta con soluciones. Tus documentos, siempre vigentes.
+          </p>
         </div>
+      </div>
 
-        <FormularioLogin volver={volver} aviso={aviso} />
+      {/* Panel de acceso */}
+      <div className="flex items-center justify-center px-4 py-10 sm:px-8">
+        <div className="w-full max-w-[400px]">
+          <Image
+            src="/marca/voz-logo.png"
+            alt=""
+            width={140}
+            height={56}
+            priority
+            className="h-14 w-auto rounded-[14px]"
+          />
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          El registro es cerrado. Si no tienes usuario o lo olvidaste, pide
-          ayuda al administrador.
-        </p>
+          <h1 className="mt-7 text-[26px] leading-tight font-semibold tracking-[-0.02em]">
+            Iniciar sesión
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Usa el correo y la contraseña que te asignaron.
+          </p>
+
+          <FormularioLogin volver={volver} aviso={aviso} />
+
+          <p className="mt-6 text-xs text-atenuado">
+            El registro es cerrado. Si no tienes usuario o lo olvidaste, pide
+            ayuda al administrador.
+          </p>
+        </div>
       </div>
     </main>
   );

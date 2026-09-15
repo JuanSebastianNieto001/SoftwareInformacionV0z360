@@ -30,8 +30,9 @@ export default async function PaginaSubir({ searchParams }: PageProps<"/subir">)
     typeof sp.area === "string" && areasEdicion.some((a) => a.id === sp.area) ? sp.area : null;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-[720px]">
       <EncabezadoPagina
+        kicker="Documentos"
         titulo="Subir documento"
         descripcion="El archivo se guarda en el área elegida y será visible para los lectores dentro de la ventana de vigencia."
       />

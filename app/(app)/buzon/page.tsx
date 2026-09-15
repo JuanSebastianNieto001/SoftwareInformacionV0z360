@@ -31,6 +31,7 @@ export default async function PaginaBuzon() {
   return (
     <>
       <EncabezadoPagina
+        kicker="Comunícate con VOZ360"
         titulo="Buzón de sugerencias"
         descripcion="Sugerencias, quejas, felicitaciones y no conformidades. Cada envío queda con número de radicado y se trata según el sistema de gestión de calidad."
       />
@@ -39,7 +40,9 @@ export default async function PaginaBuzon() {
         <FormularioSugerencia />
 
         <section className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Mis registros</h2>
+          <h2 className="text-xs font-semibold tracking-[0.12em] text-atenuado uppercase">
+            Mis registros
+          </h2>
 
           {!mias || mias.length === 0 ? (
             <EstadoVacio
@@ -51,8 +54,8 @@ export default async function PaginaBuzon() {
             <ul className="space-y-2">
               {mias.map((s) => (
                 <li key={s.id}>
-                  <Card>
-                    <CardContent className="space-y-1.5 py-3">
+                  <Card className="rounded-[18px]">
+                    <CardContent className="space-y-1.5 px-[18px] py-4">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-xs text-muted-foreground">
                           {radicado(s.consecutivo)}
@@ -66,7 +69,7 @@ export default async function PaginaBuzon() {
                         {etiquetaArea(s.proceso)} · {formatearFecha(s.creado_en)}
                       </p>
                       {s.respuesta_emisor && (
-                        <p className="border-l-2 pl-2 text-xs text-muted-foreground">
+                        <p className="rounded-xl bg-zona p-2.5 text-[12.5px] text-marino">
                           {s.respuesta_emisor}
                         </p>
                       )}

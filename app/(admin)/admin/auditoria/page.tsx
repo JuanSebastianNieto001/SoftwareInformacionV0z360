@@ -39,6 +39,7 @@ export default async function PaginaAuditoria({ searchParams }: PageProps<"/admi
   return (
     <>
       <EncabezadoPagina
+        kicker="Administración"
         titulo="Auditoría"
         descripcion="Quién abrió, descargó, subió o editó cada documento. El registro es inmutable: nadie puede modificarlo ni borrarlo, ni siquiera el administrador."
         acciones={

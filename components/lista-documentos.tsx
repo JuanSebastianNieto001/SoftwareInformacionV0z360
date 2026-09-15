@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ChipArchivo } from "@/components/chip-archivo";
 import { extensionVisible } from "@/lib/archivos";
 import { describirVencimiento, formatearBytes, formatearFecha } from "@/lib/formato";
 import type { DocumentoConEstado } from "@/lib/supabase/tipos";
@@ -69,8 +70,8 @@ export function ListaDocumentos({
               <Link
                 href={`/documentos/${d.id}`}
                 className={cn(
-                  "block rounded-lg border bg-card p-3 active:bg-muted",
-                  pronto && "border-amber-300 dark:border-amber-800",
+                  "block rounded-[20px] border bg-card p-4 transition-colors active:bg-campo",
+                  pronto && "border-[#fbbf24]",
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -93,7 +94,7 @@ export function ListaDocumentos({
       </ul>
 
       {/* Escritorio: tabla densa */}
-      <div className="hidden overflow-x-auto rounded-lg border md:block">
+      <div className="hidden overflow-hidden rounded-[20px] border bg-card md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -109,14 +110,22 @@ export function ListaDocumentos({
             {documentos.map((d) => {
               const pronto = resaltarVencimiento && vencePronto(d.vigente_hasta, d.estado);
               return (
-                <TableRow key={d.id} className={cn(pronto && "bg-amber-50/60 dark:bg-amber-950/20")}>
+                <TableRow key={d.id} className={cn(pronto && "bg-[#fffbeb]")}>
                   <TableCell className="max-w-md">
-                    <Link href={`/documentos/${d.id}`} className="font-medium hover:underline">
-                      {d.titulo}
-                    </Link>
-                    {d.version > 1 && (
-                      <span className="ml-2 text-xs text-muted-foreground">v{d.version}</span>
-                    )}
+                    <div className="flex items-center gap-2.5">
+                      <ChipArchivo nombreArchivo={d.nombre_archivo} />
+                      <div className="min-w-0">
+                        <Link
+                          href={`/documentos/${d.id}`}
+                          className="text-[13.5px] font-medium hover:underline"
+                        >
+                          {d.titulo}
+                        </Link>
+                        {d.version > 1 && (
+                          <span className="ml-2 text-xs text-muted-foreground">v{d.version}</span>
+                        )}
+                      </div>
+                    </div>
                   </TableCell>
                   {mostrarArea && (
                     <TableCell className="text-muted-foreground">{d.area_nombre}</TableCell>

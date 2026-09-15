@@ -39,11 +39,12 @@ export default async function PaginaInicio() {
   return (
     <>
       <EncabezadoPagina
+        kicker="Mis áreas"
         titulo={`Hola, ${perfil.nombre.split(" ")[0] || "bienvenido"}`}
         descripcion="Estas son las áreas a las que tienes acceso."
         acciones={
           editor && (
-            <Button asChild>
+            <Button asChild size="lg">
               <Link href="/subir">
                 <Upload /> Subir documento
               </Link>
@@ -72,7 +73,7 @@ export default async function PaginaInicio() {
         />
       )}
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(250px,1fr))]">
         {(areas ?? []).map((area) => {
           const nivel = nivelEfectivo(perfil.rol, perfil.activo, nivelPorArea.get(area.id));
           const cantidad = area.documentos?.[0]?.count ?? 0;
@@ -80,22 +81,29 @@ export default async function PaginaInicio() {
             <li key={area.id}>
               <Link
                 href={`/areas/${area.slug}`}
-                className="group flex h-full flex-col rounded-lg border bg-card p-4 transition-colors hover:border-foreground/30 active:bg-muted"
+                className="group flex h-full min-h-[150px] flex-col gap-3 rounded-[20px] border bg-card p-[22px] transition-all duration-150 hover:-translate-y-0.5 hover:border-borde-acento hover:shadow-tarjeta"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-medium leading-snug">{area.nombre}</h2>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                </div>
-                {area.descripcion && (
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{area.descripcion}</p>
-                )}
-                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>{plural(cantidad, "documento", "documentos")}</span>
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-tinte text-primary">
+                    <FolderOpen className="size-5" aria-hidden />
+                  </span>
                   {nivel && (
                     <Badge variant={nivel === "edicion" ? "default" : "secondary"}>
                       {ETIQUETA_NIVEL[nivel]}
                     </Badge>
                   )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base leading-snug font-semibold">{area.nombre}</h2>
+                  {area.descripcion && (
+                    <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">
+                      {area.descripcion}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2 text-[12.5px] text-muted-foreground">
+                  <span>{plural(cantidad, "documento", "documentos")}</span>
+                  <ChevronRight className="size-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>
             </li>
@@ -104,34 +112,38 @@ export default async function PaginaInicio() {
 
         {/*
           El buzón no es un área: no tiene documentos ni permisos. Comparte la
-          rejilla porque para quien entra es una puerta más, pero se distingue
-          con el borde punteado y sin contador de documentos.
+          rejilla porque para quien entra es una puerta más, pero el degradado
+          lo separa de las carpetas sin necesidad de explicarlo.
         */}
         <li>
           <Link
             href="/buzon"
-            className="group flex h-full flex-col rounded-lg border border-dashed bg-card p-4 transition-colors hover:border-foreground/30 active:bg-muted"
+            className="group flex h-full min-h-[150px] flex-col gap-3 rounded-[20px] p-[22px] text-white transition-all duration-150 hover:-translate-y-0.5 hover:shadow-tarjeta"
+            style={{ background: "linear-gradient(135deg, #0d2b4e, #1a5fb0)" }}
           >
-            <div className="flex items-start justify-between gap-2">
-              <h2 className="flex items-center gap-2 font-medium leading-snug">
-                <MessageSquareText className="size-4 shrink-0 text-muted-foreground" />
-                Buzón de sugerencias
-              </h2>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Envía una sugerencia, queja, felicitación o no conformidad.
-            </p>
-            <span className="mt-3 text-xs text-muted-foreground">
-              Queda con número de radicado
+            <span className="flex size-10 items-center justify-center rounded-xl bg-white/15">
+              <MessageSquareText className="size-5" aria-hidden />
             </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base leading-snug font-semibold">Buzón de sugerencias</h2>
+              <p className="mt-1 text-[13px] text-white/75">
+                Envía una sugerencia, queja, felicitación o no conformidad.
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[12.5px] text-white/75">
+              <span>Queda con número de radicado</span>
+              <ChevronRight className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </div>
           </Link>
         </li>
       </ul>
 
       {editor && porVencer.data && porVencer.data.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-2 text-base font-semibold">Vencen en los próximos 7 días</h2>
+        <section className="mt-10">
+          <h2 className="mb-2 flex items-center gap-2 text-[18px] font-semibold">
+            <span className="size-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
+            Vencen en los próximos 7 días
+          </h2>
           <p className="mb-3 text-sm text-muted-foreground">
             Renueva la vigencia o sube una versión nueva antes de que desaparezcan de la vista de los lectores.
           </p>

@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Sora } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RegistroPwa } from "@/components/pwa/registro-pwa";
 import "./globals.css";
 
-const geistSans = Geist({
+// Sora es la tipografia de la marca. Se cargan solo los tres pesos que usa
+// el diseno: cada peso extra es una descarga que nadie mira.
+const sora = Sora({
   variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 const geistMono = Geist_Mono({
@@ -15,7 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const NOMBRE_APP = "Gestor Documental";
+const NOMBRE_APP = "Comunícate con VOZ360";
 
 export const metadata: Metadata = {
   title: {
@@ -42,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#171717",
+  themeColor: "#0d2b4e",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -52,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sora.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <TooltipProvider>{children}</TooltipProvider>

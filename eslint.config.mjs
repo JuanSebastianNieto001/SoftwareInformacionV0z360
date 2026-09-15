@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Referencia de diseno, no codigo del proyecto: se lee, no se compila.
+    "design_handoff_voz360_rediseno/**",
   ]),
 ]);
 

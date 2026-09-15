@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { iniciales } from "@/lib/formato";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,6 +34,12 @@ import { llamarApi } from "@/lib/subida-cliente";
 import type { RolGlobal } from "@/lib/supabase/tipos";
 import { ROLES } from "@/lib/validaciones";
 import { cn } from "@/lib/utils";
+
+const ESTILO_ROL: Record<string, string> = {
+  admin: "border-transparent bg-marino text-white",
+  editor: "border-transparent bg-tinte text-marino-suave",
+  lector: "border-transparent bg-background text-nav-inactivo",
+};
 
 function contrasenaAleatoria(longitud = 12): string {
   const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -111,7 +118,7 @@ export function GestionUsuarios({ miId }: { miId: string }) {
       ) : usuarios.length === 0 ? (
         <EstadoVacio titulo="No hay usuarios" descripcion="Crea el primero con el botón de arriba." />
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="overflow-hidden rounded-[20px] border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -125,16 +132,25 @@ export function GestionUsuarios({ miId }: { miId: string }) {
             </TableHeader>
             <TableBody>
               {usuarios.map((u) => (
-                <TableRow key={u.id} className={cn(!u.activo && "text-muted-foreground")}>
+                <TableRow key={u.id} className={cn(!u.activo && "opacity-55")}>
                   <TableCell>
-                    <span className="block font-medium">
-                      {u.nombre || "(sin nombre)"}
-                      {u.id === miId && <span className="ml-1 text-xs text-muted-foreground">(tú)</span>}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">{u.email}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tinte text-[12px] font-semibold text-marino-suave">
+                        {iniciales(u.nombre || u.email) || "U"}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="block font-medium">
+                          {u.nombre || "(sin nombre)"}
+                          {u.id === miId && (
+                            <span className="ml-1 text-xs text-muted-foreground">(tú)</span>
+                          )}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">{u.email}</span>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={u.rol === "admin" ? "default" : "secondary"}>{ETIQUETA_ROL[u.rol]}</Badge>
+                    <Badge className={ESTILO_ROL[u.rol]}>{ETIQUETA_ROL[u.rol]}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{u.cargo ?? "—"}</TableCell>
                   <TableCell className="hidden whitespace-nowrap sm:table-cell">
@@ -142,8 +158,18 @@ export function GestionUsuarios({ miId }: { miId: string }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {u.activo ? <Badge variant="outline">Activo</Badge> : <Badge variant="destructive">Desactivado</Badge>}
-                      {u.debe_cambiar_contrasena && <Badge variant="outline">Clave pendiente</Badge>}
+                      {u.activo ? (
+                        <Badge className="border-transparent bg-[#dcfce7] text-[#166534]">Activo</Badge>
+                      ) : (
+                        <Badge className="border-transparent bg-[#fee2e2] text-[#991b1b]">
+                          Desactivado
+                        </Badge>
+                      )}
+                      {u.debe_cambiar_contrasena && (
+                        <Badge className="border-transparent bg-[#fef3c7] text-[#92400e]">
+                          Clave pendiente
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

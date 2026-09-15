@@ -22,7 +22,7 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
   if (!areas || areas.length === 0) {
     return (
       <>
-        <EncabezadoPagina titulo="Permisos" />
+        <EncabezadoPagina kicker="Administración" titulo="Permisos" />
         <EstadoVacio
           titulo="Primero crea al menos un área"
           accion={
@@ -38,6 +38,7 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
   return (
     <>
       <EncabezadoPagina
+        kicker="Administración"
         titulo="Permisos por área"
         descripcion="El rol global es el techo: un lector nunca pasa de lectura aunque se le marque edición; un administrador tiene edición en todo sin necesidad de asignación."
       />

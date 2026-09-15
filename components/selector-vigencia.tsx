@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { hoyIso, sumarADia } from "@/lib/formato";
@@ -49,16 +48,21 @@ export function SelectorVigencia({
           const objetivo = atajo.calcular(valor.desde || hoyIso());
           const activo = valor.hasta === objetivo;
           return (
-            <Button
+            <button
               key={atajo.etiqueta}
               type="button"
-              size="sm"
-              variant={activo ? "default" : "outline"}
+              aria-pressed={activo}
               disabled={deshabilitado}
               onClick={() => onChange({ desde: valor.desde || hoyIso(), hasta: objetivo })}
+              className={cn(
+                "flex h-[38px] items-center rounded-full border-[1.5px] px-4 text-[13px] transition-colors disabled:pointer-events-none disabled:opacity-50",
+                activo
+                  ? "border-primary bg-tinte font-medium text-marino-suave"
+                  : "border-border bg-card text-nav-inactivo hover:border-borde-acento",
+              )}
             >
               {atajo.etiqueta}
-            </Button>
+            </button>
           );
         })}
       </div>

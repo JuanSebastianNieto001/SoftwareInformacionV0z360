@@ -19,6 +19,7 @@ export default async function PaginaAreasAdmin() {
   return (
     <>
       <EncabezadoPagina
+        kicker="Administración"
         titulo="Áreas"
         descripcion="Cada área agrupa documentos y permisos. Desactivar un área la oculta para todos sin borrar nada."
         acciones={<FormularioArea />}

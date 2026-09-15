@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
-  FileText,
   FolderOpen,
   KeyRound,
   LogOut,
@@ -101,8 +101,8 @@ export function AppShell({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-3 sm:px-4">
+      <header className="sticky top-0 z-40 border-b bg-card/85 backdrop-blur-md">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1120px] items-center gap-2 px-4 sm:px-6">
           {/* Menú móvil */}
           <Sheet open={abierto} onOpenChange={setAbierto}>
             <SheetTrigger asChild>
@@ -112,9 +112,7 @@ export function AppShell({
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0">
               <SheetHeader className="border-b px-4 py-3 text-left">
-                <SheetTitle className="flex items-center gap-2 text-base">
-                  <FileText className="size-4" /> Gestor Documental
-                </SheetTitle>
+                <SheetTitle className="text-base">Comunícate con VOZ360</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-0.5 p-2" aria-label="Principal">
                 {items.map((item) => (
@@ -135,45 +133,50 @@ export function AppShell({
             </SheetContent>
           </Sheet>
 
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <FileText className="size-4" aria-hidden />
-            </span>
-            <span className="hidden sm:inline">Gestor Documental</span>
+          <Link href="/" className="shrink-0">
+            {/* El nombre va en texto solo para lectores de pantalla: en
+                pantalla lo dice el logotipo. */}
+            <span className="sr-only">Comunícate con VOZ360</span>
+            <Image
+              src="/marca/voz-logo.png"
+              alt=""
+              width={95}
+              height={38}
+              priority
+              className="h-[38px] w-auto rounded-[10px]"
+            />
           </Link>
 
           <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label="Principal">
             {items.map((item) => (
-              <Button
-                key={item.href}
-                variant={activo(item) ? "secondary" : "ghost"}
-                size="sm"
-                asChild
-              >
-                <Link href={item.href}>
-                  <item.icono /> {item.etiqueta}
-                </Link>
-              </Button>
+              <Pastilla key={item.href} href={item.href} activo={activo(item)} icono={item.icono}>
+                {item.etiqueta}
+              </Pastilla>
             ))}
             {esAdmin && (
-              <Button variant={enAdmin ? "secondary" : "ghost"} size="sm" asChild>
-                <Link href="/admin/documentos">
-                  <Shield /> Administración
-                </Link>
-              </Button>
+              <Pastilla href="/admin/documentos" activo={enAdmin} icono={Shield}>
+                Administración
+              </Pastilla>
             )}
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 px-2" aria-label="Menú de usuario">
-                  <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-                    {iniciales(perfil.nombre || email) || "U"}
-                  </span>
-                  <span className="hidden max-w-40 truncate text-left leading-tight sm:block">
-                    <span className="block text-sm">{perfil.nombre || email}</span>
+                <Button
+                  variant="ghost"
+                  className="h-auto gap-2.5 px-1.5 py-1 hover:bg-tinte"
+                  aria-label="Menú de usuario"
+                >
+                  <span className="hidden max-w-40 truncate text-right leading-tight sm:block">
+                    <span className="block text-[13px] font-medium">{perfil.nombre || email}</span>
                     <span className="block text-[11px] text-muted-foreground">{ETIQUETA_ROL[perfil.rol]}</span>
+                  </span>
+                  <span
+                    className="flex size-10 items-center justify-center rounded-full text-[13px] font-semibold text-white"
+                    style={{ background: "linear-gradient(135deg, #1a7fe0, #0d2b4e)" }}
+                  >
+                    {iniciales(perfil.nombre || email) || "U"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
@@ -206,8 +209,35 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-4 sm:py-6">{children}</main>
+      <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 pt-7 pb-14 sm:px-6 sm:pt-9">{children}</main>
     </div>
+  );
+}
+
+function Pastilla({
+  href,
+  activo,
+  icono: Icono,
+  children,
+}: {
+  href: string;
+  activo: boolean;
+  icono: typeof FolderOpen;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex h-[38px] items-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition-colors",
+        activo
+          ? "bg-marino text-white"
+          : "text-nav-inactivo hover:bg-tinte hover:text-marino",
+      )}
+    >
+      <Icono className="size-4" aria-hidden />
+      {children}
+    </Link>
   );
 }
 
@@ -225,8 +255,8 @@ function EnlaceNav({
       href={item.href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-        activo ? "bg-secondary font-medium" : "hover:bg-muted",
+        "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-colors",
+        activo ? "bg-marino font-medium text-white" : "text-nav-inactivo hover:bg-tinte",
       )}
     >
       <item.icono className="size-4" aria-hidden />
@@ -240,7 +270,7 @@ export function NavAdmin() {
   const pathname = usePathname();
   return (
     <nav
-      className="-mx-3 mb-5 flex gap-1 overflow-x-auto border-b px-3 pb-px sm:mx-0 sm:px-0"
+      className="mb-6 flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl border-[1.5px] bg-card p-[5px]"
       aria-label="Administración"
     >
       {ITEMS_ADMIN.map((item) => {
@@ -250,10 +280,10 @@ export function NavAdmin() {
             key={item.href}
             href={item.href}
             className={cn(
-              "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm",
+              "flex h-[38px] shrink-0 items-center gap-1.5 rounded-[11px] px-3.5 text-[13.5px] transition-colors",
               activo
-                ? "border-primary font-medium text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
+                ? "bg-marino font-medium text-white"
+                : "text-nav-inactivo hover:bg-tinte hover:text-marino",
             )}
           >
             <item.icono className="size-4" aria-hidden />

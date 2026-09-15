@@ -19,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AYUDA_TIPO, ETIQUETA_AREA_REPORTE, ETIQUETA_TIPO } from "@/lib/buzon";
 import { hoyIso } from "@/lib/formato";
+import { cn } from "@/lib/utils";
 import { AREAS_REPORTE, TIPOS_SUGERENCIA } from "@/lib/validaciones";
 import type { TipoSugerencia } from "@/lib/supabase/tipos";
 
@@ -56,37 +57,40 @@ export function FormularioSugerencia() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Nuevo registro</CardTitle>
+    <Card className="rounded-[24px] p-6 sm:p-8">
+      <CardHeader className="p-0">
+        <CardTitle className="text-xl">Nuevo registro</CardTitle>
         <CardDescription>
           Describe hechos concretos: qué pasó, dónde y cuándo. Lo que escribas aquí
           no se puede editar después, porque es lo que sirve de evidencia.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={enviar} className="space-y-4" noValidate>
+      <CardContent className="p-0">
+        <form onSubmit={enviar} className="space-y-[22px]" noValidate>
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="s-tipo">Tipo de registro</Label>
-            <Select
-              value={f.tipo}
-              onValueChange={(v) => set("tipo", v as TipoSugerencia)}
-              disabled={pendiente}
-            >
-              <SelectTrigger id="s-tipo" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIPOS_SUGERENCIA.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {ETIQUETA_TIPO[t]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">{AYUDA_TIPO[f.tipo]}</p>
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Tipo de registro</span>
+            <div className="flex flex-wrap gap-1.5">
+              {TIPOS_SUGERENCIA.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={f.tipo === t}
+                  disabled={pendiente}
+                  onClick={() => set("tipo", t as TipoSugerencia)}
+                  className={cn(
+                    "flex h-[38px] items-center rounded-full border-[1.5px] px-4 text-[13px] transition-colors disabled:pointer-events-none disabled:opacity-50",
+                    f.tipo === t
+                      ? "border-primary bg-tinte font-medium text-marino-suave"
+                      : "border-border bg-card text-nav-inactivo hover:border-borde-acento",
+                  )}
+                >
+                  {ETIQUETA_TIPO[t]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-atenuado">{AYUDA_TIPO[f.tipo]}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -171,6 +175,7 @@ export function FormularioSugerencia() {
 
           <div className="flex items-start gap-2">
             <Checkbox
+              className="size-[22px] rounded-[7px] border-borde-acento"
               id="s-respuesta"
               checked={f.desea_respuesta}
               onCheckedChange={(v) => set("desea_respuesta", v === true)}

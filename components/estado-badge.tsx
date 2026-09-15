@@ -3,15 +3,13 @@ import { cn } from "@/lib/utils";
 import type { EstadoDocumento } from "@/lib/supabase/tipos";
 import { diasHasta } from "@/lib/formato";
 
+// Tintes planos del handoff, sin borde: el color de fondo ya separa la
+// pastilla del blanco de la tarjeta.
 const ESTILOS: Record<EstadoDocumento, string> = {
-  vigente:
-    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300",
-  programado:
-    "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-300",
-  vencido:
-    "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300",
-  purgado:
-    "border-neutral-300 bg-neutral-100 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400",
+  vigente: "border-transparent bg-[#dcfce7] text-[#166534]",
+  programado: "border-transparent bg-tinte text-marino-suave",
+  vencido: "border-transparent bg-[#fee2e2] text-[#991b1b]",
+  purgado: "border-transparent bg-background text-nav-inactivo",
 };
 
 export const ETIQUETA_ESTADO: Record<EstadoDocumento, string> = {
@@ -62,7 +60,7 @@ export function AvisoVencePronto({
     <Badge
       variant="outline"
       className={cn(
-        "border-amber-300 bg-amber-50 font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+        "border-transparent bg-[#fef3c7] font-medium text-[#92400e]",
         className,
       )}
     >

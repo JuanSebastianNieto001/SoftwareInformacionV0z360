@@ -16,6 +16,7 @@ export default async function PaginaUsuarios() {
   return (
     <>
       <EncabezadoPagina
+        kicker="Administración"
         titulo="Usuarios"
         descripcion="El registro público está cerrado: aquí se crean las cuentas. Desactiva en lugar de borrar para conservar la trazabilidad."
       />

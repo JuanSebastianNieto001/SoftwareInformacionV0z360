@@ -44,6 +44,7 @@ export default async function PaginaDocumentosAdmin({ searchParams }: PageProps<
   return (
     <>
       <EncabezadoPagina
+        kicker="Administración"
         titulo="Todos los documentos"
         descripcion="Incluye vencidos, programados y purgados. Los lectores solo ven los vigentes."
         acciones={

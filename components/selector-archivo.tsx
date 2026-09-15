@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef } from "react";
-import { FileUp, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ACCEPT_ARCHIVOS, extensionVisible } from "@/lib/archivos";
 import { formatearBytes } from "@/lib/formato";
@@ -34,8 +34,8 @@ export function SelectorArchivo({
         onChange={(e) => onChange(e.target.files?.[0] ?? null)}
       />
       {archivo ? (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-background text-xs font-semibold">
+        <div className="flex items-center gap-3 rounded-[18px] border bg-card p-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-tinte text-xs font-semibold text-marino-suave">
             {extensionVisible(archivo.name) || "?"}
           </div>
           <div className="min-w-0 flex-1">
@@ -61,13 +61,15 @@ export function SelectorArchivo({
         <label
           htmlFor={id}
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed px-4 py-8 text-center transition-colors hover:bg-muted/50",
+            "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[18px] border-2 border-dashed border-borde-acento bg-zona px-4 py-[34px] text-center transition-colors hover:border-primary hover:bg-tinte",
             deshabilitado && "pointer-events-none opacity-50",
           )}
         >
-          <FileUp className="size-6 text-muted-foreground" aria-hidden />
+          <span className="flex size-[52px] items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-boton">
+            <Upload className="size-6" aria-hidden />
+          </span>
           <span className="text-sm font-medium">Toca para elegir un archivo</span>
-          <span className="text-xs text-muted-foreground">PDF, JPG, PNG, Word, Excel o PowerPoint · máx. 50 MB</span>
+          <span className="text-xs text-atenuado">PDF, JPG, PNG, Word, Excel o PowerPoint · máx. 50 MB</span>
         </label>
       )}
     </div>
@@ -78,7 +80,7 @@ export function BarraProgreso({ fraccion, etiqueta }: { fraccion: number; etique
   const pct = Math.max(0, Math.min(100, Math.round(fraccion * 100)));
   return (
     <div className="space-y-1" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-tinte">
         <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
       </div>
       {etiqueta && (

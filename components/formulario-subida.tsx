@@ -96,8 +96,14 @@ export function FormularioSubida({
     }
   }
 
+  // La tarjeta blanca sobre el fondo azulado es lo que separa el formulario del
+  // resto de la pagina; por eso el padding generoso y el radio grande.
   return (
-    <form onSubmit={enviar} className="space-y-6" noValidate>
+    <form
+      onSubmit={enviar}
+      className="space-y-[22px] rounded-[24px] border bg-card p-6 sm:p-8"
+      noValidate
+    >
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
@@ -112,7 +118,7 @@ export function FormularioSubida({
           value={areaId}
           disabled={ocupado}
           onChange={(e) => setAreaId(e.target.value)}
-          className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-[46px] w-full rounded-lg border-[1.5px] border-input bg-campo px-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:bg-card focus-visible:ring-3 focus-visible:ring-ring/20"
           required
         >
           {areas.map((a) => (

@@ -46,3 +46,7 @@ next-env.d.ts
 
 # supabase cli
 supabase/.temp
+
+# referencia de diseno (no es codigo del proyecto)
+design_handoff_voz360_rediseno/
+Dise*.zip
