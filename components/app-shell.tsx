@@ -46,17 +46,21 @@ type Item = { href: string; etiqueta: string; icono: typeof FolderOpen; exacto?:
 
 const PRINCIPALES: Item[] = [
   { href: "/", etiqueta: "Mis áreas", icono: FolderOpen, exacto: true },
-  { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText },
 ];
 
 const SUBIR: Item = { href: "/subir", etiqueta: "Subir documento", icono: Upload };
+
+// El buzon significa cosas distintas segun quien mira: para el personal es
+// donde se envia un PQR, y para el admin donde se revisan los recibidos. El
+// formulario de envio le sigue quedando a mano en la tarjeta del inicio.
+const BUZON: Item = { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText };
+const BUZON_ADMIN: Item = { href: "/admin/buzon", etiqueta: "Buzón", icono: Inbox };
 
 export const ITEMS_ADMIN: Item[] = [
   { href: "/admin/documentos", etiqueta: "Documentos", icono: Files },
   { href: "/admin/usuarios", etiqueta: "Usuarios", icono: Users },
   { href: "/admin/areas", etiqueta: "Áreas", icono: Layers },
   { href: "/admin/permisos", etiqueta: "Permisos", icono: KeySquare },
-  { href: "/admin/buzon", etiqueta: "Buzón", icono: Inbox },
   { href: "/admin/auditoria", etiqueta: "Auditoría", icono: ClipboardList },
 ];
 
@@ -81,7 +85,11 @@ export function AppShell({
   const esAdmin = perfil.rol === "admin";
   const puedeSubir = esAdmin || perfil.rol === "editor";
 
-  const items: Item[] = [...PRINCIPALES, ...(puedeSubir ? [SUBIR] : [])];
+  const items: Item[] = [
+    ...PRINCIPALES,
+    esAdmin ? BUZON_ADMIN : BUZON,
+    ...(puedeSubir ? [SUBIR] : []),
+  ];
 
   const activo = (item: Item) =>
     item.exacto ? pathname === item.href : pathname.startsWith(item.href);
