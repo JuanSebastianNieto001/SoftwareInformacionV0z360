@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Loader2, Paperclip, Wrench } from "lucide-react";
+import { Ban, Loader2, Paperclip, Wrench } from "lucide-react";
 import { toast } from "sonner";
-import { tratarSugerencia } from "@/app/acciones/buzon";
+import { iniciarGestion, rechazarSugerencia, tratarSugerencia } from "@/app/acciones/buzon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -122,11 +122,25 @@ export function DialogoTratamiento({
     });
   }
 
+  // Abrir el detalle ya es gestionar: el estado avanza solo, en vez de
+  // depender de que alguien se acuerde de cambiarlo en el desplegable. La
+  // accion no retrocede casos ya cerrados, filtra por 'recibida'.
+  function alCambiarApertura(visible: boolean) {
+    setAbierto(visible);
+    if (visible && s.estado === "recibida") {
+      setEstado("en_proceso");
+      iniciar(async () => {
+        const r = await iniciarGestion({ id: s.id });
+        if (!r.ok) toast.error(r.error);
+      });
+    }
+  }
+
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog open={abierto} onOpenChange={alCambiarApertura}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={`Tratar ${radicado(s.consecutivo)}`}>
-          <Wrench />
+        <Button variant="outline" size="sm">
+          <Wrench /> Gestionar
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
@@ -355,6 +369,82 @@ export function DialogoTratamiento({
             <Button type="submit" disabled={pendiente || faltaEvidencia}>
               {pendiente && <Loader2 className="animate-spin" />}
               {cerrando ? "Responder y cerrar" : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Botón "Rechazar". Pide el motivo y nada más: rechazar no es tratar, y
+ * obligar a pasar por el formulario largo para descartar un caso sin sentido
+ * empujaría a dejarlo pudriéndose en "Sin gestionar".
+ */
+export function DialogoRechazo({ sugerencia: s }: { sugerencia: Sugerencia }) {
+  const [abierto, setAbierto] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pendiente, iniciar] = useTransition();
+
+  function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    iniciar(async () => {
+      const r = await rechazarSugerencia({ id: s.id, motivo });
+      if (!r.ok) return setError(r.error);
+      toast.success("Caso rechazado");
+      setAbierto(false);
+    });
+  }
+
+  return (
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Ban /> Rechazar
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form onSubmit={enviar} className="space-y-4" noValidate>
+          <DialogHeader>
+            <DialogTitle>Rechazar {radicado(s.consecutivo)}</DialogTitle>
+            <DialogDescription>
+              El motivo queda guardado y lo verá quien presentó la PQR. También es
+              lo que se consulta después para saber por qué se desechó.
+            </DialogDescription>
+          </DialogHeader>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="r-motivo">Motivo del rechazo</Label>
+            <Textarea
+              id="r-motivo"
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              rows={4}
+              maxLength={4000}
+              required
+              autoFocus
+              placeholder="Por ejemplo: el caso está duplicado con BZ-00012, o no corresponde a un proceso de la empresa."
+              disabled={pendiente}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setAbierto(false)}
+              disabled={pendiente}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" variant="destructive" disabled={pendiente}>
+              {pendiente && <Loader2 className="animate-spin" />}
+              Rechazar caso
             </Button>
           </DialogFooter>
         </form>

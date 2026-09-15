@@ -307,8 +307,7 @@ export const TIPOS_QUE_EXIGEN_CAUSA: readonly (typeof TIPOS_SUGERENCIA)[number][
 
 export const ESTADOS_SUGERENCIA = [
   "recibida",
-  "en_analisis",
-  "en_accion",
+  "en_proceso",
   "cerrada",
   "rechazada",
 ] as const;
@@ -411,6 +410,23 @@ export const esquemaTratamiento = z
   });
 
 export type DatosTratamiento = z.infer<typeof esquemaTratamiento>;
+
+/** Boton "Gestionar": solo necesita saber de que caso se habla. */
+export const esquemaIdSugerencia = z.object({ id: uuid });
+
+/**
+ * Boton "Rechazar". El motivo es obligatorio y con un minimo real: es lo
+ * unico que quedara para responder, meses despues, por que se desecho el
+ * caso. Un "no aplica" de tres letras no responde eso.
+ */
+export const esquemaRechazo = z.object({
+  id: uuid,
+  motivo: z
+    .string()
+    .trim()
+    .min(10, "Explica por qué se rechaza: es lo que se consultará después")
+    .max(4000, "El motivo no puede superar 4000 caracteres"),
+});
 
 // ---------------------------------------------------------------------------
 // Utilidad

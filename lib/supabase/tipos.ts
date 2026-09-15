@@ -33,12 +33,7 @@ export type TipoSugerencia =
   | "felicitacion"
   | "no_conformidad"
   | "oportunidad_mejora";
-export type EstadoSugerencia =
-  | "recibida"
-  | "en_analisis"
-  | "en_accion"
-  | "cerrada"
-  | "rechazada";
+export type EstadoSugerencia = "recibida" | "en_proceso" | "cerrada" | "rechazada";
 
 export type Database = {
   __InternalSupabase: {

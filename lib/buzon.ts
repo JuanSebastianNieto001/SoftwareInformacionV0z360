@@ -41,19 +41,17 @@ export function etiquetaArea(valor: string): string {
 }
 
 export const ETIQUETA_ESTADO: Record<EstadoSugerencia, string> = {
-  recibida: "Recibida",
-  en_analisis: "En análisis",
-  en_accion: "En acción",
+  recibida: "Sin gestionar",
+  en_proceso: "En proceso",
   cerrada: "Cerrada",
-  rechazada: "Descartada",
+  rechazada: "Rechazada",
 };
 
 type VarianteBadge = "default" | "secondary" | "destructive" | "outline";
 
 export const VARIANTE_ESTADO: Record<EstadoSugerencia, VarianteBadge> = {
   recibida: "default",
-  en_analisis: "secondary",
-  en_accion: "secondary",
+  en_proceso: "secondary",
   cerrada: "outline",
   rechazada: "destructive",
 };
