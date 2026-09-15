@@ -1,4 +1,4 @@
-import { exigirAdminApi } from "@/lib/api-admin";
+import { exigirGestorBuzonApi } from "@/lib/api-admin";
 import { respuestaError } from "@/lib/api-errores";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO, etiquetaArea, radicado } from "@/lib/buzon";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
@@ -30,7 +30,7 @@ function eficacia(v: boolean | null): string {
  * eficacia— porque es lo que un auditor pide ver de una sentada.
  */
 export async function GET() {
-  const ctx = await exigirAdminApi();
+  const ctx = await exigirGestorBuzonApi();
   if (ctx.error) return ctx.error;
 
   const [{ data, error }, { data: personas }] = await Promise.all([
@@ -67,6 +67,8 @@ export async function GET() {
     "Eficacia",
     "Cómo se verificó",
     "Respuesta al emisor",
+    "Evidencia adjunta",
+    "Evidencia subida el",
   ];
 
   const lineas = [cabecera.join(";")];
@@ -93,6 +95,8 @@ export async function GET() {
         eficacia(s.eficacia_verificada),
         s.eficacia_nota ?? "",
         s.respuesta_emisor ?? "",
+        s.evidencia_nombre ?? "",
+        fechaHoraCsv(s.evidencia_subida_en),
       ]
         .map(celda)
         .join(";"),

@@ -27,3 +27,22 @@ export async function exigirAdminApi(): Promise<Resultado> {
   }
   return { supabase, user };
 }
+
+/**
+ * Para los Route Handlers del buzón. La pregunta no es "¿es admin?" sino
+ * "¿puede gestionar el buzón?", y la responde Postgres con la misma
+ * función que usan las políticas de RLS, no una lista en TypeScript.
+ */
+export async function exigirGestorBuzonApi(): Promise<Resultado> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: respuestaError("No autorizado", 401) };
+
+  const { data: puede, error } = await supabase.rpc("gestiono_buzon");
+  if (error || !puede) {
+    return { error: respuestaError("No tienes permiso para gestionar el buzón.", 403) };
+  }
+  return { supabase, user };
+}

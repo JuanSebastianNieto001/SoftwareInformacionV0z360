@@ -11,7 +11,12 @@ export default async function LayoutApp({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      perfil={{ nombre: perfil.nombre, rol: perfil.rol, cargo: perfil.cargo }}
+      perfil={{
+        nombre: perfil.nombre,
+        rol: perfil.rol,
+        cargo: perfil.cargo,
+        gestiona_buzon: perfil.gestiona_buzon,
+      }}
       email={user.email ?? ""}
     >
       {children}

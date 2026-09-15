@@ -53,6 +53,7 @@ export type Database = {
           cargo: string | null;
           rol: RolGlobal;
           activo: boolean;
+          gestiona_buzon: boolean;
           ultimo_login: string | null;
           creado_en: string;
           actualizado_en: string;
@@ -63,6 +64,7 @@ export type Database = {
           cargo?: string | null;
           rol?: RolGlobal;
           activo?: boolean;
+          gestiona_buzon?: boolean;
           ultimo_login?: string | null;
           creado_en?: string;
           actualizado_en?: string;
@@ -73,6 +75,7 @@ export type Database = {
           cargo?: string | null;
           rol?: RolGlobal;
           activo?: boolean;
+          gestiona_buzon?: boolean;
           ultimo_login?: string | null;
           creado_en?: string;
           actualizado_en?: string;
@@ -314,6 +317,9 @@ export type Database = {
           eficacia_verificada: boolean | null;
           eficacia_nota: string | null;
           respuesta_emisor: string | null;
+          evidencia_path: string | null;
+          evidencia_nombre: string | null;
+          evidencia_subida_en: string | null;
           creado_en: string;
           actualizado_en: string;
         };
@@ -339,6 +345,9 @@ export type Database = {
           eficacia_verificada?: boolean | null;
           eficacia_nota?: string | null;
           respuesta_emisor?: string | null;
+          evidencia_path?: string | null;
+          evidencia_nombre?: string | null;
+          evidencia_subida_en?: string | null;
           creado_en?: string;
           actualizado_en?: string;
         };
@@ -364,6 +373,9 @@ export type Database = {
           eficacia_verificada?: boolean | null;
           eficacia_nota?: string | null;
           respuesta_emisor?: string | null;
+          evidencia_path?: string | null;
+          evidencia_nombre?: string | null;
+          evidencia_subida_en?: string | null;
           creado_en?: string;
           actualizado_en?: string;
         };
@@ -441,6 +453,10 @@ export type Database = {
         Returns: RolGlobal | null;
       };
       soy_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      gestiono_buzon: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };

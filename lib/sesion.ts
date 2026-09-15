@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { gestionaBuzon } from "./permisos";
 import { crearClienteServidor, type ClienteServidor } from "./supabase/server";
 import type { Perfil } from "./supabase/tipos";
 
@@ -57,6 +58,13 @@ export async function exigirSesion(): Promise<Sesion> {
 export async function exigirAdmin(): Promise<Sesion> {
   const sesion = await exigirSesion();
   if (sesion.perfil.rol !== "admin") redirect("/");
+  return sesion;
+}
+
+/** Como exigirSesion, pero además debe poder responder el buzón. */
+export async function exigirGestorBuzon(): Promise<Sesion> {
+  const sesion = await exigirSesion();
+  if (!gestionaBuzon(sesion.perfil)) redirect("/");
   return sesion;
 }
 

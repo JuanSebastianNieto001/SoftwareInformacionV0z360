@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Loader2, Wrench } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Loader2, Paperclip, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { tratarSugerencia } from "@/app/acciones/buzon";
 import { Badge } from "@/components/ui/badge";
@@ -25,16 +25,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { sanitizarNombreArchivo } from "@/lib/archivos";
 import {
+  ACCEPT_EVIDENCIA,
   ETIQUETA_ESTADO,
   ETIQUETA_TIPO,
-  TIPOS_CON_ACCION_CORRECTIVA,
   VARIANTE_ESTADO,
   etiquetaArea,
+  motivoRechazoEvidencia,
   radicado,
+  rutaEvidencia,
 } from "@/lib/buzon";
 import { formatearFecha } from "@/lib/formato";
-import { ESTADOS_SUGERENCIA } from "@/lib/validaciones";
+import { crearClienteNavegador } from "@/lib/supabase/client";
+import { ESTADOS_SUGERENCIA, TIPOS_QUE_EXIGEN_CAUSA } from "@/lib/validaciones";
 import type { EstadoSugerencia, Sugerencia } from "@/lib/supabase/tipos";
 
 /** Centinela: Radix Select no admite una opción con value vacío. */
@@ -67,19 +71,40 @@ export function DialogoTratamiento({
   const [eficacia, setEficacia] = useState(eficaciaAClave(s.eficacia_verificada));
   const [notaEficacia, setNotaEficacia] = useState(s.eficacia_nota ?? "");
   const [respuesta, setRespuesta] = useState(s.respuesta_emisor ?? "");
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [evidencia, setEvidencia] = useState(s.evidencia_nombre);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, iniciar] = useTransition();
+  const supabase = useMemo(() => crearClienteNavegador(), []);
 
   // El 10.2 exige el ciclo completo solo cuando hubo incumplimiento. Pedir
   // "análisis de causa" ante una felicitación sería ruido.
-  const exigeAccionCorrectiva = TIPOS_CON_ACCION_CORRECTIVA.includes(s.tipo);
+  const exigeAccionCorrectiva = TIPOS_QUE_EXIGEN_CAUSA.includes(s.tipo);
+  const cerrando = estado === "cerrada";
+  const faltaEvidencia = cerrando && !evidencia && !archivo;
 
   function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     iniciar(async () => {
+      // El archivo sube primero. Si fallara despues de guardar la fila, la
+      // base tendria una evidencia que no existe, que es peor que no poder
+      // cerrar el caso.
+      let nombre = evidencia;
+      if (archivo) {
+        const limpio = sanitizarNombreArchivo(archivo.name);
+        const { error: fallo } = await supabase.storage
+          .from("evidencias")
+          .upload(rutaEvidencia(s.id, limpio), archivo, { upsert: true });
+        if (fallo) return setError(`No se pudo subir la evidencia: ${fallo.message}`);
+        nombre = limpio;
+      }
+
       const r = await tratarSugerencia({
         id: s.id,
+        tipo: s.tipo,
+        evidencia_nombre: nombre,
+        evidencia_nueva: archivo !== null,
         estado,
         responsable_id: responsable === SIN_ASIGNAR ? null : responsable,
         analisis_causa: causa || null,
@@ -90,6 +115,8 @@ export function DialogoTratamiento({
         respuesta_emisor: respuesta || null,
       });
       if (!r.ok) return setError(r.error);
+      setEvidencia(nombre);
+      setArchivo(null);
       toast.success("Caso actualizado");
       setAbierto(false);
     });
@@ -272,6 +299,46 @@ export function DialogoTratamiento({
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="t-evidencia">Prueba de que se respondió por correo</Label>
+            <Input
+              id="t-evidencia"
+              type="file"
+              accept={ACCEPT_EVIDENCIA}
+              disabled={pendiente}
+              onChange={(e) => {
+                const elegido = e.target.files?.[0] ?? null;
+                const motivo = elegido ? motivoRechazoEvidencia(elegido) : null;
+                if (motivo) {
+                  setError(motivo);
+                  e.target.value = "";
+                  return setArchivo(null);
+                }
+                setError(null);
+                setArchivo(elegido);
+              }}
+            />
+            {evidencia && !archivo && (
+              <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <Paperclip className="size-3 shrink-0" aria-hidden />
+                <a
+                  href={`/api/buzon/${s.id}/evidencia`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  {evidencia}
+                </a>
+                <span>— adjuntar otro archivo lo reemplaza</span>
+              </p>
+            )}
+            {faltaEvidencia && (
+              <p className="text-xs text-destructive">
+                Sin el pantallazo no se puede cerrar el caso.
+              </p>
+            )}
+          </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -281,9 +348,13 @@ export function DialogoTratamiento({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={pendiente}>
+            {/*
+              El boton se bloquea sin evidencia, pero la regla de verdad esta
+              en el CHECK de la base: esto solo evita el viaje en balde.
+            */}
+            <Button type="submit" disabled={pendiente || faltaEvidencia}>
               {pendiente && <Loader2 className="animate-spin" />}
-              Guardar
+              {cerrando ? "Responder y cerrar" : "Guardar"}
             </Button>
           </DialogFooter>
         </form>

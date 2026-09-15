@@ -54,7 +54,7 @@ const SUBIR: Item = { href: "/subir", etiqueta: "Subir documento", icono: Upload
 // donde se envia un PQR, y para el admin donde se revisan los recibidos. El
 // formulario de envio le sigue quedando a mano en la tarjeta del inicio.
 const BUZON: Item = { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText };
-const BUZON_ADMIN: Item = { href: "/admin/buzon", etiqueta: "Buzón", icono: Inbox };
+const BUZON_GESTION: Item = { href: "/buzon/gestion", etiqueta: "Buzón", icono: Inbox };
 
 export const ITEMS_ADMIN: Item[] = [
   { href: "/admin/documentos", etiqueta: "Documentos", icono: Files },
@@ -68,6 +68,7 @@ export type PerfilShell = {
   nombre: string;
   rol: RolGlobal;
   cargo: string | null;
+  gestiona_buzon: boolean;
 };
 
 export function AppShell({
@@ -84,10 +85,12 @@ export function AppShell({
 
   const esAdmin = perfil.rol === "admin";
   const puedeSubir = esAdmin || perfil.rol === "editor";
+  // Quien gestiona el buzon ve la bandeja; el resto, el formulario de envio.
+  const gestorBuzon = esAdmin || perfil.gestiona_buzon;
 
   const items: Item[] = [
     ...PRINCIPALES,
-    esAdmin ? BUZON_ADMIN : BUZON,
+    gestorBuzon ? BUZON_GESTION : BUZON,
     ...(puedeSubir ? [SUBIR] : []),
   ];
 

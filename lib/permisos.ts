@@ -24,6 +24,19 @@ export function puedeSubir(
 }
 
 /**
+ * Responder PQR y administrar usuarios son cosas distintas: Luisa contesta
+ * el buzon sin tocar cuentas ni auditoria. Por eso es una bandera propia y
+ * no un rol, que la habria hecho administradora de todo de paso.
+ */
+export function gestionaBuzon(
+  perfil: Pick<Perfil, "rol" | "activo" | "gestiona_buzon"> | null | undefined,
+): boolean {
+  return (
+    !!perfil && perfil.activo && (perfil.rol === "admin" || perfil.gestiona_buzon)
+  );
+}
+
+/**
  * Replica la lógica de public.nivel_en_area() para mostrar el nivel
  * efectivo en pantalla: el rol global es el techo.
  */

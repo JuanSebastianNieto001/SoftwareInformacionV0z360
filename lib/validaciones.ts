@@ -299,6 +299,12 @@ export const AREAS_REPORTE = [
   "gerencia",
 ] as const;
 
+/** Los tipos donde hubo incumplimiento y el 10.2 exige causa raíz. */
+export const TIPOS_QUE_EXIGEN_CAUSA: readonly (typeof TIPOS_SUGERENCIA)[number][] = [
+  "queja",
+  "no_conformidad",
+];
+
 export const ESTADOS_SUGERENCIA = [
   "recibida",
   "en_analisis",
@@ -351,6 +357,9 @@ export type DatosSugerencia = z.infer<typeof esquemaSugerencia>;
 export const esquemaTratamiento = z
   .object({
     id: uuid,
+    // El tipo viaja solo para saber si hay que exigir causa raíz. Lo fijó
+    // quien envió el caso y desde aquí no se actualiza.
+    tipo: z.enum(TIPOS_SUGERENCIA),
     estado: z.enum(ESTADOS_SUGERENCIA),
     responsable_id: uuid.nullish().transform((v) => v || null),
     analisis_causa: textoOpcional(4000),
@@ -359,21 +368,44 @@ export const esquemaTratamiento = z
     eficacia_verificada: z.boolean().nullish().transform((v) => v ?? null),
     eficacia_nota: textoOpcional(2000),
     respuesta_emisor: textoOpcional(4000),
+    // Solo el nombre del archivo: la ruta la arma el servidor con el id del
+    // caso, para que nadie pueda apuntar la evidencia a otro expediente.
+    evidencia_nombre: textoOpcional(200),
+    evidencia_nueva: z.boolean().default(false),
   })
   .superRefine((d, ctx) => {
-    if (d.estado === "cerrada" && (!d.analisis_causa || !d.accion_tomada)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["analisis_causa"],
-        message:
-          "Para cerrar un caso hay que registrar la causa y la acción tomada (ISO 9001, 10.2).",
-      });
-    }
     if (d.estado === "rechazada" && !d.respuesta_emisor) {
       ctx.addIssue({
         code: "custom",
         path: ["respuesta_emisor"],
         message: "Para descartar un caso hay que dejar escrita la justificación.",
+      });
+    }
+
+    if (d.estado !== "cerrada") return;
+
+    if (!d.accion_tomada) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["accion_tomada"],
+        message: "Escribe la gestión que se hizo antes de cerrar el caso.",
+      });
+    }
+    // La misma regla vive como CHECK en la base. Aquí solo se adelanta para
+    // dar un mensaje entendible en vez de un error de Postgres.
+    if (!d.evidencia_nombre) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["evidencia_nombre"],
+        message: "Adjunta el pantallazo de la respuesta enviada por correo.",
+      });
+    }
+    if (TIPOS_QUE_EXIGEN_CAUSA.includes(d.tipo) && !d.analisis_causa) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["analisis_causa"],
+        message:
+          "Una queja o una no conformidad no se cierra sin análisis de causa (ISO 9001, 10.2).",
       });
     }
   });
