@@ -36,11 +36,14 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
               "linear-gradient(180deg, rgba(13,43,78,0) 30%, rgba(13,43,78,0.85))",
           }}
         />
-        <div className="relative max-w-[440px] text-white">
-          <p className="text-xs font-semibold tracking-[0.12em] uppercase opacity-80">
+        {/* El nombre del canal manda: va en grande y el lema debajo lo
+            acompaña. Al revés se leía primero la frase y el nombre pasaba
+            por encabezado de sección. */}
+        <div className="relative max-w-[460px] text-white">
+          <p className="text-[30px] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[46px]">
             Comunícate con VOZ360
           </p>
-          <p className="mt-2.5 text-2xl leading-tight font-semibold sm:text-[34px]">
+          <p className="mt-3 text-[15px] leading-snug text-white/80 sm:text-base">
             Conecta con soluciones. Tus documentos, siempre vigentes.
           </p>
         </div>
