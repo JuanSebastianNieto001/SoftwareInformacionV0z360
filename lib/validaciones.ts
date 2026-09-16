@@ -322,26 +322,80 @@ const textoOpcional = (max: number) =>
 
 const fechaOpcional = z.iso.date().nullish().transform((v) => v || null);
 
+/**
+ * Que se le pide a quien reporta, segun el tipo de registro.
+ *
+ * Una felicitacion no tiene "a quien afecta" ni propuesta de mejora: pedirlas
+ * obliga a rellenar con texto inventado, y ese relleno acaba contaminando el
+ * analisis del 9.1.3. Una queja o una no conformidad, al reves, no sirven de
+ * evidencia sin el impacto; y una sugerencia sin propuesta es un comentario.
+ *
+ * Esta tabla manda en los dos sitios a la vez -decide que campos pinta el
+ * formulario y cuales exige el esquema-, asi que vive aqui y no en la capa
+ * visual: si se separaran, el formulario podria ocultar un campo que el
+ * servidor sigue exigiendo.
+ */
+type Exigencia = "obligatorio" | "opcional" | "oculto";
+
+export const CAMPOS_POR_TIPO: Record<
+  (typeof TIPOS_SUGERENCIA)[number],
+  { impacto: Exigencia; propuesta: Exigencia; desea_respuesta: boolean }
+> = {
+  sugerencia: { impacto: "oculto", propuesta: "obligatorio", desea_respuesta: true },
+  queja: { impacto: "obligatorio", propuesta: "opcional", desea_respuesta: true },
+  felicitacion: { impacto: "oculto", propuesta: "oculto", desea_respuesta: false },
+  no_conformidad: { impacto: "obligatorio", propuesta: "opcional", desea_respuesta: true },
+  oportunidad_mejora: { impacto: "oculto", propuesta: "obligatorio", desea_respuesta: true },
+};
+
 /** Lo que escribe quien envía. Una vez guardado no se edita: es el hecho. */
-export const esquemaSugerencia = z.object({
-  tipo: z.enum(TIPOS_SUGERENCIA),
-  proceso: z.enum(AREAS_REPORTE, {
-    message: "Selecciona el proceso o área de quien reporta",
-  }),
-  ocurrido_en: fechaOpcional,
-  descripcion: z
-    .string()
-    .trim()
-    .min(20, "Describe el hecho con al menos 20 caracteres")
-    .max(4000, "La descripción no puede superar 4000 caracteres"),
-  impacto: z
-    .string()
-    .trim()
-    .min(5, "Indica a quién o a qué afecta")
-    .max(1000, "El impacto no puede superar 1000 caracteres"),
-  propuesta: textoOpcional(2000),
-  desea_respuesta: z.boolean().default(false),
-});
+export const esquemaSugerencia = z
+  .object({
+    tipo: z.enum(TIPOS_SUGERENCIA),
+    proceso: z.enum(AREAS_REPORTE, {
+      message: "Selecciona el proceso o área de quien reporta",
+    }),
+    ocurrido_en: fechaOpcional,
+    descripcion: z
+      .string()
+      .trim()
+      .min(20, "Describe el hecho con al menos 20 caracteres")
+      .max(4000, "La descripción no puede superar 4000 caracteres"),
+    // Opcionales en el tipo base: cuales son obligatorios de verdad lo decide
+    // CAMPOS_POR_TIPO unas lineas mas abajo.
+    impacto: textoOpcional(1000),
+    propuesta: textoOpcional(2000),
+    desea_respuesta: z.boolean().default(false),
+  })
+  .superRefine((d, ctx) => {
+    const campos = CAMPOS_POR_TIPO[d.tipo];
+    if (campos.impacto === "obligatorio" && (d.impacto ?? "").length < 5) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["impacto"],
+        message: "Indica a quién o a qué afecta",
+      });
+    }
+    if (campos.propuesta === "obligatorio" && (d.propuesta ?? "").length < 10) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["propuesta"],
+        message: "Escribe qué propones, con al menos 10 caracteres",
+      });
+    }
+  })
+  // Se vacia lo que el tipo no pide. Si alguien escribio el impacto y despues
+  // cambio el tipo a felicitacion, ese texto no debe viajar ni guardarse: la
+  // fila quedaria con un dato que el formulario ya no muestra a nadie.
+  .transform((d) => {
+    const campos = CAMPOS_POR_TIPO[d.tipo];
+    return {
+      ...d,
+      impacto: campos.impacto === "oculto" ? null : d.impacto,
+      propuesta: campos.propuesta === "oculto" ? null : d.propuesta,
+      desea_respuesta: campos.desea_respuesta ? d.desea_respuesta : false,
+    };
+  });
 
 export type DatosSugerencia = z.infer<typeof esquemaSugerencia>;
 

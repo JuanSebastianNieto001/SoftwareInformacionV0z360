@@ -300,7 +300,8 @@ export type Database = {
           proceso: string;
           ocurrido_en: string | null;
           descripcion: string;
-          impacto: string;
+          // Nullable desde 005: solo queja y no conformidad lo exigen.
+          impacto: string | null;
           propuesta: string | null;
           desea_respuesta: boolean;
           estado: EstadoSugerencia;
@@ -328,7 +329,7 @@ export type Database = {
           proceso: string;
           ocurrido_en?: string | null;
           descripcion: string;
-          impacto: string;
+          impacto?: string | null;
           propuesta?: string | null;
           desea_respuesta?: boolean;
           estado?: EstadoSugerencia;
@@ -356,7 +357,7 @@ export type Database = {
           proceso?: string;
           ocurrido_en?: string | null;
           descripcion?: string;
-          impacto?: string;
+          impacto?: string | null;
           propuesta?: string | null;
           desea_respuesta?: boolean;
           estado?: EstadoSugerencia;

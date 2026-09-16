@@ -25,6 +25,84 @@ export const AYUDA_TIPO: Record<TipoSugerencia, string> = {
 };
 
 /**
+ * Como se le pregunta a quien reporta, segun el tipo.
+ *
+ * El mismo campo de la base cambia de pregunta: "que ocurrio" en una queja es
+ * "que quieres reconocer" en una felicitacion. Preguntar bien es lo que hace
+ * que el registro sirva de evidencia sin tener que devolver el caso.
+ *
+ * Que campos aparecen no se decide aqui sino en CAMPOS_POR_TIPO
+ * (lib/validaciones.ts), que es la misma tabla que usa el esquema.
+ */
+export const TEXTOS_TIPO: Record<
+  TipoSugerencia,
+  {
+    descripcion: { etiqueta: string; ayuda: string };
+    impacto: { etiqueta: string; ayuda: string };
+    propuesta: { etiqueta: string; ayuda: string };
+  }
+> = {
+  sugerencia: {
+    descripcion: {
+      etiqueta: "¿Qué observaste?",
+      ayuda: "Qué se puede hacer mejor y en qué punto del proceso lo viste.",
+    },
+    impacto: { etiqueta: "¿A quién o a qué afecta?", ayuda: "" },
+    propuesta: {
+      etiqueta: "¿Qué propones?",
+      ayuda: "La mejora concreta que sugieres.",
+    },
+  },
+  queja: {
+    descripcion: {
+      etiqueta: "¿Qué ocurrió?",
+      ayuda: "Hechos, no opiniones: qué pasó, en qué punto del proceso y quiénes intervinieron.",
+    },
+    impacto: {
+      etiqueta: "¿A quién o a qué afecta?",
+      ayuda: "Al cliente, al servicio, a un compañero, a un documento del sistema…",
+    },
+    propuesta: {
+      etiqueta: "¿Cómo lo mejorarías? (opcional)",
+      ayuda: "",
+    },
+  },
+  felicitacion: {
+    descripcion: {
+      etiqueta: "¿Qué quieres reconocer?",
+      ayuda: "A quién felicitas y qué hizo bien.",
+    },
+    impacto: { etiqueta: "¿A quién o a qué afecta?", ayuda: "" },
+    propuesta: { etiqueta: "¿Cómo lo mejorarías? (opcional)", ayuda: "" },
+  },
+  no_conformidad: {
+    descripcion: {
+      etiqueta: "¿Qué requisito se incumplió?",
+      ayuda: "Qué procedimiento, requisito o compromiso con el cliente no se cumplió, y dónde.",
+    },
+    impacto: {
+      etiqueta: "¿A quién o a qué afecta?",
+      ayuda: "Al cliente, al servicio, a un compañero, a un documento del sistema…",
+    },
+    propuesta: {
+      etiqueta: "¿Cómo lo corregirías? (opcional)",
+      ayuda: "",
+    },
+  },
+  oportunidad_mejora: {
+    descripcion: {
+      etiqueta: "¿Qué proceso puede dar más?",
+      ayuda: "Qué funciona hoy y dónde ves margen para que rinda mejor.",
+    },
+    impacto: { etiqueta: "¿A quién o a qué afecta?", ayuda: "" },
+    propuesta: {
+      etiqueta: "¿Qué propones?",
+      ayuda: "La mejora concreta que sugieres.",
+    },
+  },
+};
+
+/**
  * Area o cargo de quien reporta. Se guardan claves y no etiquetas para poder
  * cambiar el texto mostrado sin reescribir los registros ya enviados.
  */

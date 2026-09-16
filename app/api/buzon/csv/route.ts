@@ -84,7 +84,7 @@ export async function GET() {
         s.emisor_nombre,
         s.emisor_email,
         s.descripcion,
-        s.impacto,
+        s.impacto ?? "",
         s.propuesta ?? "",
         s.desea_respuesta ? "Sí" : "No",
         s.responsable_id ? (nombrePorId.get(s.responsable_id) ?? "") : "",

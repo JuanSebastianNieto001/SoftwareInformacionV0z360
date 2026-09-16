@@ -17,10 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AYUDA_TIPO, ETIQUETA_AREA_REPORTE, ETIQUETA_TIPO } from "@/lib/buzon";
+import { AYUDA_TIPO, ETIQUETA_AREA_REPORTE, ETIQUETA_TIPO, TEXTOS_TIPO } from "@/lib/buzon";
 import { hoyIso } from "@/lib/formato";
-import { cn } from "@/lib/utils";
-import { AREAS_REPORTE, TIPOS_SUGERENCIA } from "@/lib/validaciones";
+import { AREAS_REPORTE, CAMPOS_POR_TIPO, TIPOS_SUGERENCIA } from "@/lib/validaciones";
 import type { TipoSugerencia } from "@/lib/supabase/tipos";
 
 const VACIO = {
@@ -41,6 +40,33 @@ export function FormularioSugerencia() {
   const set = <K extends keyof typeof VACIO>(k: K, v: (typeof VACIO)[K]) =>
     setF((prev) => ({ ...prev, [k]: v }));
 
+  // Qué se pide y cómo se pregunta lo decide el tipo elegido. La tabla de
+  // exigencias es la misma que usa el esquema en el servidor, así que el
+  // formulario no puede ocultar un campo que luego se vaya a rechazar.
+  const campos = CAMPOS_POR_TIPO[f.tipo];
+  const textos = TEXTOS_TIPO[f.tipo];
+
+  /**
+   * Al cambiar de tipo se borra lo que el tipo nuevo ya no pregunta.
+   *
+   * El esquema también lo limpia antes de guardar, pero hacerlo aquí evita
+   * que un texto escrito para una queja reaparezca si se vuelve a ese tipo
+   * después de haber pasado por felicitación: lo que se ve es lo que se
+   * envía, sin sobrantes escondidos.
+   */
+  function cambiarTipo(valor: string) {
+    const tipo = valor as TipoSugerencia;
+    const nuevos = CAMPOS_POR_TIPO[tipo];
+    setF((prev) => ({
+      ...prev,
+      tipo,
+      impacto: nuevos.impacto === "oculto" ? "" : prev.impacto,
+      propuesta: nuevos.propuesta === "oculto" ? "" : prev.propuesta,
+      desea_respuesta: nuevos.desea_respuesta ? prev.desea_respuesta : false,
+    }));
+    setError(null);
+  }
+
   function enviar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -48,6 +74,7 @@ export function FormularioSugerencia() {
       const r = await enviarSugerencia({
         ...f,
         ocurrido_en: f.ocurrido_en || null,
+        impacto: f.impacto || null,
         propuesta: f.propuesta || null,
       });
       if (!r.ok) return setError(r.error);
@@ -69,27 +96,20 @@ export function FormularioSugerencia() {
         <form onSubmit={enviar} className="space-y-[22px]" noValidate>
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="space-y-2">
-            <span className="text-sm font-medium">Tipo de registro</span>
-            <div className="flex flex-wrap gap-1.5">
-              {TIPOS_SUGERENCIA.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={f.tipo === t}
-                  disabled={pendiente}
-                  onClick={() => set("tipo", t as TipoSugerencia)}
-                  className={cn(
-                    "flex h-[38px] items-center rounded-full border-[1.5px] px-4 text-[13px] transition-colors disabled:pointer-events-none disabled:opacity-50",
-                    f.tipo === t
-                      ? "border-primary bg-tinte font-medium text-marino-suave"
-                      : "border-border bg-card text-nav-inactivo hover:border-borde-acento",
-                  )}
-                >
-                  {ETIQUETA_TIPO[t]}
-                </button>
-              ))}
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-tipo">Tipo de registro</Label>
+            <Select value={f.tipo} onValueChange={cambiarTipo} disabled={pendiente}>
+              <SelectTrigger id="s-tipo" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS_SUGERENCIA.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {ETIQUETA_TIPO[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-atenuado">{AYUDA_TIPO[f.tipo]}</p>
           </div>
 
@@ -134,7 +154,7 @@ export function FormularioSugerencia() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="s-descripcion">¿Qué ocurrió?</Label>
+            <Label htmlFor="s-descripcion">{textos.descripcion.etiqueta}</Label>
             <Textarea
               id="s-descripcion"
               value={f.descripcion}
@@ -142,49 +162,57 @@ export function FormularioSugerencia() {
               rows={5}
               maxLength={4000}
               required
-              placeholder="Hechos, no opiniones: qué pasó, en qué punto del proceso y quiénes intervinieron."
+              placeholder={textos.descripcion.ayuda}
               disabled={pendiente}
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="s-impacto">¿A quién o a qué afecta?</Label>
-            <Textarea
-              id="s-impacto"
-              value={f.impacto}
-              onChange={(e) => set("impacto", e.target.value)}
-              rows={2}
-              maxLength={1000}
-              required
-              placeholder="Al cliente, al servicio, a un compañero, a un documento del sistema…"
-              disabled={pendiente}
-            />
-          </div>
+          {campos.impacto !== "oculto" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="s-impacto">{textos.impacto.etiqueta}</Label>
+              <Textarea
+                id="s-impacto"
+                value={f.impacto}
+                onChange={(e) => set("impacto", e.target.value)}
+                rows={2}
+                maxLength={1000}
+                required
+                placeholder={textos.impacto.ayuda}
+                disabled={pendiente}
+              />
+            </div>
+          )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="s-propuesta">¿Cómo lo mejorarías? (opcional)</Label>
-            <Textarea
-              id="s-propuesta"
-              value={f.propuesta}
-              onChange={(e) => set("propuesta", e.target.value)}
-              rows={3}
-              maxLength={2000}
-              disabled={pendiente}
-            />
-          </div>
+          {campos.propuesta !== "oculto" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="s-propuesta">{textos.propuesta.etiqueta}</Label>
+              <Textarea
+                id="s-propuesta"
+                value={f.propuesta}
+                onChange={(e) => set("propuesta", e.target.value)}
+                rows={3}
+                maxLength={2000}
+                required={campos.propuesta === "obligatorio"}
+                placeholder={textos.propuesta.ayuda}
+                disabled={pendiente}
+              />
+            </div>
+          )}
 
-          <div className="flex items-start gap-2">
-            <Checkbox
-              className="size-[22px] rounded-[7px] border-borde-acento"
-              id="s-respuesta"
-              checked={f.desea_respuesta}
-              onCheckedChange={(v) => set("desea_respuesta", v === true)}
-              disabled={pendiente}
-            />
-            <Label htmlFor="s-respuesta" className="text-sm leading-tight font-normal">
-              Quiero que se me responda cuando el caso se cierre
-            </Label>
-          </div>
+          {campos.desea_respuesta && (
+            <div className="flex items-start gap-2">
+              <Checkbox
+                className="size-[22px] rounded-[7px] border-borde-acento"
+                id="s-respuesta"
+                checked={f.desea_respuesta}
+                onCheckedChange={(v) => set("desea_respuesta", v === true)}
+                disabled={pendiente}
+              />
+              <Label htmlFor="s-respuesta" className="text-sm leading-tight font-normal">
+                Quiero que se me responda cuando el caso se cierre
+              </Label>
+            </div>
+          )}
 
           <Button type="submit" className="w-full" size="lg" disabled={pendiente}>
             {pendiente ? <Loader2 className="animate-spin" /> : <Send />}

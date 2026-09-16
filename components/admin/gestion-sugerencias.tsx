@@ -172,10 +172,13 @@ export function DialogoTratamiento({
               <dt className="text-xs font-medium text-muted-foreground">Qué ocurrió</dt>
               <dd className="whitespace-pre-wrap">{s.descripcion}</dd>
             </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">A quién afecta</dt>
-              <dd className="whitespace-pre-wrap">{s.impacto}</dd>
-            </div>
+            {/* Solo queja y no conformidad lo piden; en el resto no existe. */}
+            {s.impacto && (
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">A quién afecta</dt>
+                <dd className="whitespace-pre-wrap">{s.impacto}</dd>
+              </div>
+            )}
             {s.propuesta && (
               <div>
                 <dt className="text-xs font-medium text-muted-foreground">Propuesta del emisor</dt>
