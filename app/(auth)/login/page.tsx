@@ -18,27 +18,45 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
 
   return (
     <main className="grid min-h-svh grid-rows-[200px_1fr] bg-card lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1">
-      {/* Panel de marca. En móvil se encoge a una franja superior: la imagen
-          ambienta, pero el formulario es lo que se viene a hacer. */}
-      <div className="relative flex items-end overflow-hidden p-6 sm:p-10 lg:p-12">
-        <Image
-          src="/marca/voz-fondo.png"
-          alt=""
-          fill
-          priority
-          sizes="(min-width: 1024px) 55vw, 100vw"
-          className="object-cover"
-        />
+      {/* Panel de marca. El archivo original es un rectangulo apaisado: al
+          estirarlo para cubrir una columna vertical el logotipo se recortaba
+          por los lados. Ahora el campo de lunares se dibuja con CSS -encaja en
+          cualquier tamano y no pesa nada- y el logotipo va encima, entero. */}
+      <div
+        className="relative flex flex-col justify-end overflow-hidden p-6 sm:p-10 lg:p-12"
+        style={{
+          backgroundColor: "#b1e9fe",
+          backgroundImage: [
+            "radial-gradient(circle at center, #fff 12px, transparent 12.5px)",
+            "radial-gradient(circle at center, #fff 12px, transparent 12.5px)",
+          ].join(", "),
+          backgroundSize: "104px 102px",
+          backgroundPosition: "0 0, 52px 51px",
+        }}
+      >
+        {/* Velo inferior: da contraste al titulo sin oscurecer el logotipo. */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(13,43,78,0) 30%, rgba(13,43,78,0.85))",
+              "linear-gradient(180deg, rgba(13,43,78,0) 45%, rgba(13,43,78,0.88))",
           }}
         />
-        {/* El nombre del canal manda: va en grande y el lema debajo lo
-            acompaña. Al revés se leía primero la frase y el nombre pasaba
-            por encabezado de sección. */}
+
+        {/* Solo en pantalla ancha: en el movil esta franja mide 200 px y el
+            logotipo ya aparece justo debajo, sobre el formulario. */}
+        <div className="relative hidden flex-1 items-center justify-center pb-12 lg:flex">
+          <Image
+            src="/marca/voz-marca.png"
+            alt=""
+            width={1519}
+            height={545}
+            priority
+            sizes="420px"
+            className="h-auto w-full max-w-[420px]"
+          />
+        </div>
+
         <div className="relative max-w-[460px] text-white">
           <p className="text-[30px] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[46px]">
             Comunícate con VOZ360
