@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extensionVisible } from "@/lib/archivos";
 import { describirVencimiento, formatearBytes, formatearFecha, formatearFechaHora } from "@/lib/formato";
+import { puedeDescargar } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 import { ETIQUETA_MIME, type MimePermitido } from "@/lib/validaciones";
 
@@ -62,6 +63,7 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
   ]);
 
   const puedeEditar = nivel === "edicion";
+  const puedeBajar = puedeDescargar(nivel);
   const purgado = doc.estado === "purgado";
   const mimeEtiqueta = doc.mime ? ETIQUETA_MIME[doc.mime as MimePermitido] ?? doc.mime : "—";
 
@@ -129,7 +131,8 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
             <ExternalLink /> Abrir
           </a>
         </Button>
-        {!purgado && (
+        {/* Con nivel Vista no se ofrece: la ruta tambien lo rechaza. */}
+        {!purgado && puedeBajar && (
           <Button asChild size="lg" variant="outline">
             <a href={`/api/documentos/${doc.id}/abrir?descargar=1`}>
               <Download /> Descargar

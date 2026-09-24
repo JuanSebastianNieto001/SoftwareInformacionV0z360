@@ -1,4 +1,5 @@
 import { registrarAcceso } from "@/lib/auditoria";
+import { puedeDescargar } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,9 @@ const SIN_CACHE = { "Cache-Control": "no-store, private" };
  *  3. Se firma la ruta privada por 60 s y se redirige.
  *
  * `?descargar=1` fuerza la descarga (Content-Disposition: attachment) y
- * registra la acción como "descargar" en lugar de "abrir".
+ * registra la acción como "descargar" en lugar de "abrir". Solo lo
+ * consigue quien tiene nivel Descarga o Edición en el área: con Vista se
+ * responde 403 aunque escriba el parámetro a mano.
  */
 export async function GET(
   req: Request,
@@ -35,7 +38,7 @@ export async function GET(
   // RLS decide: si no tiene permiso o está vencido, doc viene null.
   const { data: doc } = await supabase
     .from("documentos")
-    .select("id, titulo, storage_path, nombre_archivo, purgado_en, areas(nombre)")
+    .select("id, titulo, area_id, storage_path, nombre_archivo, purgado_en, areas(nombre)")
     .eq("id", id)
     .maybeSingle();
 
@@ -55,6 +58,20 @@ export async function GET(
     .maybeSingle();
 
   const descargar = new URL(req.url).searchParams.get("descargar") === "1";
+
+  // El nivel se pregunta a la misma función que usa RLS, no se deduce del
+  // perfil: así la respuesta es la de Postgres y no una copia que se pueda
+  // desincronizar. Ver el documento ya lo autorizó la consulta de arriba;
+  // esto decide únicamente si además se entrega como adjunto.
+  if (descargar) {
+    const { data: nivel } = await supabase.rpc("nivel_en_area", { a: doc.area_id });
+    if (!puedeDescargar(nivel)) {
+      return new Response("Tu permiso en esta área es de vista: puedes abrir el documento, no descargarlo.", {
+        status: 403,
+        headers: SIN_CACHE,
+      });
+    }
+  }
 
   const auditoria = await registrarAcceso(supabase, user, {
     accion: descargar ? "descargar" : "abrir",

@@ -16,7 +16,7 @@ export type Json =
   | Json[];
 
 export type RolGlobal = "admin" | "editor" | "lector";
-export type NivelAcceso = "lectura" | "edicion";
+export type NivelAcceso = "lectura" | "descarga" | "edicion";
 export type Accion =
   | "listar"
   | "abrir"

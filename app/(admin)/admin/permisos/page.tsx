@@ -40,7 +40,7 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
       <EncabezadoPagina
         kicker="Administración"
         titulo="Permisos por área"
-        descripcion="El rol global es el techo: un lector nunca pasa de lectura aunque se le marque edición; un administrador tiene edición en todo sin necesidad de asignación."
+        descripcion="Vista abre los documentos en pantalla; Descarga además permite bajarlos; Edición permite subirlos. El rol global es el techo: un lector nunca pasa de descarga aunque se le marque edición, y un administrador tiene edición en todo sin necesidad de asignación."
       />
       <MatrizPermisos
         usuarios={perfiles ?? []}

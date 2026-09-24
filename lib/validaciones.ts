@@ -41,7 +41,7 @@ export const ETIQUETA_MIME: Record<MimePermitido, string> = {
 };
 
 export const ROLES = ["admin", "editor", "lector"] as const;
-export const NIVELES = ["lectura", "edicion"] as const;
+export const NIVELES = ["lectura", "descarga", "edicion"] as const;
 export const ESTADOS = ["vigente", "programado", "vencido", "purgado"] as const;
 export const ACCIONES = [
   "listar",

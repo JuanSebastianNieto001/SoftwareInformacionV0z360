@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { asignarPermiso } from "@/app/(admin)/admin/acciones";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ETIQUETA_ROL, nivelEfectivo } from "@/lib/permisos";
+import { ETIQUETA_NIVEL, ETIQUETA_ROL, nivelEfectivo } from "@/lib/permisos";
 import type { NivelAcceso, RolGlobal } from "@/lib/supabase/tipos";
 import { cn } from "@/lib/utils";
 
@@ -14,10 +14,17 @@ type Usuario = { id: string; nombre: string; cargo: string | null; rol: RolGloba
 type Area = { id: string; nombre: string; activa: boolean };
 type Permiso = { usuario_id: string; area_id: string; nivel: NivelAcceso };
 
-const OPCIONES: { valor: NivelAcceso | null; etiqueta: string }[] = [
-  { valor: null, etiqueta: "Sin acceso" },
-  { valor: "lectura", etiqueta: "Lectura" },
-  { valor: "edicion", etiqueta: "Edición" },
+/**
+ * Los cuatro estados posibles de una persona en un área, de menos a más.
+ * "Vista" abre el documento en pantalla; "Descarga" además se lo lleva.
+ * Separarlos es lo que permite que un formato se consulte sin que circulen
+ * copias sueltas fuera del sistema.
+ */
+const OPCIONES: { valor: NivelAcceso | null; etiqueta: string; ayuda: string }[] = [
+  { valor: null, etiqueta: "Sin acceso", ayuda: "No ve el área." },
+  { valor: "lectura", etiqueta: "Vista", ayuda: "Abre los documentos, no los descarga." },
+  { valor: "descarga", etiqueta: "Descarga", ayuda: "Abre y descarga los documentos." },
+  { valor: "edicion", etiqueta: "Edición", ayuda: "Sube, edita y descarga." },
 ];
 
 export function MatrizPermisos({
@@ -153,7 +160,7 @@ export function MatrizPermisos({
               )}
               {usuario.rol === "lector" && (
                 <p className="basis-full text-xs text-muted-foreground">
-                  Como es lector, «Edición» se aplicará como lectura mientras no cambie su rol.
+                  Como es lector, «Edición» se aplicará como descarga mientras no cambie su rol.
                 </p>
               )}
             </header>
@@ -171,14 +178,14 @@ export function MatrizPermisos({
                       </span>
                       {efectivo !== nivel && nivel !== null && (
                         <span className="block text-xs text-muted-foreground">
-                          Efectivo: {efectivo === "lectura" ? "lectura" : efectivo === "edicion" ? "edición" : "sin acceso"}
+                          Efectivo: {efectivo ? ETIQUETA_NIVEL[efectivo].toLowerCase() : "sin acceso"}
                         </span>
                       )}
                     </div>
                     <div
                       role="radiogroup"
                       aria-label={`Nivel en ${a.nombre}`}
-                      className="inline-flex rounded-lg border bg-muted/40 p-0.5"
+                      className="inline-flex flex-wrap rounded-lg border bg-muted/40 p-0.5"
                     >
                       {OPCIONES.map((op) => {
                         const activo = nivel === op.valor;
@@ -189,6 +196,7 @@ export function MatrizPermisos({
                             role="radio"
                             aria-checked={activo}
                             disabled={ocupado || usuario.rol === "admin"}
+                            title={op.ayuda}
                             onClick={() => !activo && cambiar(a.id, op.valor)}
                             className={cn(
                               "rounded-md px-2.5 py-1 text-xs transition-colors disabled:opacity-60",
