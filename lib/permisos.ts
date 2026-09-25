@@ -40,7 +40,7 @@ export function gestionaBuzon(
  * Los tres niveles, de menor a mayor. El mismo orden que el enum
  * nivel_acceso en Postgres, porque uno se compara contra el otro.
  */
-const ORDEN: readonly NivelAcceso[] = ["lectura", "descarga", "edicion"];
+const ORDEN: readonly NivelAcceso[] = ["lectura", "descarga", "edicion", "total"];
 
 /**
  * Hasta dónde deja llegar el rol global, por alto que sea el permiso de
@@ -48,8 +48,8 @@ const ORDEN: readonly NivelAcceso[] = ["lectura", "descarga", "edicion"];
  * concedida la edición en un área y aun así no pasará de descarga.
  */
 const TECHO: Record<RolGlobal, NivelAcceso> = {
-  admin: "edicion",
-  editor: "edicion",
+  admin: "total",
+  editor: "total",
   lector: "descarga",
 };
 
@@ -63,7 +63,7 @@ export function nivelEfectivo(
   permiso: NivelAcceso | null | undefined,
 ): NivelAcceso | null {
   if (!activo) return null;
-  if (rol === "admin") return "edicion";
+  if (rol === "admin") return "total";
   if (!permiso) return null;
   const techo = TECHO[rol];
   return ORDEN.indexOf(permiso) <= ORDEN.indexOf(techo) ? permiso : techo;
@@ -89,7 +89,7 @@ export const ETIQUETA_ROL: Record<RolGlobal, string> = {
 
 export const DESCRIPCION_ROL: Record<RolGlobal, string> = {
   admin: "Administra usuarios, áreas y permisos. Ve todo y la auditoría.",
-  editor: "Sube y edita documentos, solo en las áreas asignadas con edición.",
+  editor: "Sube, edita y, si se le concede Total, elimina en las áreas asignadas.",
   lector: "No pasa de descarga, únicamente en las áreas asignadas.",
 };
 
@@ -97,4 +97,19 @@ export const ETIQUETA_NIVEL: Record<NivelAcceso, string> = {
   lectura: "Vista",
   descarga: "Descarga",
   edicion: "Edición",
+  total: "Total",
 };
+
+/** Sube documentos nuevos y modifica los que ya están. */
+export function puedeEditarArea(nivel: NivelAcceso | null | undefined): boolean {
+  return nivel === "edicion" || nivel === "total";
+}
+
+/**
+ * Elimina documentos del área. Es el único nivel que destruye algo, por eso
+ * va aparte aunque sea el último peldaño: quien lea el código tiene que ver
+ * cuándo se está concediendo eso y no deducirlo de una comparación.
+ */
+export function puedeEliminarArea(nivel: NivelAcceso | null | undefined): boolean {
+  return nivel === "total";
+}

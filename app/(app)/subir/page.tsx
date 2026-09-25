@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
 import { FormularioSubida } from "@/components/formulario-subida";
 import { Button } from "@/components/ui/button";
-import { nivelEfectivo, puedeSubir } from "@/lib/permisos";
+import { nivelEfectivo, puedeEditarArea, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Subir documento" };
@@ -23,7 +23,7 @@ export default async function PaginaSubir({ searchParams }: PageProps<"/subir">)
 
   const nivelPorArea = new Map((permisos ?? []).map((p) => [p.area_id, p.nivel]));
   const areasEdicion = (areas ?? []).filter(
-    (a) => nivelEfectivo(perfil.rol, perfil.activo, nivelPorArea.get(a.id)) === "edicion",
+    (a) => puedeEditarArea(nivelEfectivo(perfil.rol, perfil.activo, nivelPorArea.get(a.id))),
   );
 
   const areaInicial =

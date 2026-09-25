@@ -1,0 +1,21 @@
+-- =====================================================================
+-- CUARTO NIVEL DE ACCESO: TOTAL
+-- =====================================================================
+-- Hasta ahora eliminar era exclusivo del administrador. Con el área de
+-- Formatos y las plantillas que caducan, quien mantiene un área necesita
+-- poder retirar lo que sobra sin pedírselo a TI cada vez.
+--
+--   lectura  -> Vista     : abre el documento
+--   descarga -> Descarga  : además se lo lleva
+--   edicion  -> Edición   : sube y edita
+--   total    -> Total     : además elimina
+--
+-- Sigue siendo una escalera, de menor a mayor, y eso es lo que la hace
+-- segura: no existe "puede eliminar pero no puede leer". Por eso las
+-- políticas comparan con >= y no con =.
+--
+-- En su propio archivo porque Postgres no deja usar un valor de enum en la
+-- misma transacción en la que se crea. Aquí se añade; en 009 se usa.
+-- =====================================================================
+
+alter type nivel_acceso add value if not exists 'total' after 'edicion';

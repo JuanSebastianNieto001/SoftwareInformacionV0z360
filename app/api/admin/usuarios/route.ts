@@ -1,7 +1,7 @@
 import { exigirAdminApi } from "@/lib/api-admin";
 import { leerJson, mensajePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
-import type { Tablas } from "@/lib/supabase/tipos";
+import type { NivelAcceso, Tablas } from "@/lib/supabase/tipos";
 import { esquemaUsuarioEdicion, esquemaUsuarioNuevo, primerError } from "@/lib/validaciones";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,13 @@ export type UsuarioAdmin = {
   ultimo_login: string | null;
   creado_en: string;
   debe_cambiar_contrasena: boolean;
+  gestiona_buzon: boolean;
+  /** Lo guardado en permisos_area, sin aplicar el techo del rol. */
+  permisos: { area_id: string; nivel: NivelAcceso }[];
 };
+
+/** Las áreas viajan con la lista para poder filtrar por ellas sin otra llamada. */
+export type AreaBreve = { id: string; nombre: string; activa: boolean };
 
 /**
  * Único lugar (junto con la Edge Function) donde se usa la service_role
@@ -32,15 +38,28 @@ export async function GET() {
   if (ctx.error) return ctx.error;
 
   const admin = crearClienteAdmin();
-  const [{ data: perfiles, error: errorPerfiles }, { data: lista, error: errorAuth }] = await Promise.all([
+  const [
+    { data: perfiles, error: errorPerfiles },
+    { data: lista, error: errorAuth },
+    { data: permisos },
+    { data: areas },
+  ] = await Promise.all([
     ctx.supabase.from("perfiles").select("*").order("nombre"),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    ctx.supabase.from("permisos_area").select("usuario_id, area_id, nivel"),
+    ctx.supabase.from("areas").select("id, nombre, activa").order("nombre"),
   ]);
 
   if (errorPerfiles) return respuestaError(mensajePostgrest(errorPerfiles).mensaje, 500);
   if (errorAuth) return respuestaError(`No se pudo listar usuarios: ${errorAuth.message}`, 502);
 
   const porId = new Map(lista.users.map((u) => [u.id, u]));
+  const porUsuario = new Map<string, { area_id: string; nivel: NivelAcceso }[]>();
+  for (const p of permisos ?? []) {
+    const suyos = porUsuario.get(p.usuario_id) ?? [];
+    suyos.push({ area_id: p.area_id, nivel: p.nivel });
+    porUsuario.set(p.usuario_id, suyos);
+  }
   const usuarios: UsuarioAdmin[] = (perfiles ?? []).map((p) => {
     const u = porId.get(p.id);
     return {
@@ -53,10 +72,12 @@ export async function GET() {
       ultimo_login: p.ultimo_login,
       creado_en: p.creado_en,
       debe_cambiar_contrasena: u?.user_metadata?.debe_cambiar_contrasena === true,
+      gestiona_buzon: p.gestiona_buzon,
+      permisos: porUsuario.get(p.id) ?? [],
     };
   });
 
-  return respuestaOk({ usuarios });
+  return respuestaOk({ usuarios, areas: areas ?? [] });
 }
 
 export async function POST(req: Request) {

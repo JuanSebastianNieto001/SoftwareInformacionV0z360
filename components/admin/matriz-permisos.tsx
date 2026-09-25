@@ -15,16 +15,19 @@ type Area = { id: string; nombre: string; activa: boolean };
 type Permiso = { usuario_id: string; area_id: string; nivel: NivelAcceso };
 
 /**
- * Los cuatro estados posibles de una persona en un área, de menos a más.
- * "Vista" abre el documento en pantalla; "Descarga" además se lo lleva.
- * Separarlos es lo que permite que un formato se consulte sin que circulen
- * copias sueltas fuera del sistema.
+ * Los cinco estados posibles de una persona en un área, de menos a más.
+ *
+ * Es una escalera y no una lista de casillas sueltas: cada peldaño incluye
+ * todo lo del anterior. Así no existe "puede eliminar pero no puede leer",
+ * que es la clase de permiso que nadie concede a propósito y que luego
+ * nadie entiende al auditar.
  */
 const OPCIONES: { valor: NivelAcceso | null; etiqueta: string; ayuda: string }[] = [
   { valor: null, etiqueta: "Sin acceso", ayuda: "No ve el área." },
-  { valor: "lectura", etiqueta: "Vista", ayuda: "Abre los documentos, no los descarga." },
-  { valor: "descarga", etiqueta: "Descarga", ayuda: "Abre y descarga los documentos." },
-  { valor: "edicion", etiqueta: "Edición", ayuda: "Sube, edita y descarga." },
+  { valor: "lectura", etiqueta: "Solo leer", ayuda: "Abre los documentos en pantalla." },
+  { valor: "descarga", etiqueta: "Descargar", ayuda: "Los abre y además los baja." },
+  { valor: "edicion", etiqueta: "Editar", ayuda: "Sube documentos nuevos y modifica los existentes." },
+  { valor: "total", etiqueta: "Todos", ayuda: "Todo lo anterior y además eliminar." },
 ];
 
 export function MatrizPermisos({
@@ -160,7 +163,7 @@ export function MatrizPermisos({
               )}
               {usuario.rol === "lector" && (
                 <p className="basis-full text-xs text-muted-foreground">
-                  Como es lector, «Edición» se aplicará como descarga mientras no cambie su rol.
+                  Como es lector, «Editar» y «Todos» se aplicarán como descarga mientras no cambie su rol.
                 </p>
               )}
             </header>

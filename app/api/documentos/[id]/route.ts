@@ -1,4 +1,5 @@
 import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
+import { puedeEliminarArea } from "@/lib/permisos";
 import { registrarAcceso } from "@/lib/auditoria";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { esquemaEdicionDocumento, primerError } from "@/lib/validaciones";
@@ -69,13 +70,23 @@ export async function DELETE(req: Request, { params }: Ctx) {
 
   const { data: doc } = await supabase
     .from("documentos")
-    .select("id, titulo, storage_path, purgado_en, areas(nombre, slug)")
+    .select("id, titulo, area_id, storage_path, purgado_en, areas(nombre, slug)")
     .eq("id", id)
     .maybeSingle();
   if (!doc) return respuestaError("No encontrado.", 404);
 
-  const { data: esAdmin } = await supabase.rpc("soy_admin");
-  if (!esAdmin) return respuestaError("Solo el administrador puede eliminar documentos.", 403);
+  // RLS ya lo impediría, pero se comprueba antes para dar un 403 con motivo
+  // en lugar de un borrado que no afecta a ninguna fila.
+  const [{ data: esAdmin }, { data: nivel }] = await Promise.all([
+    supabase.rpc("soy_admin"),
+    supabase.rpc("nivel_en_area", { a: doc.area_id }),
+  ]);
+  if (!esAdmin && !puedeEliminarArea(nivel)) {
+    return respuestaError(
+      "Para eliminar documentos de esta área hace falta el nivel Total.",
+      403,
+    );
+  }
 
   const { data: perfil } = await supabase
     .from("perfiles")

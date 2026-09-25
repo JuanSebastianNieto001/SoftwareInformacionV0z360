@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { Copy, KeyRound, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, UserCheck, UserX } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Copy, KeyRound, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Search, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
-import type { UsuarioAdmin } from "@/app/api/admin/usuarios/route";
+import type { AreaBreve, UsuarioAdmin } from "@/app/api/admin/usuarios/route";
 import { EstadoVacio } from "@/components/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,10 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearFechaHora } from "@/lib/formato";
-import { DESCRIPCION_ROL, ETIQUETA_ROL } from "@/lib/permisos";
+import { DESCRIPCION_ROL, ETIQUETA_NIVEL, ETIQUETA_ROL, nivelEfectivo } from "@/lib/permisos";
 import { llamarApi } from "@/lib/subida-cliente";
-import type { RolGlobal } from "@/lib/supabase/tipos";
-import { ROLES } from "@/lib/validaciones";
+import type { NivelAcceso, RolGlobal } from "@/lib/supabase/tipos";
+import { NIVELES, ROLES } from "@/lib/validaciones";
 import { cn } from "@/lib/utils";
 
 const ESTILO_ROL: Record<string, string> = {
@@ -57,15 +57,22 @@ type Modo =
 
 export function GestionUsuarios({ miId }: { miId: string }) {
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[] | null>(null);
+  const [areas, setAreas] = useState<AreaBreve[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState<RolGlobal | "">("");
+  const [filtroEstado, setFiltroEstado] = useState<"" | "activos" | "inactivos" | "pendientes" | "buzon">("");
+  const [filtroArea, setFiltroArea] = useState("");
+  const [filtroNivel, setFiltroNivel] = useState<NivelAcceso | "" | "sin">("");
   const [error, setError] = useState<string | null>(null);
   const [modo, setModo] = useState<Modo>({ tipo: "cerrado" });
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
 
   const cargar = useCallback(
     () =>
-      llamarApi<{ usuarios: UsuarioAdmin[] }>("/api/admin/usuarios", { method: "GET" })
+      llamarApi<{ usuarios: UsuarioAdmin[]; areas: AreaBreve[] }>("/api/admin/usuarios", { method: "GET" })
         .then((r) => {
           setUsuarios(r.usuarios);
+          setAreas(r.areas);
           setError(null);
         })
         .catch((e: unknown) => {
@@ -92,11 +99,59 @@ export function GestionUsuarios({ miId }: { miId: string }) {
     }
   }
 
+  /**
+   * El filtrado es en memoria y no en el servidor a propósito: la lista
+   * completa ya viaja en una sola llamada y cabe de sobra, así que filtrar
+   * aquí responde al instante y no gasta una petición por tecla.
+   */
+  const filtrados = useMemo(() => {
+    if (!usuarios) return [];
+    const q = busqueda.trim().toLowerCase();
+    return usuarios.filter((u) => {
+      if (
+        q &&
+        !(u.nombre + " " + u.email + " " + (u.cargo ?? "")).toLowerCase().includes(q)
+      ) {
+        return false;
+      }
+      if (filtroRol && u.rol !== filtroRol) return false;
+      if (filtroEstado === "activos" && !u.activo) return false;
+      if (filtroEstado === "inactivos" && u.activo) return false;
+      if (filtroEstado === "pendientes" && !u.debe_cambiar_contrasena) return false;
+      if (filtroEstado === "buzon" && !(u.gestiona_buzon || u.rol === "admin")) return false;
+
+      if (filtroArea) {
+        // Se compara el nivel efectivo, no el guardado: es lo que la persona
+        // puede hacer de verdad. Filtrar por lo guardado devolvería lectores
+        // marcados con Editar que en la práctica no editan nada.
+        const guardado = u.permisos.find((p) => p.area_id === filtroArea)?.nivel ?? null;
+        const efectivo = nivelEfectivo(u.rol, u.activo, guardado);
+        if (filtroNivel === "sin") return efectivo === null;
+        if (filtroNivel && efectivo !== filtroNivel) return false;
+        if (!filtroNivel && efectivo === null) return false;
+      }
+      return true;
+    });
+  }, [usuarios, busqueda, filtroRol, filtroEstado, filtroArea, filtroNivel]);
+
+  const hayFiltros = Boolean(busqueda || filtroRol || filtroEstado || filtroArea);
+  const limpiar = () => {
+    setBusqueda("");
+    setFiltroRol("");
+    setFiltroEstado("");
+    setFiltroArea("");
+    setFiltroNivel("");
+  };
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          {usuarios ? `${usuarios.length} ${usuarios.length === 1 ? "usuario" : "usuarios"}` : "Cargando…"}
+          {!usuarios
+            ? "Cargando…"
+            : hayFiltros
+              ? `${filtrados.length} de ${usuarios.length}`
+              : `${usuarios.length} ${usuarios.length === 1 ? "usuario" : "usuarios"}`}
         </p>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" aria-label="Recargar" onClick={() => void cargar()}>
@@ -106,6 +161,87 @@ export function GestionUsuarios({ miId }: { miId: string }) {
             <Plus /> Nuevo usuario
           </Button>
         </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1 basis-56">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-atenuado" />
+          <Input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar por nombre, correo o cargo"
+            className="pl-[42px]"
+            aria-label="Buscar persona"
+          />
+        </div>
+
+        <select
+          value={filtroRol}
+          onChange={(e) => setFiltroRol(e.target.value as RolGlobal | "")}
+          aria-label="Filtrar por rol"
+          className="h-10 min-w-0 rounded-lg border-[1.5px] border-input bg-campo px-2.5 text-[13px] outline-none transition-colors focus-visible:border-primary focus-visible:bg-card"
+        >
+          <option value="">Todos los roles</option>
+          {ROLES.map((r) => (
+            <option key={r} value={r}>
+              {ETIQUETA_ROL[r]}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value as typeof filtroEstado)}
+          aria-label="Filtrar por estado"
+          className="h-10 min-w-0 rounded-lg border-[1.5px] border-input bg-campo px-2.5 text-[13px] outline-none transition-colors focus-visible:border-primary focus-visible:bg-card"
+        >
+          <option value="">Cualquier estado</option>
+          <option value="activos">Solo activos</option>
+          <option value="inactivos">Solo desactivados</option>
+          <option value="pendientes">Con clave pendiente</option>
+          <option value="buzon">Gestionan el buzón</option>
+        </select>
+
+        <select
+          value={filtroArea}
+          onChange={(e) => {
+            setFiltroArea(e.target.value);
+            if (!e.target.value) setFiltroNivel("");
+          }}
+          aria-label="Filtrar por área"
+          className="h-10 min-w-0 rounded-lg border-[1.5px] border-input bg-campo px-2.5 text-[13px] outline-none transition-colors focus-visible:border-primary focus-visible:bg-card"
+        >
+          <option value="">Cualquier área</option>
+          {areas.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nombre}
+            </option>
+          ))}
+        </select>
+
+        {/* El nivel solo significa algo con un área elegida; sin ella no aparece. */}
+        {filtroArea && (
+          <select
+            value={filtroNivel}
+            onChange={(e) => setFiltroNivel(e.target.value as NivelAcceso | "" | "sin")}
+            aria-label="Filtrar por nivel en el área"
+            className="h-10 min-w-0 rounded-lg border-[1.5px] border-input bg-campo px-2.5 text-[13px] outline-none transition-colors focus-visible:border-primary focus-visible:bg-card"
+          >
+            <option value="">Con cualquier acceso</option>
+            {NIVELES.map((n) => (
+              <option key={n} value={n}>
+                {ETIQUETA_NIVEL[n]}
+              </option>
+            ))}
+            <option value="sin">Sin acceso</option>
+          </select>
+        )}
+
+        {hayFiltros && (
+          <Button type="button" variant="ghost" onClick={limpiar}>
+            Limpiar
+          </Button>
+        )}
       </div>
 
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
@@ -118,6 +254,16 @@ export function GestionUsuarios({ miId }: { miId: string }) {
         </div>
       ) : usuarios.length === 0 ? (
         <EstadoVacio titulo="No hay usuarios" descripcion="Crea el primero con el botón de arriba." />
+      ) : filtrados.length === 0 ? (
+        <EstadoVacio
+          titulo="Ninguna persona coincide"
+          descripcion="Prueba con otros filtros o límpialos para ver la lista completa."
+          accion={
+            <Button variant="outline" onClick={limpiar}>
+              Limpiar filtros
+            </Button>
+          }
+        />
       ) : (
         <div className="overflow-hidden rounded-[20px] border bg-card">
           <Table>
@@ -132,7 +278,7 @@ export function GestionUsuarios({ miId }: { miId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usuarios.map((u) => (
+              {filtrados.map((u) => (
                 <TableRow key={u.id} className={cn(!u.activo && "opacity-55")}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">

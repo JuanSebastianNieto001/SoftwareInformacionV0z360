@@ -22,7 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extensionVisible } from "@/lib/archivos";
 import { describirVencimiento, formatearBytes, formatearFecha, formatearFechaHora } from "@/lib/formato";
-import { puedeDescargar } from "@/lib/permisos";
+import { puedeDescargar, puedeEditarArea, puedeEliminarArea } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 import { ETIQUETA_MIME, type MimePermitido } from "@/lib/validaciones";
 
@@ -62,8 +62,10 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
     esAdmin ? supabase.rpc("pendientes_de_leer", { doc: doc.id }) : Promise.resolve({ data: null }),
   ]);
 
-  const puedeEditar = nivel === "edicion";
+  const puedeEditar = puedeEditarArea(nivel);
   const puedeBajar = puedeDescargar(nivel);
+  // Eliminar deja de ser exclusivo del admin: el nivel Total lo concede por área.
+  const puedeEliminar = esAdmin || puedeEliminarArea(nivel);
   const purgado = doc.estado === "purgado";
   const mimeEtiqueta = doc.mime ? ETIQUETA_MIME[doc.mime as MimePermitido] ?? doc.mime : "—";
 
@@ -146,7 +148,7 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
             </Link>
           </Button>
         )}
-        {esAdmin && (
+        {puedeEliminar && (
           <AccionesDocumento id={doc.id} titulo={doc.titulo} areaSlug={area?.slug ?? null}>
             <Trash2 /> Eliminar
           </AccionesDocumento>
