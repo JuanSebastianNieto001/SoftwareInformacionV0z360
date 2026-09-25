@@ -50,3 +50,8 @@ supabase/.temp
 # referencia de diseno (no es codigo del proyecto)
 design_handoff_voz360_rediseno/
 Dise*.zip
+
+# Listados de personal con datos personales (cedulas, numeros de Poliedro).
+# Se usan para dar de alta y no tienen por que vivir en el repositorio.
+*.xlsx
+*.xls

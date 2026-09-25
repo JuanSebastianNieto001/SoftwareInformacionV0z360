@@ -113,6 +113,60 @@ const contrasena = z
   .min(8, "La contraseña debe tener al menos 8 caracteres")
   .max(72, "La contraseña es demasiado larga");
 
+/**
+ * La que reparte el administrador y dura un solo inicio de sesión.
+ *
+ * Seis en vez de ocho porque vive hasta que la persona entra y la cambia, y
+ * porque seis es el mínimo que acepta Supabase: por debajo de eso el alta
+ * falla del lado del servidor de autenticación, no aquí. Si el
+ * administrador desmarca "obligar a cambiarla" la contraseña deja de ser
+ * temporal, y entonces se le exigen los ocho: eso lo comprueba cada
+ * esquema que la usa.
+ */
+const contrasenaTemporal = z
+  .string()
+  .min(6, "La contraseña temporal debe tener al menos 6 caracteres")
+  .max(72, "La contraseña es demasiado larga");
+
+/** Si una contraseña que no se va a cambiar cumple la regla larga. */
+function exigirLargaSiEsPermanente(
+  d: { exigir_cambio: boolean },
+  clave: string | undefined,
+  campo: string,
+  ctx: z.RefinementCtx,
+) {
+  if (clave && !d.exigir_cambio && clave.length < 8) {
+    ctx.addIssue({
+      code: "custom",
+      path: [campo],
+      message:
+        "Si no se va a obligar a cambiarla, la contraseña debe tener al menos 8 caracteres.",
+    });
+  }
+}
+
+/**
+ * Dominio interno de las cuentas que entran con su número de Poliedro.
+ *
+ * No existe como buzón de correo y no tiene registro MX a propósito: es solo
+ * la forma que tiene Supabase de identificar una cuenta, porque su API de
+ * autenticación exige un correo. Quien entra escribe únicamente el número.
+ */
+export const DOMINIO_POLIEDRO = "poliedro.voz360.co";
+
+/**
+ * Convierte lo que se escribe en el login en el correo con el que la cuenta
+ * existe. Un número suelto es un usuario de Poliedro; cualquier otra cosa se
+ * deja igual, que es como entran las cuentas con correo propio.
+ *
+ * Es idempotente: aplicado dos veces da lo mismo, porque un correo ya
+ * formado contiene una arroba y no vuelve a tocarse.
+ */
+export function correoDesdeIdentificador(valor: string): string {
+  const limpio = valor.trim();
+  return /^[0-9]{4,15}$/.test(limpio) ? `${limpio}@${DOMINIO_POLIEDRO}` : limpio;
+}
+
 /** Regla común: vigente_hasta (si existe) debe ser posterior a vigente_desde. */
 function vigenciaCoherente(
   datos: { vigente_desde: string; vigente_hasta: string | null },
@@ -136,7 +190,12 @@ function vigenciaCoherente(
 // ---------------------------------------------------------------------------
 
 export const esquemaLogin = z.object({
-  email,
+  // El preprocess va en el esquema y no en el formulario para que valga
+  // igual en el cliente y en el servidor, que lo vuelve a parsear.
+  email: z.preprocess(
+    (v) => (typeof v === "string" ? correoDesdeIdentificador(v) : v),
+    z.email({ message: "Escribe tu número de Poliedro o tu correo" }).trim().toLowerCase(),
+  ),
   password: z.string().min(1, "Ingresa tu contraseña"),
 });
 
@@ -225,7 +284,7 @@ export type DatosPermiso = z.infer<typeof esquemaPermiso>;
 
 export const esquemaUsuarioNuevo = z.object({
   email,
-  password: contrasena,
+  password: contrasenaTemporal,
   nombre: z
     .string()
     .trim()
@@ -238,7 +297,10 @@ export const esquemaUsuarioNuevo = z.object({
     .nullish()
     .transform((v) => (v && v.length > 0 ? v : null)),
   rol: z.enum(ROLES),
-});
+  /** Marcado, la contraseña dada es temporal y se pide otra al entrar. */
+  exigir_cambio: z.boolean().default(true),
+})
+.superRefine((d, ctx) => exigirLargaSiEsPermanente(d, d.password, "password", ctx));
 
 export type DatosUsuarioNuevo = z.infer<typeof esquemaUsuarioNuevo>;
 
@@ -254,9 +316,14 @@ export const esquemaUsuarioEdicion = z.object({
     .transform((v) => (v === undefined ? undefined : v && v.length > 0 ? v : null)),
   rol: z.enum(ROLES).optional(),
   activo: z.boolean().optional(),
-  /** Si viene, se restablece la contraseña y se exige cambiarla al entrar. */
-  nueva_contrasena: contrasena.optional(),
-});
+  /** Si viene, se restablece la contraseña. */
+  nueva_contrasena: contrasenaTemporal.optional(),
+  /** Marcado, se le pedirá otra en cuanto entre con la que acabas de darle. */
+  exigir_cambio: z.boolean().default(true),
+})
+.superRefine((d, ctx) =>
+  exigirLargaSiEsPermanente(d, d.nueva_contrasena, "nueva_contrasena", ctx),
+);
 
 export type DatosUsuarioEdicion = z.infer<typeof esquemaUsuarioEdicion>;
 

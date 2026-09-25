@@ -8,6 +8,7 @@ import type { UsuarioAdmin } from "@/app/api/admin/usuarios/route";
 import { EstadoVacio } from "@/components/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -250,6 +251,9 @@ function DialogoUsuario({
   const [password, setPassword] = useState(() =>
     modo.tipo === "crear" || modo.tipo === "contrasena" ? contrasenaAleatoria() : "",
   );
+  // Marcada por defecto: dar una contraseña y no pedir que la cambien es la
+  // excepción, no la norma. Si se desmarca, el esquema exige ocho caracteres.
+  const [exigirCambio, setExigirCambio] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState(false);
   const [creado, setCreado] = useState<{ email: string; password: string } | null>(null);
@@ -262,7 +266,7 @@ function DialogoUsuario({
       if (modo.tipo === "crear") {
         await llamarApi("/api/admin/usuarios", {
           method: "POST",
-          body: JSON.stringify({ email, password, nombre, cargo: cargo || undefined, rol }),
+          body: JSON.stringify({ email, password, nombre, cargo: cargo || undefined, rol, exigir_cambio: exigirCambio }),
         });
         setCreado({ email: email.trim().toLowerCase(), password });
         toast.success("Usuario creado");
@@ -278,7 +282,7 @@ function DialogoUsuario({
       } else if (modo.tipo === "contrasena") {
         await llamarApi("/api/admin/usuarios", {
           method: "PATCH",
-          body: JSON.stringify({ id: modo.usuario.id, nueva_contrasena: password }),
+          body: JSON.stringify({ id: modo.usuario.id, nueva_contrasena: password, exigir_cambio: exigirCambio }),
         });
         setCreado({ email: modo.usuario.email, password });
         toast.success("Contraseña restablecida");
@@ -380,7 +384,7 @@ function DialogoUsuario({
                     id="u-pass"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    minLength={8}
+                    minLength={exigirCambio ? 6 : 8}
                     required
                     className="font-mono"
                     disabled={pendiente}
@@ -388,6 +392,23 @@ function DialogoUsuario({
                   <Button type="button" variant="outline" size="icon" aria-label="Generar otra" onClick={() => setPassword(contrasenaAleatoria())} disabled={pendiente}>
                     <RefreshCw />
                   </Button>
+                </div>
+                <div className="flex items-start gap-2 pt-1">
+                  <Checkbox
+                    id="u-exigir"
+                    className="size-[18px] rounded-[6px] border-borde-acento"
+                    checked={exigirCambio}
+                    onCheckedChange={(v) => setExigirCambio(v === true)}
+                    disabled={pendiente}
+                  />
+                  <Label htmlFor="u-exigir" className="text-sm leading-tight font-normal">
+                    Obligar a cambiarla la próxima vez que entre
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {exigirCambio
+                        ? "Esta contraseña es temporal: al entrar tendrá que elegir una suya."
+                        : "La contraseña quedará fija, así que debe tener al menos 8 caracteres."}
+                    </span>
+                  </Label>
                 </div>
               </div>
             )}

@@ -31,18 +31,23 @@ export function FormularioLogin({
         </Alert>
       )}
 
+      {/*
+        Dos formas de identificarse conviven aquí: los asesores escriben su
+        número de Poliedro y el resto su correo. El esquema convierte el
+        número en el correo interno, así que el campo no es type="email":
+        con ese tipo el navegador tacharía el número como inválido.
+      */}
       <div className="space-y-1.5">
-        <Label htmlFor="email">Correo</Label>
+        <Label htmlFor="email">Número de Poliedro o correo</Label>
         <Input
           id="email"
           name="email"
-          type="email"
-          inputMode="email"
+          type="text"
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
           required
-          placeholder="nombre@empresa.com"
+          placeholder="46350710"
         />
       </div>
 

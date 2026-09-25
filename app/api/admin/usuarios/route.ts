@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     password: d.password,
     email_confirm: true,
     // El trigger crear_perfil_nuevo_usuario lee nombre y rol de aquí.
-    user_metadata: { nombre: d.nombre, rol: d.rol, debe_cambiar_contrasena: true },
+    user_metadata: { nombre: d.nombre, rol: d.rol, debe_cambiar_contrasena: d.exigir_cambio },
   });
 
   if (error || !data.user) {
@@ -138,7 +138,12 @@ export async function PATCH(req: Request) {
   if (d.nueva_contrasena) {
     const { data: actual } = await admin.auth.admin.getUserById(d.id);
     cambiosAuth.password = d.nueva_contrasena;
-    cambiosAuth.user_metadata = { ...(actual?.user?.user_metadata ?? {}), debe_cambiar_contrasena: true };
+    // La casilla del formulario manda: normalmente se exige el cambio, pero
+    // el administrador puede dar una contrasena definitiva si hace falta.
+    cambiosAuth.user_metadata = {
+      ...(actual?.user?.user_metadata ?? {}),
+      debe_cambiar_contrasena: d.exigir_cambio,
+    };
   }
 
   if (Object.keys(cambiosAuth).length > 0) {
