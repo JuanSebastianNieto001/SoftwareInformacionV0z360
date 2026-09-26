@@ -11,10 +11,20 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
   const sp = await searchParams;
   const { supabase } = await exigirAdmin();
 
-  const [{ data: perfiles }, { data: areas }, { data: permisos }] = await Promise.all([
+  const [
+    { data: perfiles },
+    { data: areas },
+    { data: permisos },
+    { data: grupos },
+    { data: miembros },
+    { data: permisosGrupo },
+  ] = await Promise.all([
     supabase.from("perfiles").select("id, nombre, cargo, rol, activo").order("nombre"),
     supabase.from("areas").select("id, nombre, activa").order("nombre"),
     supabase.from("permisos_area").select("usuario_id, area_id, nivel"),
+    supabase.from("grupos").select("id, nombre, activo").order("nombre"),
+    supabase.from("grupos_usuarios").select("grupo_id, usuario_id"),
+    supabase.from("permisos_grupo").select("grupo_id, area_id, nivel"),
   ]);
 
   const usuarioInicial = typeof sp.usuario === "string" ? sp.usuario : null;
@@ -40,12 +50,15 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
       <EncabezadoPagina
         kicker="Administración"
         titulo="Permisos por área"
-        descripcion="Vista abre los documentos en pantalla; Descarga además permite bajarlos; Edición permite subirlos. El rol global es el techo: un lector nunca pasa de descarga aunque se le marque edición, y un administrador tiene edición en todo sin necesidad de asignación."
+        descripcion="Aquí se concede a una persona en concreto. Lo que además le llegue por sus grupos se suma, y gana el mayor de los dos. El rol global sigue siendo el techo: un lector nunca pasa de descarga aunque se le marque Editar."
       />
       <MatrizPermisos
         usuarios={perfiles ?? []}
         areas={areas}
         permisos={permisos ?? []}
+        grupos={grupos ?? []}
+        miembros={miembros ?? []}
+        permisosGrupo={permisosGrupo ?? []}
         usuarioInicial={usuarioInicial}
       />
     </>

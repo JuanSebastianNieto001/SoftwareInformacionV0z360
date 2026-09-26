@@ -12,6 +12,7 @@ import {
   Shield,
   Upload,
   Users,
+  Users2,
   ClipboardList,
   Inbox,
   MessageSquareText,
@@ -60,6 +61,7 @@ export const ITEMS_ADMIN: Item[] = [
   { href: "/admin/documentos", etiqueta: "Documentos", icono: Files },
   { href: "/admin/usuarios", etiqueta: "Usuarios", icono: Users },
   { href: "/admin/areas", etiqueta: "Áreas", icono: Layers },
+  { href: "/admin/grupos", etiqueta: "Grupos", icono: Users2 },
   { href: "/admin/permisos", etiqueta: "Permisos", icono: KeySquare },
   { href: "/admin/auditoria", etiqueta: "Auditoría", icono: ClipboardList },
 ];

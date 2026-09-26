@@ -22,10 +22,13 @@ export type UsuarioAdmin = {
   gestiona_buzon: boolean;
   /** Lo guardado en permisos_area, sin aplicar el techo del rol. */
   permisos: { area_id: string; nivel: NivelAcceso }[];
+  /** Ids de los grupos a los que pertenece. */
+  grupos: string[];
 };
 
 /** Las áreas viajan con la lista para poder filtrar por ellas sin otra llamada. */
 export type AreaBreve = { id: string; nombre: string; activa: boolean };
+export type GrupoBreve = { id: string; nombre: string; activo: boolean };
 
 /**
  * Único lugar (junto con la Edge Function) donde se usa la service_role
@@ -43,17 +46,25 @@ export async function GET() {
     { data: lista, error: errorAuth },
     { data: permisos },
     { data: areas },
+    { data: miembros },
+    { data: grupos },
   ] = await Promise.all([
     ctx.supabase.from("perfiles").select("*").order("nombre"),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ctx.supabase.from("permisos_area").select("usuario_id, area_id, nivel"),
     ctx.supabase.from("areas").select("id, nombre, activa").order("nombre"),
+    ctx.supabase.from("grupos_usuarios").select("grupo_id, usuario_id"),
+    ctx.supabase.from("grupos").select("id, nombre, activo").order("nombre"),
   ]);
 
   if (errorPerfiles) return respuestaError(mensajePostgrest(errorPerfiles).mensaje, 500);
   if (errorAuth) return respuestaError(`No se pudo listar usuarios: ${errorAuth.message}`, 502);
 
   const porId = new Map(lista.users.map((u) => [u.id, u]));
+  const gruposDe = new Map<string, string[]>();
+  for (const m of miembros ?? []) {
+    gruposDe.set(m.usuario_id, [...(gruposDe.get(m.usuario_id) ?? []), m.grupo_id]);
+  }
   const porUsuario = new Map<string, { area_id: string; nivel: NivelAcceso }[]>();
   for (const p of permisos ?? []) {
     const suyos = porUsuario.get(p.usuario_id) ?? [];
@@ -74,10 +85,11 @@ export async function GET() {
       debe_cambiar_contrasena: u?.user_metadata?.debe_cambiar_contrasena === true,
       gestiona_buzon: p.gestiona_buzon,
       permisos: porUsuario.get(p.id) ?? [],
+      grupos: gruposDe.get(p.id) ?? [],
     };
   });
 
-  return respuestaOk({ usuarios, areas: areas ?? [] });
+  return respuestaOk({ usuarios, areas: areas ?? [], grupos: grupos ?? [] });
 }
 
 export async function POST(req: Request) {

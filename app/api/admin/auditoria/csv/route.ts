@@ -1,6 +1,11 @@
 import { exigirAdminApi } from "@/lib/api-admin";
 import { respuestaError } from "@/lib/api-errores";
-import { consultaAuditoria, ETIQUETA_ACCION, filtrosDesdeParams } from "@/lib/auditoria-consulta";
+import {
+  consultaAuditoria,
+  ETIQUETA_ACCION,
+  filtrosDesdeParams,
+  miembrosDelGrupo,
+} from "@/lib/auditoria-consulta";
 import { formatearFechaHora } from "@/lib/formato";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +29,10 @@ export async function GET(req: Request) {
   const sp = Object.fromEntries(new URL(req.url).searchParams.entries());
   const filtros = filtrosDesdeParams(sp);
 
-  const { data, error } = await consultaAuditoria(ctx.supabase, filtros, { limite: LIMITE_EXPORT });
+  const { data, error } = await consultaAuditoria(ctx.supabase, filtros, {
+    limite: LIMITE_EXPORT,
+    miembros: await miembrosDelGrupo(ctx.supabase, filtros.grupo),
+  });
   if (error) return respuestaError(error.message, 500);
 
   const cabecera = ["Fecha", "Persona", "Correo", "Acción", "Documento", "Área", "IP", "Navegador", "ID documento"];

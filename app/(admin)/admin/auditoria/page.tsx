@@ -11,6 +11,7 @@ import {
   ETIQUETA_ACCION,
   filtrosAQuery,
   filtrosDesdeParams,
+  miembrosDelGrupo,
 } from "@/lib/auditoria-consulta";
 import { formatearFechaHora } from "@/lib/formato";
 import { exigirAdmin } from "@/lib/sesion";
@@ -28,9 +29,14 @@ export default async function PaginaAuditoria({ searchParams }: PageProps<"/admi
   const { supabase } = await exigirAdmin();
   const filtros = filtrosDesdeParams(sp);
 
-  const [{ data: filas, count, error }, { data: perfiles }] = await Promise.all([
-    consultaAuditoria(supabase, filtros, { limite: LIMITE, conteo: true }),
+  // El grupo se resuelve primero: la consulta de accesos necesita la lista
+  // de ids ya hecha para poder filtrar por ella.
+  const miembros = await miembrosDelGrupo(supabase, filtros.grupo);
+
+  const [{ data: filas, count, error }, { data: perfiles }, { data: grupos }] = await Promise.all([
+    consultaAuditoria(supabase, filtros, { limite: LIMITE, conteo: true, miembros }),
     supabase.from("perfiles").select("id, nombre").order("nombre"),
+    supabase.from("grupos").select("id, nombre").order("nombre"),
   ]);
 
   const hayFiltros = Object.values(filtros).some(Boolean);
@@ -51,7 +57,7 @@ export default async function PaginaAuditoria({ searchParams }: PageProps<"/admi
         }
       />
 
-      <form method="get" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+      <form method="get" className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
         <Input
           type="search"
           name="q"
@@ -60,6 +66,19 @@ export default async function PaginaAuditoria({ searchParams }: PageProps<"/admi
           aria-label="Buscar"
           className="lg:col-span-2"
         />
+        {/*
+          El segmento va antes que la persona a propósito: con 57 cuentas,
+          "los asesores" es la pregunta que se hace de verdad, y buscar a
+          alguien concreto en una lista de 57 nombres es el último recurso.
+        */}
+        <select name="grupo" defaultValue={filtros.grupo ?? ""} aria-label="Segmento" className={CLASE_SELECT}>
+          <option value="">Todos los segmentos</option>
+          {(grupos ?? []).map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nombre}
+            </option>
+          ))}
+        </select>
         <select name="usuario" defaultValue={filtros.usuario ?? ""} aria-label="Persona" className={CLASE_SELECT}>
           <option value="">Todas las personas</option>
           {(perfiles ?? []).map((p) => (

@@ -104,6 +104,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      grupos: {
+        Row: {
+          id: string;
+          nombre: string;
+          slug: string;
+          descripcion: string | null;
+          activo: boolean;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          slug: string;
+          descripcion?: string | null;
+          activo?: boolean;
+          creado_en?: string;
+        };
+        Update: {
+          nombre?: string;
+          slug?: string;
+          descripcion?: string | null;
+          activo?: boolean;
+        };
+        Relationships: [];
+      };
+      grupos_usuarios: {
+        Row: {
+          grupo_id: string;
+          usuario_id: string;
+          agregado_por: string | null;
+          agregado_en: string;
+        };
+        Insert: {
+          grupo_id: string;
+          usuario_id: string;
+          agregado_por?: string | null;
+          agregado_en?: string;
+        };
+        Update: { agregado_por?: string | null };
+        Relationships: [];
+      };
+      permisos_grupo: {
+        Row: {
+          grupo_id: string;
+          area_id: string;
+          nivel: NivelAcceso;
+          otorgado_por: string | null;
+          otorgado_en: string;
+        };
+        Insert: {
+          grupo_id: string;
+          area_id: string;
+          nivel?: NivelAcceso;
+          otorgado_por?: string | null;
+          otorgado_en?: string;
+        };
+        Update: { nivel?: NivelAcceso; otorgado_por?: string | null; otorgado_en?: string };
+        Relationships: [];
+      };
       permisos_area: {
         Row: {
           usuario_id: string;

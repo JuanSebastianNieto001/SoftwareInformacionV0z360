@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, KeyRound, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Search, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
-import type { AreaBreve, UsuarioAdmin } from "@/app/api/admin/usuarios/route";
+import type { AreaBreve, GrupoBreve, UsuarioAdmin } from "@/app/api/admin/usuarios/route";
 import { EstadoVacio } from "@/components/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ type Modo =
 export function GestionUsuarios({ miId }: { miId: string }) {
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[] | null>(null);
   const [areas, setAreas] = useState<AreaBreve[]>([]);
+  const [grupos, setGrupos] = useState<GrupoBreve[]>([]);
+  const [filtroGrupo, setFiltroGrupo] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState<RolGlobal | "">("");
   const [filtroEstado, setFiltroEstado] = useState<"" | "activos" | "inactivos" | "pendientes" | "buzon">("");
@@ -69,10 +71,11 @@ export function GestionUsuarios({ miId }: { miId: string }) {
 
   const cargar = useCallback(
     () =>
-      llamarApi<{ usuarios: UsuarioAdmin[]; areas: AreaBreve[] }>("/api/admin/usuarios", { method: "GET" })
+      llamarApi<{ usuarios: UsuarioAdmin[]; areas: AreaBreve[]; grupos: GrupoBreve[] }>("/api/admin/usuarios", { method: "GET" })
         .then((r) => {
           setUsuarios(r.usuarios);
           setAreas(r.areas);
+          setGrupos(r.grupos);
           setError(null);
         })
         .catch((e: unknown) => {
@@ -115,6 +118,7 @@ export function GestionUsuarios({ miId }: { miId: string }) {
         return false;
       }
       if (filtroRol && u.rol !== filtroRol) return false;
+      if (filtroGrupo && !u.grupos.includes(filtroGrupo)) return false;
       if (filtroEstado === "activos" && !u.activo) return false;
       if (filtroEstado === "inactivos" && u.activo) return false;
       if (filtroEstado === "pendientes" && !u.debe_cambiar_contrasena) return false;
@@ -132,12 +136,13 @@ export function GestionUsuarios({ miId }: { miId: string }) {
       }
       return true;
     });
-  }, [usuarios, busqueda, filtroRol, filtroEstado, filtroArea, filtroNivel]);
+  }, [usuarios, busqueda, filtroRol, filtroGrupo, filtroEstado, filtroArea, filtroNivel]);
 
-  const hayFiltros = Boolean(busqueda || filtroRol || filtroEstado || filtroArea);
+  const hayFiltros = Boolean(busqueda || filtroRol || filtroGrupo || filtroEstado || filtroArea);
   const limpiar = () => {
     setBusqueda("");
     setFiltroRol("");
+    setFiltroGrupo("");
     setFiltroEstado("");
     setFiltroArea("");
     setFiltroNivel("");
@@ -174,6 +179,21 @@ export function GestionUsuarios({ miId }: { miId: string }) {
             aria-label="Buscar persona"
           />
         </div>
+
+        {/* El segmento primero: es por donde se busca cuando hay 57 cuentas. */}
+        <select
+          value={filtroGrupo}
+          onChange={(e) => setFiltroGrupo(e.target.value)}
+          aria-label="Filtrar por grupo"
+          className="h-10 min-w-0 rounded-lg border-[1.5px] border-input bg-campo px-2.5 text-[13px] outline-none transition-colors focus-visible:border-primary focus-visible:bg-card"
+        >
+          <option value="">Todos los grupos</option>
+          {grupos.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nombre}
+            </option>
+          ))}
+        </select>
 
         <select
           value={filtroRol}

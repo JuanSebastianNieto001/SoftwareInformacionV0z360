@@ -13,6 +13,12 @@ import { cn } from "@/lib/utils";
 type Usuario = { id: string; nombre: string; cargo: string | null; rol: RolGlobal; activo: boolean };
 type Area = { id: string; nombre: string; activa: boolean };
 type Permiso = { usuario_id: string; area_id: string; nivel: NivelAcceso };
+type Grupo = { id: string; nombre: string; activo: boolean };
+type Miembro = { grupo_id: string; usuario_id: string };
+type PermisoGrupo = { grupo_id: string; area_id: string; nivel: NivelAcceso };
+
+/** De menor a mayor, igual que el enum nivel_acceso en Postgres. */
+const ORDEN: readonly NivelAcceso[] = ["lectura", "descarga", "edicion", "total"];
 
 /**
  * Los cinco estados posibles de una persona en un área, de menos a más.
@@ -34,11 +40,17 @@ export function MatrizPermisos({
   usuarios,
   areas,
   permisos,
+  grupos,
+  miembros,
+  permisosGrupo,
   usuarioInicial,
 }: {
   usuarios: Usuario[];
   areas: Area[];
   permisos: Permiso[];
+  grupos: Grupo[];
+  miembros: Miembro[];
+  permisosGrupo: PermisoGrupo[];
   usuarioInicial: string | null;
 }) {
   const [busqueda, setBusqueda] = useState("");
@@ -56,6 +68,27 @@ export function MatrizPermisos({
   }, [usuarios, busqueda]);
 
   const usuario = usuarios.find((u) => u.id === seleccionado) ?? null;
+
+  /**
+   * Lo mejor que le conceden sus grupos activos sobre esa área, con el
+   * nombre del grupo que lo concede. Sin esto la pantalla mentiría: un
+   * asesor sin permiso propio saldría como "Sin acceso" aunque entre todos
+   * los días por lo que hereda de su segmento.
+   */
+  function porGrupo(usuarioId: string, areaId: string): { nivel: NivelAcceso; grupo: string } | null {
+    let mejor: { nivel: NivelAcceso; grupo: string } | null = null;
+    for (const m of miembros) {
+      if (m.usuario_id !== usuarioId) continue;
+      const g = grupos.find((x) => x.id === m.grupo_id);
+      if (!g || !g.activo) continue;
+      const pg = permisosGrupo.find((p) => p.grupo_id === m.grupo_id && p.area_id === areaId);
+      if (!pg) continue;
+      if (!mejor || ORDEN.indexOf(pg.nivel) > ORDEN.indexOf(mejor.nivel)) {
+        mejor = { nivel: pg.nivel, grupo: g.nombre };
+      }
+    }
+    return mejor;
+  }
 
   function nivelDe(usuarioId: string, areaId: string): NivelAcceso | null {
     const clave = `${usuarioId}|${areaId}`;
@@ -83,8 +116,9 @@ export function MatrizPermisos({
     });
   }
 
+  // Cuenta las áreas a las que llega, por permiso propio o por grupo.
   const cuentaPermisos = (u: Usuario) =>
-    areas.filter((a) => nivelDe(u.id, a.id) !== null).length;
+    areas.filter((a) => nivelDe(u.id, a.id) !== null || porGrupo(u.id, a.id) !== null).length;
 
   return (
     <div className="grid gap-4 md:grid-cols-[280px_1fr]">
@@ -171,6 +205,7 @@ export function MatrizPermisos({
               {areas.map((a) => {
                 const nivel = nivelDe(usuario.id, a.id);
                 const efectivo = nivelEfectivo(usuario.rol, usuario.activo, nivel);
+                const heredado = porGrupo(usuario.id, a.id);
                 const clave = `${usuario.id}|${a.id}`;
                 const ocupado = ocupados.has(clave);
                 return (
@@ -182,6 +217,11 @@ export function MatrizPermisos({
                       {efectivo !== nivel && nivel !== null && (
                         <span className="block text-xs text-muted-foreground">
                           Efectivo: {efectivo ? ETIQUETA_NIVEL[efectivo].toLowerCase() : "sin acceso"}
+                        </span>
+                      )}
+                      {heredado && (
+                        <span className="block text-xs text-marino-suave">
+                          Además por «{heredado.grupo}»: {ETIQUETA_NIVEL[heredado.nivel].toLowerCase()}
                         </span>
                       )}
                     </div>

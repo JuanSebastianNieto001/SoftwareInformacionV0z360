@@ -282,6 +282,49 @@ export const esquemaPermiso = z.object({
 
 export type DatosPermiso = z.infer<typeof esquemaPermiso>;
 
+// ---------------------------------------------------------------------------
+// Grupos (segmentos de personas)
+// ---------------------------------------------------------------------------
+
+const nombreGrupo = z
+  .string()
+  .trim()
+  .min(2, "El nombre del grupo debe tener al menos 2 caracteres")
+  .max(60, "El nombre del grupo no puede superar 60 caracteres");
+
+const descripcionGrupo = z
+  .string()
+  .trim()
+  .max(300, "La descripción no puede superar 300 caracteres")
+  .nullish()
+  .transform((v) => (v && v.length > 0 ? v : null));
+
+export const esquemaGrupoNuevo = z.object({
+  nombre: nombreGrupo,
+  descripcion: descripcionGrupo,
+});
+
+export const esquemaGrupoEdicion = z.object({
+  id: uuid,
+  nombre: nombreGrupo.optional(),
+  descripcion: descripcionGrupo.optional(),
+  activo: z.boolean().optional(),
+});
+
+/** Añadir o quitar a alguien del grupo. `dentro: false` lo saca. */
+export const esquemaMiembroGrupo = z.object({
+  grupo_id: uuid,
+  usuario_id: uuid,
+  dentro: z.boolean(),
+});
+
+/** Nivel que el grupo concede sobre un área. `null` retira la concesión. */
+export const esquemaPermisoGrupo = z.object({
+  grupo_id: uuid,
+  area_id: uuid,
+  nivel: z.enum(NIVELES).nullable(),
+});
+
 export const esquemaUsuarioNuevo = z.object({
   email,
   password: contrasenaTemporal,
@@ -333,6 +376,8 @@ export type DatosUsuarioEdicion = z.infer<typeof esquemaUsuarioEdicion>;
 
 export const esquemaFiltrosAuditoria = z.object({
   usuario: uuid.optional(),
+  /** Filtra por todas las personas del segmento, no por una sola. */
+  grupo: uuid.optional(),
   documento: uuid.optional(),
   accion: z.enum(ACCIONES).optional(),
   desde: z.iso.date().optional(),
