@@ -12,6 +12,17 @@ import {
 
 export type EstadoFormulario = { error: string | null };
 
+/**
+ * IP de quien llama, según las cabeceras que pone Vercel. Solo sirve para
+ * agrupar intentos fallidos: es falsificable por quien controle su propio
+ * proxy, así que nunca se usa para autorizar nada.
+ */
+function ipDeLaPeticion(h: Headers): string | null {
+  const reenviada = h.get("x-forwarded-for");
+  if (reenviada) return reenviada.split(",")[0]!.trim().slice(0, 64) || null;
+  return h.get("x-real-ip")?.slice(0, 64) ?? null;
+}
+
 /** Solo permitimos volver a rutas internas (evita open redirect). */
 function destinoSeguro(valor: unknown): string {
   if (typeof valor !== "string") return "/";
@@ -31,11 +42,31 @@ export async function iniciarSesion(
   if (!parsed.success) return { error: primerError(parsed.error) };
 
   const supabase = await crearClienteServidor();
+  const ip = ipDeLaPeticion(await headers());
+
+  // Freno antes de tocar el servidor de autenticación: si esta cuenta lleva
+  // ocho fallos en un cuarto de hora desde este mismo sitio, ni se intenta.
+  const { data: frenado } = await supabase.rpc("login_frenado", {
+    p_correo: parsed.data.email,
+    p_ip: ip,
+  });
+  if (frenado) {
+    return {
+      error:
+        "Demasiados intentos fallidos. Espera unos minutos antes de volver a probar.",
+    };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error || !data.user) {
+    await supabase.rpc("anotar_intento_login", { p_correo: parsed.data.email, p_ip: ip });
+    // Mensaje único a propósito: decir "ese correo no existe" le confirmaría
+    // a quien prueba números de Poliedro cuáles están dados de alta.
     return { error: "Correo o contraseña incorrectos." };
   }
+
+  await supabase.rpc("olvidar_intentos_login", { p_correo: parsed.data.email, p_ip: ip });
 
   // El perfil lo crea el trigger al registrar el usuario. Si está
   // desactivado, cerramos la sesión de inmediato.

@@ -105,8 +105,11 @@ export async function POST(req: Request) {
     email: d.email,
     password: d.password,
     email_confirm: true,
-    // El trigger crear_perfil_nuevo_usuario lee nombre y rol de aquí.
-    user_metadata: { nombre: d.nombre, rol: d.rol, debe_cambiar_contrasena: d.exigir_cambio },
+    // Solo el nombre y la marca de cambio de contraseña. El rol NO viaja
+    // aquí: el trigger dejó de leerlo del metadata porque ese campo lo
+    // escribe quien llama, y con el registro público abierto era la vía
+    // para que cualquiera se hiciera administrador.
+    user_metadata: { nombre: d.nombre, debe_cambiar_contrasena: d.exigir_cambio },
   });
 
   if (error || !data.user) {
@@ -117,13 +120,21 @@ export async function POST(req: Request) {
     return respuestaError(`No se pudo crear el usuario: ${msg}`, 502);
   }
 
-  // El perfil ya existe (trigger). Completamos el cargo con la sesión del admin (RLS).
-  if (d.cargo) {
-    const { error: errorCargo } = await ctx.supabase
-      .from("perfiles")
-      .update({ cargo: d.cargo })
-      .eq("id", data.user.id);
-    if (errorCargo) console.warn("[usuarios] No se pudo guardar el cargo:", errorCargo.message);
+  // El trigger creó el perfil como lector e inactivo. Elevarlo es un acto
+  // deliberado de un administrador ya autenticado, y pasa por RLS
+  // (perfiles_admin_all) con SU sesión, no con la clave de servicio.
+  const { error: errorPerfil } = await ctx.supabase
+    .from("perfiles")
+    .update({ nombre: d.nombre, cargo: d.cargo ?? null, rol: d.rol, activo: true })
+    .eq("id", data.user.id);
+
+  if (errorPerfil) {
+    // Si no se pudo activar, la cuenta queda inerte en lugar de a medias.
+    await admin.auth.admin.deleteUser(data.user.id).catch(() => undefined);
+    return respuestaError(
+      `No se pudo completar el perfil, el usuario no se creó: ${errorPerfil.message}`,
+      502,
+    );
   }
 
   return respuestaOk({ id: data.user.id }, 201);

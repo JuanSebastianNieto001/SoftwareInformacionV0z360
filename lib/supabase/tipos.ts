@@ -515,6 +515,18 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      login_frenado: {
+        Args: { p_correo: string; p_ip: string | null };
+        Returns: boolean;
+      };
+      anotar_intento_login: {
+        Args: { p_correo: string; p_ip: string | null };
+        Returns: undefined;
+      };
+      olvidar_intentos_login: {
+        Args: { p_correo: string; p_ip: string | null };
+        Returns: undefined;
+      };
       nivel_en_area: {
         Args: { a: string };
         Returns: NivelAcceso | null;
