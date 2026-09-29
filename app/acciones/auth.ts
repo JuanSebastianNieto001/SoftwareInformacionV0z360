@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { registrarAcceso } from "@/lib/auditoria";
+import { ipDePeticion, registrarAcceso } from "@/lib/auditoria";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   esquemaCambioContrasena,
@@ -11,17 +11,6 @@ import {
 } from "@/lib/validaciones";
 
 export type EstadoFormulario = { error: string | null };
-
-/**
- * IP de quien llama, según las cabeceras que pone Vercel. Solo sirve para
- * agrupar intentos fallidos: es falsificable por quien controle su propio
- * proxy, así que nunca se usa para autorizar nada.
- */
-function ipDeLaPeticion(h: Headers): string | null {
-  const reenviada = h.get("x-forwarded-for");
-  if (reenviada) return reenviada.split(",")[0]!.trim().slice(0, 64) || null;
-  return h.get("x-real-ip")?.slice(0, 64) ?? null;
-}
 
 /** Solo permitimos volver a rutas internas (evita open redirect). */
 function destinoSeguro(valor: unknown): string {
@@ -42,7 +31,9 @@ export async function iniciarSesion(
   if (!parsed.success) return { error: primerError(parsed.error) };
 
   const supabase = await crearClienteServidor();
-  const ip = ipDeLaPeticion(await headers());
+  // La IP solo agrupa intentos fallidos. Es falsificable por quien controle
+  // su propio proxy, así que no autoriza nada por sí misma.
+  const ip = ipDePeticion({ headers: await headers() });
 
   // Freno antes de tocar el servidor de autenticación: si esta cuenta lleva
   // ocho fallos en un cuarto de hora desde este mismo sitio, ni se intenta.

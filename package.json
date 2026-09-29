@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "prueba:rls": "node pruebas/rls.test.mjs",
-    "prueba:bundle": "node pruebas/bundle-sin-secretos.mjs"
+    "prueba:bundle": "node pruebas/bundle-sin-secretos.mjs",
+    "codigo-muerto": "knip"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
@@ -36,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "knip": "^5.88.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

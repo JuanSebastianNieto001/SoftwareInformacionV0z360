@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inbox } from "lucide-react";
-import { FormularioSugerencia } from "@/components/formulario-sugerencia";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
+import { FormularioSugerencia } from "@/components/buzon/formulario-sugerencia";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {

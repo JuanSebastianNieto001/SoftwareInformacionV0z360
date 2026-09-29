@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
-import { FormularioSubida } from "@/components/formulario-subida";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { FormularioSubida } from "@/components/documentos/formulario-subida";
 import { Button } from "@/components/ui/button";
 import { nivelEfectivo, puedeEditarArea, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";

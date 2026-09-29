@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EncabezadoPagina } from "@/components/encabezado-pagina";
+import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { GestionGrupos } from "@/components/admin/gestion-grupos";
 import { exigirAdmin } from "@/lib/sesion";
 

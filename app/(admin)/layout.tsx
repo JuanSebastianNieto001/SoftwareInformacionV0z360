@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AppShell, NavAdmin } from "@/components/app-shell";
+import { AppShell, NavAdmin } from "@/components/comunes/app-shell";
 import { exigirAdmin } from "@/lib/sesion";
 
 /**

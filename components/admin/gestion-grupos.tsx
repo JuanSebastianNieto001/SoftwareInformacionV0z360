@@ -9,7 +9,7 @@ import {
   asignarPermisoGrupo,
   crearGrupo,
 } from "@/app/(admin)/admin/acciones";
-import { EstadoVacio } from "@/components/encabezado-pagina";
+import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

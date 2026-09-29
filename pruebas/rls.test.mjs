@@ -1,7 +1,9 @@
 /**
- * Pruebas de las políticas RLS de supabase/migrations/001_esquema_inicial.sql
- * contra un Postgres embebido (PGlite), sin necesidad de Docker ni de un
- * proyecto de Supabase.
+ * Pruebas de las políticas RLS contra un Postgres embebido (PGlite), sin
+ * necesidad de Docker ni de un proyecto de Supabase.
+ *
+ * Se aplican TODAS las migraciones de supabase/migrations/ en orden, así que
+ * lo que se prueba aquí es el esquema que hay en producción, no el inicial.
  *
  * Se recrean los "stubs" mínimos que Supabase aporta (esquemas auth y
  * storage, auth.uid(), storage.foldername(), roles anon/authenticated) y
@@ -12,12 +14,11 @@
  *   npm run prueba:rls
  */
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
-const rutaMigracion = join(raiz, "supabase", "migrations", "001_esquema_inicial.sql");
 
 const db = await PGlite.create();
 
@@ -132,56 +133,46 @@ await db.exec(`
 `);
 
 // ---------------------------------------------------------------------------
-// 2. Migración real
+// 2. El esquema real, TODAS las migraciones en orden
 // ---------------------------------------------------------------------------
-let sqlMigracion = readFileSync(rutaMigracion, "utf8");
+// Aplicar solo la 001 dejaba la suite probando un esquema que ya no existe:
+// los niveles de acceso, los grupos y el endurecimiento de seguridad viven en
+// las migraciones siguientes. Se aplican todas, en orden, tal cual están.
 const avisos = [];
-try {
-  await db.exec(sqlMigracion);
-} catch (e) {
-  // PGlite no trae pgcrypto (gen_random_uuid es nativo desde PG13) y puede
-  // no traer el diccionario 'spanish'. Ninguna de las dos cosas afecta a RLS.
-  if (/pgcrypto/i.test(e.message)) {
-    sqlMigracion = sqlMigracion.replace(/create extension if not exists pgcrypto;/i, "-- (pgcrypto omitido en PGlite)");
-    avisos.push("pgcrypto omitido (gen_random_uuid es nativo en PG13+)");
+
+/** Dos cosas que PGlite no trae y que no afectan a ninguna política. */
+function adaptarAPGlite(sql) {
+  let salida = sql;
+  if (/create extension if not exists pgcrypto/i.test(salida)) {
+    salida = salida.replace(/create extension if not exists pgcrypto;/gi, "-- (pgcrypto omitido en PGlite)");
+    avisos.push("pgcrypto omitido (gen_random_uuid es nativo desde PG13)");
   }
-  if (/text search configuration "spanish"/i.test(e.message)) {
-    sqlMigracion = sqlMigracion.replace(/to_tsvector\('spanish'/g, "to_tsvector('simple'");
+  if (salida.includes("to_tsvector('spanish'")) {
+    salida = salida.split("to_tsvector('spanish'").join("to_tsvector('simple'");
     avisos.push("índice GIN con configuración 'simple' en lugar de 'spanish'");
   }
-  if (avisos.length === 0) throw e;
-  // Reiniciamos la base para aplicar la migración corregida desde cero.
-  await db.exec(`drop schema public cascade; create schema public; grant usage on schema public to anon, authenticated, service_role;
-    alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-    alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
-    alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
-    drop policy if exists storage_select_documentos on storage.objects;
-    drop policy if exists storage_insert_documentos on storage.objects;
-    drop policy if exists storage_update_documentos on storage.objects;
-    drop policy if exists storage_delete_documentos on storage.objects;`);
+  return salida;
+}
+
+const dirMigraciones = join(raiz, "supabase", "migrations");
+const migraciones = readdirSync(dirMigraciones)
+  .filter((n) => n.endsWith(".sql"))
+  .sort();
+
+for (const nombre of migraciones) {
+  const sql = adaptarAPGlite(readFileSync(join(dirMigraciones, nombre), "utf8"));
   try {
-    await db.exec(sqlMigracion);
-  } catch (e2) {
-    if (/text search configuration "spanish"/i.test(e2.message) && !/simple/.test(sqlMigracion)) {
-      sqlMigracion = sqlMigracion.replace(/to_tsvector\('spanish'/g, "to_tsvector('simple'");
-      avisos.push("índice GIN con configuración 'simple' en lugar de 'spanish'");
-      await db.exec(`drop schema public cascade; create schema public; grant usage on schema public to anon, authenticated, service_role;
-        alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-        alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
-        alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
-        drop policy if exists storage_select_documentos on storage.objects;
-        drop policy if exists storage_insert_documentos on storage.objects;
-        drop policy if exists storage_update_documentos on storage.objects;
-        drop policy if exists storage_delete_documentos on storage.objects;`);
-      await db.exec(sqlMigracion);
-    } else {
-      throw e2;
-    }
+    await db.exec(sql);
+  } catch (e) {
+    console.error(`\n✘ Falló la migración ${nombre}:\n   ${e.message}`);
+    process.exit(1);
   }
 }
-console.log("Migración aplicada." + (avisos.length ? ` Ajustes solo para PGlite: ${avisos.join("; ")}.` : ""));
+console.log(
+  `Esquema aplicado: ${migraciones.length} migraciones` +
+    (avisos.length ? `. Ajustes solo para PGlite: ${[...new Set(avisos)].join("; ")}.` : "."),
+);
 
-// ---------------------------------------------------------------------------
 // 3. Datos de prueba (como superusuario: salta RLS, igual que service_role)
 // ---------------------------------------------------------------------------
 const U = {
@@ -215,7 +206,16 @@ await db.exec(`
     ('${U.sinPermiso}',   'nadie@empresa.com',   '{"nombre":"Nora Nadie","rol":"editor"}'),
     ('${U.editorLector}', 'mixto@empresa.com',   '{"nombre":"Mario Mixto","rol":"editor"}');
 
-  update perfiles set activo = false where id = '${U.inactivo}';
+  -- Desde la migración 011 el disparador crea los perfiles como lector e
+  -- INACTIVOS, y el rol no se lee del metadata. Aquí se hace lo mismo que
+  -- hace el panel de administración tras dar de alta a alguien: un
+  -- administrador ya autenticado fija rol y estado.
+  update perfiles set rol = 'admin',  activo = true  where id = '${U.admin}';
+  update perfiles set rol = 'editor', activo = true  where id = '${U.editor}';
+  update perfiles set rol = 'lector', activo = true  where id = '${U.lector}';
+  update perfiles set rol = 'editor', activo = true  where id = '${U.sinPermiso}';
+  update perfiles set rol = 'editor', activo = true  where id = '${U.editorLector}';
+  update perfiles set rol = 'lector', activo = false where id = '${U.inactivo}';
 
   insert into areas (id, nombre, slug, activa) values
     ('${AREA.x}', 'Comercial', 'comercial', true),
@@ -258,11 +258,46 @@ await db.exec(`
 // ---------------------------------------------------------------------------
 console.log("\nTrigger de perfiles");
 grupo("Trigger de perfiles");
-await prueba("crear_perfil_nuevo_usuario copia nombre y rol de raw_user_meta_data", async () => {
-  const r = await db.query(`select nombre, rol::text as rol from perfiles where id = $1`, [U.admin]);
-  igual(r.rows[0].nombre, "Ana Admin", "nombre");
-  igual(r.rows[0].rol, "admin", "rol");
+await prueba("el disparador NO acepta el rol que venga en el metadata (escalada cerrada)", async () => {
+  // Esta prueba nació al revés: comprobaba que el rol se copiara del
+  // metadata. Ese campo lo escribe quien se registra, así que con el
+  // registro público abierto bastaba pedir rol:"admin" para serlo. Ahora
+  // comprueba lo contrario, y si alguien vuelve a leer el metadata, falla.
+  const intruso = "90000000-0000-4000-8000-000000000001";
+  await db.query(
+    `insert into auth.users (id, email, raw_user_meta_data) values ($1, 'intruso@fuera.com', '{"nombre":"Intruso","rol":"admin","gestiona_buzon":true}')`,
+    [intruso],
+  );
+  const r = await db.query(
+    `select nombre, rol::text as rol, activo, gestiona_buzon from perfiles where id = $1`,
+    [intruso],
+  );
+  igual(r.rows[0].rol, "lector", "el rol pedido en el metadata se ignora");
+  igual(r.rows[0].activo, false, "la cuenta nace inactiva");
+  igual(r.rows[0].gestiona_buzon, false, "no se concede el buzón por metadata");
+  igual(r.rows[0].nombre, "Intruso", "el nombre sí se toma del metadata (no concede nada)");
 });
+
+await prueba("nadie se concede a sí mismo el buzón ni el rol (escalada cerrada)", async () => {
+  // La política perfiles_update_propio fijaba rol y activo, pero
+  // gestiona_buzon se añadió después y quedó fuera: cualquiera con sesión
+  // podía hacerse gestor del buzón y leer todas las quejas.
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`update perfiles set gestiona_buzon = true where id = $1`, [U.lector]),
+  );
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`update perfiles set rol = 'admin' where id = $1`, [U.lector]),
+  );
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`update perfiles set cargo = 'Gerente' where id = $1`, [U.lector]),
+  );
+  // Lo que sí puede: su nombre y su marca de último acceso.
+  const r = await como(U.lector, (tx) =>
+    tx.query(`update perfiles set ultimo_login = now() where id = $1 returning id`, [U.lector]),
+  );
+  igual(r.rows.length, 1, "puede anotar su propio último acceso");
+});
+
 await prueba("sin rol en metadata queda como 'lector'", async () => {
   const r = await db.query(`select rol::text as rol from perfiles where id = $1`, [U.lector]);
   igual(r.rows[0].rol, "lector", "rol");
@@ -382,15 +417,89 @@ await prueba("editor con lectura en Y: en Y se comporta como lector (ve solo vig
   const r = await como(U.editor, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.y]));
   igual(r[0].n, "lectura", "nivel en Y");
 });
-await prueba("rol lector con permiso 'edicion' en área inactiva / techo: nivel efectivo nunca supera lectura", async () => {
-  // Mario tiene rol editor y permiso lectura en X → lectura. Luis (rol lector) jamás obtiene edición.
+await prueba("el rol global es el techo: un lector nunca pasa de descarga", async () => {
+  // Mario es editor con permiso de lectura en X: se queda en lectura, el
+  // techo no regala nada. Luis es lector: aunque se le marque edición o
+  // incluso Todos, el techo lo deja en descarga.
   const m = await como(U.editorLector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
-  igual(m[0].n, "lectura", "Mario en X");
-  await db.query(`update permisos_area set nivel = 'edicion' where usuario_id = $1 and area_id = $2`, [U.lector, AREA.x]);
-  const l = await como(U.lector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
-  igual(l[0].n, "lectura", "Luis con permiso edición pero rol lector");
+  igual(m[0].n, "lectura", "Mario (editor con permiso lectura) en X");
+
+  for (const concedido of ["edicion", "total"]) {
+    await db.query(`update permisos_area set nivel = $3 where usuario_id = $1 and area_id = $2`, [
+      U.lector, AREA.x, concedido,
+    ]);
+    const l = await como(U.lector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
+    igual(l[0].n, "descarga", `Luis con permiso ${concedido} pero rol lector`);
+  }
   await db.query(`update permisos_area set nivel = 'lectura' where usuario_id = $1 and area_id = $2`, [U.lector, AREA.x]);
 });
+
+await prueba("los grupos se suman al permiso propio y gana el mayor", async () => {
+  const grupo = "80000000-0000-4000-8000-000000000001";
+  await db.query(`insert into grupos (id, nombre, slug) values ($1, 'Operación', 'operacion')`, [grupo]);
+  await db.query(`insert into grupos_usuarios (grupo_id, usuario_id) values ($1, $2)`, [grupo, U.editorLector]);
+
+  // Mario tiene 'lectura' propia en X. El grupo le da 'edicion': gana el grupo.
+  await db.query(`insert into permisos_grupo (grupo_id, area_id, nivel) values ($1, $2, 'edicion')`, [grupo, AREA.x]);
+  let n = await como(U.editorLector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
+  igual(n[0].n, "edicion", "el grupo sube lo que la persona tenía");
+
+  // Si el grupo da menos que lo propio, manda lo propio: entrar a un grupo
+  // nunca le quita nada a nadie.
+  await db.query(`update permisos_grupo set nivel = 'lectura' where grupo_id = $1`, [grupo]);
+  await db.query(`update permisos_area set nivel = 'edicion' where usuario_id = $1 and area_id = $2`, [U.editorLector, AREA.x]);
+  n = await como(U.editorLector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
+  igual(n[0].n, "edicion", "el grupo no rebaja el permiso propio");
+
+  // Un grupo desactivado deja de conceder, pero conserva sus miembros.
+  await db.query(`update permisos_area set nivel = 'lectura' where usuario_id = $1 and area_id = $2`, [U.editorLector, AREA.x]);
+  await db.query(`update permisos_grupo set nivel = 'total' where grupo_id = $1`, [grupo]);
+  await db.query(`update grupos set activo = false where id = $1`, [grupo]);
+  n = await como(U.editorLector, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
+  igual(n[0].n, "lectura", "grupo desactivado: solo queda lo propio");
+
+  // Y quien no tiene nada, sigue sin tener nada. Esta es la comprobación que
+  // atrapa el fallo de LEAST() ignorando los NULL: sin la guarda, alguien sin
+  // permiso alguno salía con 'descarga' por el mero hecho de ser lector.
+  const cero = await como(U.sinPermiso, (tx) => filas(tx, `select public.nivel_en_area($1)::text as n`, [AREA.x]));
+  igual(cero[0].n, null, "sin permiso propio ni de grupo: null, no un nivel por defecto");
+
+  await db.query(`delete from grupos where id = $1`, [grupo]);
+});
+
+await prueba("el nivel Todos añade borrar, y Editar no lo tiene", async () => {
+  // Documento propio de esta prueba: borrar uno de los del montaje dejaría
+  // sin sujeto a las comprobaciones que vienen después.
+  const efimero = "20000000-0000-4000-8000-0000000000ff";
+  await db.query(
+    `insert into documentos (id, area_id, titulo, storage_path, nombre_archivo, mime, tamano_bytes, vigente_desde, subido_por)
+     values ($1, $2, 'Efímero', $3, 'e.pdf', 'application/pdf', 10, now() - interval '1 day', $4)
+     on conflict (id) do nothing`,
+    [efimero, AREA.x, AREA.x + "/" + efimero + "/e.pdf", U.editor],
+  );
+
+  const fijarNivel = (nivel) =>
+    db.query(`update permisos_area set nivel = $3 where usuario_id = $1 and area_id = $2`, [
+      U.editor,
+      AREA.x,
+      nivel,
+    ]);
+
+  await fijarNivel("edicion");
+  const conEdicion = await como(U.editor, (tx) =>
+    tx.query(`delete from documentos where id = $1`, [efimero]),
+  );
+  igual(conEdicion.affectedRows ?? 0, 0, "con Editar NO borra");
+
+  await fijarNivel("total");
+  const conTotal = await como(U.editor, (tx) =>
+    tx.query(`delete from documentos where id = $1`, [efimero]),
+  );
+  igual(conTotal.affectedRows ?? 0, 1, "con Todos sí borra");
+
+  await fijarNivel("edicion");
+});
+
 await prueba("v_documentos_estado calcula el estado (security_invoker respeta RLS)", async () => {
   const e = await como(U.editor, (tx) => filas(tx, `select titulo, estado from v_documentos_estado where area_id = $1 order by titulo`, [AREA.x]));
   const porTitulo = Object.fromEntries(e.map((x) => [x.titulo, x.estado]));

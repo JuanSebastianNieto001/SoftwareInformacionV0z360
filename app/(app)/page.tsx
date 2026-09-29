@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, FolderOpen, MessageSquareText, Upload } from "lucide-react";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
-import { ListaDocumentos } from "@/components/lista-documentos";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isoDentroDe, plural } from "@/lib/formato";

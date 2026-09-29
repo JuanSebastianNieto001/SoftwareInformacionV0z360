@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GestionUsuarios } from "@/components/admin/gestion-usuarios";
-import { EncabezadoPagina } from "@/components/encabezado-pagina";
+import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { exigirAdmin } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Usuarios" };

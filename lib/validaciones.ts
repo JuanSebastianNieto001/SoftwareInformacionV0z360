@@ -152,7 +152,7 @@ function exigirLargaSiEsPermanente(
  * la forma que tiene Supabase de identificar una cuenta, porque su API de
  * autenticación exige un correo. Quien entra escribe únicamente el número.
  */
-export const DOMINIO_POLIEDRO = "poliedro.voz360.co";
+const DOMINIO_POLIEDRO = "poliedro.voz360.co";
 
 /**
  * Convierte lo que se escribe en el login en el correo con el que la cuenta
@@ -162,7 +162,7 @@ export const DOMINIO_POLIEDRO = "poliedro.voz360.co";
  * Es idempotente: aplicado dos veces da lo mismo, porque un correo ya
  * formado contiene una arroba y no vuelve a tocarse.
  */
-export function correoDesdeIdentificador(valor: string): string {
+function correoDesdeIdentificador(valor: string): string {
   const limpio = valor.trim();
   return /^[0-9]{4,15}$/.test(limpio) ? `${limpio}@${DOMINIO_POLIEDRO}` : limpio;
 }

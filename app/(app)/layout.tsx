@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/comunes/app-shell";
 import { exigirSesion } from "@/lib/sesion";
 
 /**

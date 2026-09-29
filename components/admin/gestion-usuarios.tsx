@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, KeyRound, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Search, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
 import type { AreaBreve, GrupoBreve, UsuarioAdmin } from "@/app/api/admin/usuarios/route";
-import { EstadoVacio } from "@/components/encabezado-pagina";
+import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

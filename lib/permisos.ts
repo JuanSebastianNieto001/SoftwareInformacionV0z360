@@ -7,12 +7,6 @@ import type { NivelAcceso, Perfil, RolGlobal } from "./supabase/tipos";
  * pulsarlo devuelve "no autorizado".
  */
 
-export function esAdmin(
-  perfil: Pick<Perfil, "rol" | "activo"> | null | undefined,
-): boolean {
-  return !!perfil && perfil.activo && perfil.rol === "admin";
-}
-
 export function puedeSubir(
   perfil: Pick<Perfil, "rol" | "activo"> | null | undefined,
 ): boolean {

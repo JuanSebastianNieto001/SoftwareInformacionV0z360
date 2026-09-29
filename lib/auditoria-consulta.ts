@@ -5,7 +5,7 @@ import { esquemaFiltrosAuditoria, type FiltrosAuditoria } from "./validaciones";
 /** UUID imposible: filtra a cero filas sin inventar sintaxis. */
 const VACIO = "00000000-0000-0000-0000-000000000000";
 
-export const COLUMNAS_AUDITORIA =
+const COLUMNAS_AUDITORIA =
   "id, ocurrio_en, usuario_id, usuario_nombre, usuario_email, accion, documento_id, doc_titulo, area_nombre, ip, user_agent" as const;
 
 /** Convierte los searchParams (strings sueltos) en filtros validados. Lo inválido se ignora. */

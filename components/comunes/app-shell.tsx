@@ -57,7 +57,7 @@ const SUBIR: Item = { href: "/subir", etiqueta: "Subir documento", icono: Upload
 const BUZON: Item = { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText };
 const BUZON_GESTION: Item = { href: "/buzon/gestion", etiqueta: "Buzón", icono: Inbox };
 
-export const ITEMS_ADMIN: Item[] = [
+const ITEMS_ADMIN: Item[] = [
   { href: "/admin/documentos", etiqueta: "Documentos", icono: Files },
   { href: "/admin/usuarios", etiqueta: "Usuarios", icono: Users },
   { href: "/admin/areas", etiqueta: "Áreas", icono: Layers },

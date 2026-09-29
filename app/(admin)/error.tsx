@@ -1,3 +1,3 @@
 "use client";
 
-export { VistaError as default } from "@/components/vista-error";
+export { VistaError as default } from "@/components/comunes/vista-error";

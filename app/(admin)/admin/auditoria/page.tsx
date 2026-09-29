@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, Download } from "lucide-react";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

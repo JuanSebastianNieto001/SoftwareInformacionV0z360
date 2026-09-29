@@ -20,9 +20,12 @@ export type DatosAcceso = {
 /** IP real del cliente detrás de Vercel (primer valor de x-forwarded-for). */
 export function ipDePeticion(req: ConCabeceras | null | undefined): string | null {
   if (!req) return null;
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() || null;
-  return req.headers.get("x-real-ip");
+  // Se recorta a 64 caracteres: la cabecera la pone quien llama y no hay
+  // motivo para guardar —ni para indexar— una cadena arbitrariamente larga.
+  const recortar = (v: string | null) => v?.trim().slice(0, 64) || null;
+  const reenviada = req.headers.get("x-forwarded-for");
+  if (reenviada) return recortar(reenviada.split(",")[0] ?? null);
+  return recortar(req.headers.get("x-real-ip"));
 }
 
 /**

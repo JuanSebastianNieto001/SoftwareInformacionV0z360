@@ -27,7 +27,7 @@ export function normalizarArchivo(archivo: File): { archivo: File; mime: MimePer
 }
 
 /** Traduce errores del servicio de Storage a mensajes para el usuario. */
-export function traducirErrorStorage(mensaje: string, status?: number): string {
+function traducirErrorStorage(mensaje: string, status?: number): string {
   const m = mensaje.toLowerCase();
   if (status === 403 || m.includes("row-level security") || m.includes("unauthorized") || m.includes("not allowed")) {
     return "No tienes permiso de edición en esta área.";

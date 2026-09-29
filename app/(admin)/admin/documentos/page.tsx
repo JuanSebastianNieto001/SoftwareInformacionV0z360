@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Files, Upload } from "lucide-react";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
-import { ETIQUETA_ESTADO } from "@/components/estado-badge";
-import { FiltrosDocumentos, limpiarBusqueda } from "@/components/filtros-documentos";
-import { ListaDocumentos } from "@/components/lista-documentos";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { ETIQUETA_ESTADO } from "@/components/documentos/estado-badge";
+import { FiltrosDocumentos, limpiarBusqueda } from "@/components/documentos/filtros-documentos";
+import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Button } from "@/components/ui/button";
 import { exigirAdmin } from "@/lib/sesion";
 import type { EstadoDocumento } from "@/lib/supabase/tipos";

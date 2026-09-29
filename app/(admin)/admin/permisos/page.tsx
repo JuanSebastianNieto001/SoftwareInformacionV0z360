@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MatrizPermisos } from "@/components/admin/matriz-permisos";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Button } from "@/components/ui/button";
 import { exigirAdmin } from "@/lib/sesion";
 

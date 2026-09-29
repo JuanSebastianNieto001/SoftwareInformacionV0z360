@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
-import { AvisoVencePronto, EstadoBadge, vencePronto } from "@/components/estado-badge";
-import { EstadoVacio } from "@/components/encabezado-pagina";
+import { AvisoVencePronto, EstadoBadge, vencePronto } from "@/components/documentos/estado-badge";
+import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChipArchivo } from "@/components/chip-archivo";
+import { ChipArchivo } from "@/components/documentos/chip-archivo";
 import { extensionVisible } from "@/lib/archivos";
 import { describirVencimiento, formatearBytes, formatearFecha } from "@/lib/formato";
 import type { DocumentoConEstado } from "@/lib/supabase/tipos";

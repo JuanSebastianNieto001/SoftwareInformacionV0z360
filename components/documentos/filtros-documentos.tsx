@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { ETIQUETA_ESTADO } from "@/components/estado-badge";
+import { ETIQUETA_ESTADO } from "@/components/documentos/estado-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ESTADOS } from "@/lib/validaciones";

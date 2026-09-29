@@ -12,9 +12,9 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { AccionesDocumento } from "@/components/acciones-documento";
-import { EncabezadoPagina } from "@/components/encabezado-pagina";
-import { AvisoVencePronto, EstadoBadge } from "@/components/estado-badge";
+import { AccionesDocumento } from "@/components/documentos/acciones-documento";
+import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
+import { AvisoVencePronto, EstadoBadge } from "@/components/documentos/estado-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Inbox } from "lucide-react";
-import { BandejaBuzon } from "@/components/admin/bandeja-buzon";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
-import { TableroBuzon } from "@/components/tablero-buzon";
+import { BandejaBuzon } from "@/components/buzon/bandeja-buzon";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { TableroBuzon } from "@/components/buzon/tablero-buzon";
 import { Button } from "@/components/ui/button";
 import { exigirGestorBuzon } from "@/lib/sesion";
 

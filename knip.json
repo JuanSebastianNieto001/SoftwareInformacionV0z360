@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/{page,layout,loading,error,not-found,route,manifest}.{ts,tsx}",
+    "public/sw.js",
+    "supabase/functions/**/index.ts"
+  ],
+  "ignore": [
+    "components/ui/**"
+  ],
+  "ignoreDependencies": [
+    "postcss",
+    "npm"
+  ],
+  "exclude": [
+    "types"
+  ]
+}

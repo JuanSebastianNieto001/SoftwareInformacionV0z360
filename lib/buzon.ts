@@ -152,7 +152,7 @@ export function radicado(consecutivo: number): string {
  * pantallazo suele ser PNG o JPG, pero quien imprime el correo a PDF no
  * debería quedarse fuera por eso.
  */
-export const MIME_EVIDENCIA = [
+const MIME_EVIDENCIA = [
   "image/png",
   "image/jpeg",
   "image/webp",
@@ -160,7 +160,7 @@ export const MIME_EVIDENCIA = [
 ] as const;
 
 /** Debe coincidir con el file_size_limit del bucket `evidencias`. */
-export const TAMANO_MAXIMO_EVIDENCIA = 10 * 1024 * 1024;
+const TAMANO_MAXIMO_EVIDENCIA = 10 * 1024 * 1024;
 
 export const ACCEPT_EVIDENCIA = [".png", ".jpg", ".jpeg", ".webp", ".pdf", ...MIME_EVIDENCIA].join(
   ",",

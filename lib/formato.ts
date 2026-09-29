@@ -3,7 +3,7 @@
  * seguridad. Zona horaria fija: la empresa opera en Colombia.
  */
 
-export const ZONA_HORARIA = "America/Bogota";
+const ZONA_HORARIA = "America/Bogota";
 const LOCALE = "es-CO";
 
 export function formatearFecha(valor: string | Date | null | undefined): string {

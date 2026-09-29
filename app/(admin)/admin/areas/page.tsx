@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Layers } from "lucide-react";
 import { FormularioArea, InterruptorArea } from "@/components/admin/gestion-areas";
-import { EncabezadoPagina, EstadoVacio } from "@/components/encabezado-pagina";
+import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearFecha } from "@/lib/formato";
 import { exigirAdmin } from "@/lib/sesion";
