@@ -5,6 +5,7 @@ import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isoDentroDe, plural } from "@/lib/formato";
+import { DecoracionCuadro, FONDO_CUADRO, type TemaCuadro } from "@/components/comunes/decoracion-cuadro";
 import { MODULOS, esModulo } from "@/lib/modulos";
 import { ETIQUETA_NIVEL, nivelEfectivo, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
@@ -82,14 +83,17 @@ export default async function PaginaInicio() {
           // pero abre su pantalla propia y no cuenta documentos.
           const modulo = esModulo(area.modulo) ? MODULOS[area.modulo] : null;
           const Icono = modulo?.icono ?? FolderOpen;
+          const tema: TemaCuadro = esModulo(area.modulo) ? area.modulo : "documentos";
           return (
             <li key={area.id}>
               <Link
                 href={modulo ? modulo.href : `/areas/${area.slug}`}
-                className="group flex h-full min-h-[150px] flex-col gap-3 rounded-[20px] border bg-card p-[22px] transition-all duration-150 hover:-translate-y-0.5 hover:border-borde-acento hover:shadow-tarjeta"
+                className="group relative isolate flex h-full min-h-[150px] flex-col gap-3 overflow-hidden rounded-[20px] border p-[22px] transition-all duration-150 hover:-translate-y-0.5 hover:border-borde-acento hover:shadow-tarjeta [&>*:not([aria-hidden])]:relative"
+                style={{ background: FONDO_CUADRO[tema] }}
               >
+                <DecoracionCuadro tema={tema} semilla={area.slug} />
                 <div className="flex items-start justify-between gap-2">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-tinte text-primary">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-white/80 text-primary shadow-sm backdrop-blur-sm">
                     <Icono className="size-5" aria-hidden />
                   </span>
                   {nivel && (
@@ -98,7 +102,7 @@ export default async function PaginaInicio() {
                     </Badge>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pr-14">
                   <h2 className="text-base leading-snug font-semibold">{area.nombre}</h2>
                   {area.descripcion && (
                     <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">

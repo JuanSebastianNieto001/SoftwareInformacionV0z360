@@ -161,3 +161,21 @@
     @apply font-sans;
   }
 }
+/* ---------- Animaciones de los cuadros de «Mis áreas» ----------
+   Se usan con motion-safe:, así que no corren con «reducir movimiento». */
+@keyframes flotar {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+@keyframes confeti {
+  0%, 100% { transform: translateY(0) rotate(var(--giro, 0deg)); }
+  50% { transform: translateY(4px) rotate(calc(var(--giro, 0deg) + 25deg)); }
+}
+@keyframes crecer {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes brillar {
+  0%, 100% { opacity: 0.55; transform: scale(0.9) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.1) rotate(18deg); }
+}
