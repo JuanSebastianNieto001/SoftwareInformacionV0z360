@@ -1,3 +1,7 @@
+/**
+ * Panel · Permisos: la matriz por persona y área, mostrando también lo que
+ * cada quien hereda de sus grupos.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MatrizPermisos } from "@/components/admin/matriz-permisos";

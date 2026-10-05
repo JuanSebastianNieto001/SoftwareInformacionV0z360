@@ -5,7 +5,7 @@ import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { NavEvaluacion } from "@/components/evaluacion/nav-evaluacion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { exigirModuloEvaluacion } from "@/lib/evaluacion-acceso";
+import { exigirModulo } from "@/lib/modulos-acceso";
 import { ETIQUETA_NIVEL } from "@/lib/permisos";
 
 /**
@@ -14,7 +14,7 @@ import { ETIQUETA_NIVEL } from "@/lib/permisos";
  * llega a renderizarse, escriba la URL que escriba.
  */
 export default async function LayoutEvaluacion({ children }: { children: ReactNode }) {
-  const { area, nivel, puedeEditar } = await exigirModuloEvaluacion();
+  const { area, nivel, puedeEditar } = await exigirModulo("evaluacion");
 
   return (
     <>

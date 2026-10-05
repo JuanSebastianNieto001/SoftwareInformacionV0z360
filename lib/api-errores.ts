@@ -1,3 +1,5 @@
+// Respuestas JSON uniformes de las rutas API y traducción de errores de
+// Postgres/PostgREST a mensaje y código HTTP.
 import { NextResponse } from "next/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 

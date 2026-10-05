@@ -1,9 +1,10 @@
 # Comunícate con VOZ360
 
-Gestor documental interno de Voz360: un sitio donde el líder de TI publica
-documentos para divulgar, el personal los consulta dejando rastro de quién
-abrió qué, y cualquiera puede presentar una PQR que se trata según los
-requisitos de la ISO 9001:2015.
+Herramienta interna de Voz360: un sitio donde se publican los documentos
+del sistema de gestión y el personal los consulta dejando rastro de quién
+abrió qué; un buzón de PQR tratado según la ISO 9001:2015; y dos módulos
+de Gestión Humana, la evaluación de desempeño 360° y los cumpleaños con
+alerta.
 
 ---
 
@@ -24,44 +25,64 @@ La única excepción es `lib/supabase/admin.ts`, que usa la clave de servicio y
 se salta RLS. Importa `server-only`, así que la compilación falla si alguien
 lo arrastra al navegador sin darse cuenta.
 
+**Un cuadro puede ser un módulo.** Las áreas con `modulo` abren una pantalla
+propia en lugar de una lista de documentos, y heredan la matriz de permisos
+sin añadir nada. Cómo se añade uno está en `docs/modulos.md`.
+
 ---
 
 ## Estructura
 
 ```
 app/
-  (app)/        Pantallas del día a día: inicio, áreas, documentos, buzón,
-                evaluación de desempeño (/evaluacion)
+  (app)/        Pantallas del día a día: Mis áreas, documentos, buzón,
+                /evaluacion (desempeño 360°) y /cumpleanos
   (admin)/      Panel: documentos, usuarios, áreas, grupos, permisos, auditoría
-  (auth)/       Login y cambio de contraseña
-  acciones/     Server actions compartidas (auth, buzón, evaluación)
-  api/          Route handlers: subida, descarga, CSV, cron
+  (auth)/       Entrada y cambio de contraseña
+  acciones/     Server actions: auth, buzón, evaluación, cumpleaños,
+                notificaciones, admin
+  api/          Route handlers: subida y descarga, CSV, usuarios (service
+                role), cron de purga
 components/
-  comunes/      Cabecera, encabezado de página, pantalla de error
+  comunes/      Marco de la app, campana de notificaciones, encabezados,
+                diseño de los cuadros, botón de borrado, pantalla de error
   documentos/   Subir, editar, listar, filtrar, insignias de estado
   buzon/        Formulario de PQR, bandeja, tablero, tratamiento
-  evaluacion/   Hoja por cargo, matriz 360 y navegación del módulo de evaluación
+  evaluacion/   Hoja por cargo, matriz 360, alta, pestañas del módulo
+  cumpleanos/   Alta y edición de cumpleaños
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
-  supabase/     Clientes (navegador, servidor, admin, proxy) y tipos
+  supabase/     Clientes (navegador, servidor, admin, middleware) y tipos
   validaciones.ts   Esquemas Zod compartidos entre cliente y servidor
-  permisos.ts       Espejo en TypeScript de las reglas de RLS
+  permisos.ts       Espejo en TypeScript de las reglas de RLS (solo para pintar)
+  modulos.ts        Qué cuadros son módulos: ruta, icono, pie
+  modulos-acceso.ts Guardia de los módulos: sin permiso sobre el cuadro, 404
   sesion.ts         exigirSesion / exigirAdmin / exigirGestorBuzon
   auditoria*.ts     Registro y consulta de accesos
   evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
-  evaluacion-acceso.ts  Guardia del módulo: sin permiso sobre el cuadro, 404
+  cumpleanos.ts     Etiquetas y utilidades del módulo de cumpleaños
+  notificaciones.ts Carga de avisos para la campana (genera los pendientes)
 supabase/
   migrations/   El esquema, en orden. Es la fuente de verdad
   functions/    Edge Function `purgar` (borra archivos vencidos)
-  scripts/      Pasos manuales de puesta en marcha
+  scripts/      Pasos manuales de puesta en marcha y verificación
+pruebas/
+  rls.test.mjs              Las comprobaciones de las políticas de acceso
+  bundle-sin-secretos.mjs   Que ninguna clave secreta llegue al navegador
 docs/
   seguridad.md  Modelo de amenazas, qué se arregló y qué sigue abierto
   permisos.md   Cómo se calcula lo que cada persona puede hacer
+  modulos.md    Cómo se añade un cuadro-módulo
 ```
 
 `proxy.ts` en la raíz es el middleware (Next.js 16 lo renombró). Refresca la
-sesión y redirige a `/login`; no autoriza nada.
+sesión, cierra las inactivas más de 30 minutos y redirige a `/login`; no
+autoriza nada.
+
+Cada archivo de `app/`, `components/` y `lib/` empieza con una cabecera que
+dice qué es y por qué existe. Los comentarios del cuerpo explican
+decisiones, no repiten el código.
 
 ---
 
@@ -94,10 +115,17 @@ Variables necesarias, todas en el panel de Vercel del proyecto:
 | `npm run dev` | Servidor de desarrollo |
 | `npm run typecheck` | `next typegen` y `tsc --noEmit` |
 | `npm run lint` | ESLint |
+| `npm run prueba:rls` | Las comprobaciones de las políticas de acceso (Postgres embebido) |
+| `npm run prueba:bundle` | Que la clave de servicio no llegue al navegador |
+| `npm run codigo-muerto` | Exportaciones y archivos que nadie usa |
+| `npm audit --omit=dev` | Vulnerabilidades conocidas en dependencias de producción |
 | `npx next build` | Compilación de producción |
 | `npx vercel deploy --prod` | Despliega desde el código local |
 
-Antes de dar por terminado un cambio: **typecheck, lint y build**, los tres.
+Antes de dar por terminado un cambio: **typecheck, lint, build, las dos
+pruebas y el audit**. Tras desplegar, retirar los despliegues anteriores
+(`npx vercel ls` / `npx vercel remove`): sus direcciones siguen vivas y
+apuntan a la misma base con código viejo.
 
 ---
 
@@ -133,6 +161,9 @@ si el proyecto está enlazado.
   valida en los dos extremos. Ojo con el viaje de ida y vuelta: el cliente
   valida y manda su propia salida, que el servidor vuelve a parsear, así que
   los esquemas tienen que aceptar lo que ellos mismos producen.
+- **Las acciones de servidor no deciden permisos.** Validan la forma, usan
+  el cliente de sesión y dejan que RLS acepte o rechace. Si tocan
+  información de personas, dejan rastro con `registrarAcceso`.
 
 ---
 
@@ -140,4 +171,5 @@ si el proyecto está enlazado.
 
 - [`docs/permisos.md`](docs/permisos.md) — quién puede hacer qué y cómo se calcula
 - [`docs/seguridad.md`](docs/seguridad.md) — modelo de amenazas y estado actual
+- [`docs/modulos.md`](docs/modulos.md) — cómo se añade un cuadro-módulo
 - [`AGENTS.md`](AGENTS.md) — nota sobre esta versión de Next.js

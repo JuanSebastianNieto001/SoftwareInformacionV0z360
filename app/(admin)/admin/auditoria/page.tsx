@@ -1,3 +1,8 @@
+/**
+ * Panel · Auditoría: quién abrió o descargó qué, con filtros por persona,
+ * grupo, área, documento y fechas, y exportación a CSV. Solo el
+ * administrador ve la tabla accesos (RLS).
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, Download } from "lucide-react";

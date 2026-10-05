@@ -1,3 +1,7 @@
+/**
+ * Panel · Documentos: todos los documentos de todas las áreas con su estado
+ * de vigencia.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Files, Upload } from "lucide-react";

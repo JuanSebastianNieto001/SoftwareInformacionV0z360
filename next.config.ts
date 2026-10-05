@@ -19,11 +19,15 @@ const nextConfig: NextConfig = {
    */
   async headers() {
     const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    // 'unsafe-eval' solo lo necesita el servidor de desarrollo (recarga en
+    // caliente y mapas de código). En producción, concederlo le regala a
+    // cualquier XSS la posibilidad de ejecutar texto como código.
+    const evalDesarrollo = process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'";
     const csp = [
       "default-src 'self'",
       // Next.js arranca con scripts en línea; sin 'unsafe-inline' la página
       // no hidrata. Se compensa cerrando todo lo demás.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      `script-src 'self' 'unsafe-inline'${evalDesarrollo}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
@@ -50,6 +54,9 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
           },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          // Es una herramienta interna: ningún buscador tiene por qué
+          // indexar ni siquiera la pantalla de entrada.
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       },
     ];

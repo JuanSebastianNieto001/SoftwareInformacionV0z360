@@ -1,3 +1,4 @@
+// Guardia de acceso de los cuadros-módulo.
 import "server-only";
 
 import { cache } from "react";

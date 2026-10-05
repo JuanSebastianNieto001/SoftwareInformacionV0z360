@@ -1,9 +1,11 @@
 "use client";
 
+// Matriz de permisos por persona: una fila por usuario y un selector de nivel
+// por área, indicando lo que ya hereda de sus grupos.
 import { useMemo, useState, useTransition } from "react";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
-import { asignarPermiso } from "@/app/(admin)/admin/acciones";
+import { asignarPermiso } from "@/app/acciones/admin";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ETIQUETA_NIVEL, ETIQUETA_ROL, nivelEfectivo } from "@/lib/permisos";

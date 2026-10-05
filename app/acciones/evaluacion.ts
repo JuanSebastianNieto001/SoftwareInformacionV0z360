@@ -1,5 +1,7 @@
 "use server";
 
+// Acciones del módulo de evaluación de desempeño (formatos por cargo y matriz
+// 360).
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";

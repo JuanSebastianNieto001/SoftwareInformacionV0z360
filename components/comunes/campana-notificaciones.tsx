@@ -1,11 +1,12 @@
 "use client";
 
+// Campana de notificaciones de la cabecera.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
-import { marcarNotificacionLeida, marcarTodasLeidas } from "@/app/acciones/cumpleanos";
+import { marcarNotificacionLeida, marcarTodasLeidas } from "@/app/acciones/notificaciones";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

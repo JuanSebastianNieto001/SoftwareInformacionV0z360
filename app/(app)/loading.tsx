@@ -1,3 +1,6 @@
+/**
+ * Esqueleto de carga de la aplicación mientras llegan los datos.
+ */
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Cargando() {

@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Formulario de cambio de contraseña. Cuando el cambio es obligatorio
+ * (primer ingreso o restablecimiento por TI) no hay forma de saltarlo.
+ */
 import Link from "next/link";
 import { useActionState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";

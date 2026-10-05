@@ -1,5 +1,8 @@
 "use server";
 
+// Acciones del panel de administración: áreas, permisos por persona y grupos.
+// Validan la forma de los datos y dejan que las políticas *_admin_all de RLS
+// acepten o rechacen.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { mensajePostgrest } from "@/lib/api-errores";

@@ -1,3 +1,4 @@
+// Sesión en el servidor: exigirSesion, exigirAdmin y exigirGestorBuzon.
 import "server-only";
 
 import { cache } from "react";

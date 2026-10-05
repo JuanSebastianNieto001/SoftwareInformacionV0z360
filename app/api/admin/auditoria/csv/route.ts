@@ -1,3 +1,5 @@
+// Exporta la auditoría a CSV con los mismos filtros de la pantalla. Solo
+// administradores (exigirAdminApi).
 import { exigirAdminApi } from "@/lib/api-admin";
 import { respuestaError } from "@/lib/api-errores";
 import {

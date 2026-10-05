@@ -1,5 +1,7 @@
 "use client";
 
+// Botones de un documento (abrir, descargar, editar, eliminar) según el nivel
+// efectivo de quien mira.
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";

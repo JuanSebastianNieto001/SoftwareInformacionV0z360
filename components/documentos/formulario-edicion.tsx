@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Editar metadatos y vigencia de un documento, o reemplazar el archivo
+ * subiendo la versión nueva.
+ */
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AlertCircle, Loader2, RefreshCw, Save } from "lucide-react";

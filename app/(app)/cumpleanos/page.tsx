@@ -1,10 +1,12 @@
+// Módulo de cumpleaños: hoy, mañana, próximos 30 días y la lista completa por
+// team leader.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Cake, Filter } from "lucide-react";
 import { eliminarCumple } from "@/app/acciones/cumpleanos";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { FormularioCumple } from "@/components/cumpleanos/formulario-cumple";
-import { BotonEliminar } from "@/components/evaluacion/boton-eliminar";
+import { BotonEliminar } from "@/components/comunes/boton-eliminar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

@@ -1,5 +1,6 @@
 "use client";
 
+// Diálogo de alta y edición de un cumpleaños.
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Loader2, Pencil, Plus } from "lucide-react";

@@ -1,5 +1,6 @@
 "use client";
 
+// Bandeja de PQR pendientes y tratadas, para quien gestiona el buzón.
 import { useState } from "react";
 import { DialogoRechazo, DialogoTratamiento, type Persona } from "./gestion-sugerencias";
 import { Badge } from "@/components/ui/badge";

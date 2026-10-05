@@ -1,5 +1,7 @@
 "use client";
 
+// Formulario de PQR: el tipo elegido decide qué campos aparecen
+// (CAMPOS_POR_TIPO).
 import { useState, useTransition } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";

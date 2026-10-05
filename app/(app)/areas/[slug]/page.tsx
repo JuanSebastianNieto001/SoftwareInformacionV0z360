@@ -1,3 +1,8 @@
+/**
+ * Un cuadro de documentos: lo que hay en el área, con búsqueda y filtro por
+ * estado. Si el cuadro es un módulo, redirige a su pantalla. RLS: sin
+ * permiso sobre el área la fila no vuelve y la URL responde 404.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";

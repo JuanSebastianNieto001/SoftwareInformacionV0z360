@@ -1,3 +1,7 @@
+/**
+ * Panel · Áreas: lista los cuadros, permite crear, editar y activar o
+ * desactivar.
+ */
 import type { Metadata } from "next";
 import { Layers } from "lucide-react";
 import { FormularioArea, InterruptorArea } from "@/components/admin/gestion-areas";

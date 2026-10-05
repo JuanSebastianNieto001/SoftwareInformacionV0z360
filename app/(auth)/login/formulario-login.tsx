@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Formulario de entrada: usuario (correo o número de Poliedro) y contraseña
+ * con ver/ocultar.
+ */
 import { useActionState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { iniciarSesion, type EstadoFormulario } from "@/app/acciones/auth";

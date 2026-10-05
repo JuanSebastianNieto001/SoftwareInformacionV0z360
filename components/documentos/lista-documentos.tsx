@@ -1,3 +1,5 @@
+// Tabla de documentos con estado de vigencia; opcionalmente el área y los
+// conteos de consulta.
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { AvisoVencePronto, EstadoBadge, vencePronto } from "@/components/documentos/estado-badge";

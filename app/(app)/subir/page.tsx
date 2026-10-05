@@ -1,3 +1,7 @@
+/**
+ * Subir documento: se elige entre las áreas donde se tiene edición. Los
+ * cuadros-módulo no reciben documentos.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";

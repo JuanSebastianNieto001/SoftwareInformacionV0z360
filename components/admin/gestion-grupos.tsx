@@ -1,5 +1,7 @@
 "use client";
 
+// Panel de grupos: cada grupo con sus permisos por área y sus miembros, con
+// buscador.
 import { useMemo, useState, useTransition } from "react";
 import { Check, Loader2, Plus, Search, Users2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +10,7 @@ import {
   asignarMiembro,
   asignarPermisoGrupo,
   crearGrupo,
-} from "@/app/(admin)/admin/acciones";
+} from "@/app/acciones/admin";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

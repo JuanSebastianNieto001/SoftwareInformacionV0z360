@@ -1,5 +1,6 @@
 "use client";
 
+// Botón de borrado con confirmación, compartido por los módulos.
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";

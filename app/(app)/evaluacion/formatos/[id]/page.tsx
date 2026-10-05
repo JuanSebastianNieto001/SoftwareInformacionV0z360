@@ -1,3 +1,8 @@
+/**
+ * Una hoja de evaluación por cargo. Carga la evaluación, sus criterios,
+ * calificaciones, observaciones y pesos; registra la apertura en la
+ * auditoría y monta HojaEvaluacion.
+ */
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -8,14 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { registrarAcceso } from "@/lib/auditoria";
 import { ETIQUETA_ESTADO_EVALUACION, PESO_DEFECTO, type PerspectivaFormato } from "@/lib/evaluacion";
-import { exigirModuloEvaluacion } from "@/lib/evaluacion-acceso";
+import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFechaHora } from "@/lib/formato";
 
 export const metadata: Metadata = { title: "Evaluación" };
 
 export default async function PaginaEvaluacion({ params }: PageProps<"/evaluacion/formatos/[id]">) {
   const { id } = await params;
-  const { supabase, user, perfil, puedeEditar, puedeEliminar } = await exigirModuloEvaluacion();
+  const { supabase, user, perfil, puedeEditar, puedeEliminar } = await exigirModulo("evaluacion");
 
   // RLS: sin permiso sobre el módulo la fila no vuelve, y la URL es un 404.
   const { data: evaluacion } = await supabase.from("evaluaciones").select("*").eq("id", id).maybeSingle();

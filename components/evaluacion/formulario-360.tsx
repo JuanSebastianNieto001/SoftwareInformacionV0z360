@@ -1,5 +1,6 @@
 "use client";
 
+// Formulario de una respuesta de la matriz 360.
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { AlertCircle, Loader2, Send } from "lucide-react";

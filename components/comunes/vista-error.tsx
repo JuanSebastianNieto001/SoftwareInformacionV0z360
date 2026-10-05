@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Pantalla de error genérica que usan los error.tsx de cada grupo de rutas.
+ */
 import Link from "next/link";
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";

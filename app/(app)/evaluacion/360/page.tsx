@@ -1,8 +1,12 @@
+/**
+ * Matriz 360: registrar respuestas y ver la tabla con promedio, estatus y
+ * medias por competencia.
+ */
 import type { Metadata } from "next";
 import { Users } from "lucide-react";
 import { eliminarRespuesta360 } from "@/app/acciones/evaluacion";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
-import { BotonEliminar } from "@/components/evaluacion/boton-eliminar";
+import { BotonEliminar } from "@/components/comunes/boton-eliminar";
 import { Formulario360 } from "@/components/evaluacion/formulario-360";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,13 +17,13 @@ import {
   radicado360,
   varianteNota,
 } from "@/lib/evaluacion";
-import { exigirModuloEvaluacion } from "@/lib/evaluacion-acceso";
+import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFecha } from "@/lib/formato";
 
 export const metadata: Metadata = { title: "Matriz 360" };
 
 export default async function PaginaMatriz360() {
-  const { supabase, perfil, puedeEditar, puedeEliminar } = await exigirModuloEvaluacion();
+  const { supabase, perfil, puedeEditar, puedeEliminar } = await exigirModulo("evaluacion");
 
   const [{ data: cargos }, { data: preguntas }, { data: respuestas, error }] = await Promise.all([
     supabase.from("evaluacion_cargos").select("id, nombre").eq("activo", true).order("orden"),

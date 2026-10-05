@@ -1,9 +1,10 @@
 "use client";
 
+// Panel de áreas: lista, diálogo de crear/editar e interruptor de activa.
 import { useState, useTransition } from "react";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { actualizarArea, cambiarEstadoArea, crearArea } from "@/app/(admin)/admin/acciones";
+import { actualizarArea, cambiarEstadoArea, crearArea } from "@/app/acciones/admin";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

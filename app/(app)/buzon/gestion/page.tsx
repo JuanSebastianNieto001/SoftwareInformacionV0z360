@@ -1,3 +1,7 @@
+/**
+ * Bandeja del buzón para quien lo gestiona: tablero de indicadores y
+ * tratamiento de cada PQR.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Inbox } from "lucide-react";

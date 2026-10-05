@@ -85,9 +85,11 @@ El cálculo completo, en orden:
 
 ## Un cuadro puede ser un módulo
 
-Desde la migración `012`, un área puede llevar `modulo = 'evaluacion'`. En
-«Mis áreas» se ve como un cuadro más, pero en lugar de listar documentos
-abre el módulo de evaluación de desempeño (`/evaluacion`).
+Desde la migración `012`, un área puede llevar `modulo`. En «Mis áreas» se
+ve como un cuadro más, pero en lugar de listar documentos abre una pantalla
+propia. Hay dos: `evaluacion` (`/evaluacion`, evaluación de desempeño) y
+`cumpleanos` (`/cumpleanos`, cumpleaños con alertas). Cómo se añade otro
+está en `docs/modulos.md`.
 
 Lo importante es lo que **no** cambia: el acceso se decide igual que en
 cualquier otro cuadro, con `nivel_en_area()`, la matriz por persona y los
@@ -97,11 +99,16 @@ código.
 
 Qué significa cada peldaño dentro del módulo:
 
-| Nivel | En el módulo de evaluación |
-|---|---|
-| `lectura` / `descarga` | Consultar evaluaciones, dashboard y resumen |
-| `edicion` | Crear evaluaciones, calificar, cerrar, registrar respuestas 360 |
-| `total` (o admin) | Además eliminar |
+| Nivel | Evaluación de desempeño | Cumpleaños |
+|---|---|---|
+| `lectura` / `descarga` | Consultar evaluaciones, dashboard y resumen | Ver la lista y recibir las alertas |
+| `edicion` | Crear evaluaciones, calificar, cerrar, registrar respuestas 360 | Agregar, corregir y desactivar cumpleaños |
+| `total` (o admin) | Además eliminar | Además eliminar |
+
+Las **alertas de cumpleaños** las recibe quien tiene cualquier nivel sobre
+ese cuadro: `generar_alertas_cumpleanos()` comprueba `nivel_en_area` antes
+de crear nada, y cada notificación es de una sola persona (RLS sobre
+`notificaciones`, y solo `leida_en` es modificable).
 
 Las tablas del módulo (`evaluaciones`, `evaluacion_calificaciones`,
 `evaluacion_360_respuestas`…) tienen sus propias políticas, todas escritas

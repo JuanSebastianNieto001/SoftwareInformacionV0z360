@@ -1,3 +1,4 @@
+// Exporta las PQR a CSV para quien gestiona el buzón.
 import { exigirGestorBuzonApi } from "@/lib/api-admin";
 import { respuestaError } from "@/lib/api-errores";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO, etiquetaArea, radicado } from "@/lib/buzon";

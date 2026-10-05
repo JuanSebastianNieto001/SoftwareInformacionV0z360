@@ -1,5 +1,8 @@
 "use server";
 
+// Buzón de PQR: presentar un registro y tratarlo (estados, causa raíz,
+// respuesta a quien reporta). Sin comprobaciones de permiso en TypeScript:
+// decide RLS.
 import { revalidatePath } from "next/cache";
 import { mensajePostgrest } from "@/lib/api-errores";
 import { rutaEvidencia } from "@/lib/buzon";

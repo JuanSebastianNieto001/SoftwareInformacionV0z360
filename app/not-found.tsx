@@ -1,3 +1,8 @@
+/**
+ * Pantalla 404. Es también lo que ve quien escribe a mano la URL de un
+ * cuadro o un documento sin permiso: RLS no devuelve la fila y, para esa
+ * persona, la página no existe.
+ */
 import Link from "next/link";
 import { FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";

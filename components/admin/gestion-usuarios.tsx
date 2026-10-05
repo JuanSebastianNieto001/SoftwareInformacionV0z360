@@ -1,5 +1,8 @@
 "use client";
 
+// Panel de usuarios: lista con filtros (nombre o correo, grupo, rol, estado,
+// nivel sobre un área), alta, cambio de rol, activación, contraseña temporal y
+// gestión del buzón.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, KeyRound, Loader2, MoreHorizontal, Pencil, Plus, RefreshCw, Search, UserCheck, UserX } from "lucide-react";

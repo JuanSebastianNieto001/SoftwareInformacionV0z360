@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Publicar un documento. El archivo va primero a Storage (la política del
+ * bucket exige edición en el área) y los metadatos después por la API; si
+ * esto segundo falla, el servidor borra el archivo.
+ */
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AlertCircle, Loader2, Upload } from "lucide-react";

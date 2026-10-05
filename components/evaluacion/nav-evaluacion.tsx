@@ -1,5 +1,6 @@
 "use client";
 
+// Pestañas del módulo de evaluación.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ClipboardList, LayoutDashboard, Users } from "lucide-react";

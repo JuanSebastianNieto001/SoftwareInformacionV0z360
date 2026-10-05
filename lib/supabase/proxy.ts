@@ -9,6 +9,19 @@ const RUTAS_PUBLICAS = ["/login", "/offline"];
 const RUTAS_API_SIN_SESION = ["/api/cron/"];
 
 /**
+ * Caducidad por inactividad. Supabase renueva la sesión mientras el
+ * navegador siga pidiendo páginas, así que una sesión abierta en un equipo
+ * compartido duraba indefinidamente: quien se sentara después entraba con
+ * el nombre del anterior. Esta cookie guarda la última actividad; pasado
+ * el plazo sin ninguna petición, la siguiente cierra la sesión.
+ *
+ * Treinta minutos es el equilibrio entre no molestar a quien trabaja con
+ * la aplicación abierta y no dejar una sesión viva toda la tarde.
+ */
+const COOKIE_ACTIVIDAD = "v360_actividad";
+const INACTIVIDAD_MAXIMA_MS = 30 * 60 * 1000;
+
+/**
  * Refresca la sesión de Supabase en cada petición y redirige a /login si
  * no hay usuario. Se ejecuta desde proxy.ts (antes middleware.ts).
  *
@@ -51,6 +64,40 @@ export async function actualizarSesion(request: NextRequest) {
   );
   const esApi = pathname.startsWith("/api/");
 
+  if (user) {
+    const ultima = Number(request.cookies.get(COOKIE_ACTIVIDAD)?.value ?? 0);
+    const ahora = Date.now();
+
+    if (ultima > 0 && ahora - ultima > INACTIVIDAD_MAXIMA_MS) {
+      // signOut escribe las cookies de sesión ya vacías en `respuesta`
+      // (vía setAll); se copian a la redirección para que lleguen al
+      // navegador junto con el cambio de página.
+      await supabase.auth.signOut();
+      if (esApi) {
+        const sinSesion = NextResponse.json({ error: "Sesión caducada por inactividad" }, { status: 401 });
+        respuesta.cookies.getAll().forEach((c) => sinSesion.cookies.set(c));
+        sinSesion.cookies.delete(COOKIE_ACTIVIDAD);
+        return sinSesion;
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set("motivo", "inactividad");
+      const redireccion = NextResponse.redirect(url);
+      respuesta.cookies.getAll().forEach((c) => redireccion.cookies.set(c));
+      redireccion.cookies.delete(COOKIE_ACTIVIDAD);
+      return redireccion;
+    }
+
+    respuesta.cookies.set(COOKIE_ACTIVIDAD, String(ahora), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+  }
+
   if (!user && !esPublica && !esApiSinSesion) {
     if (esApi) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -66,7 +113,9 @@ export async function actualizarSesion(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
-    return NextResponse.redirect(url);
+    const redireccion = NextResponse.redirect(url);
+    respuesta.cookies.getAll().forEach((c) => redireccion.cookies.set(c));
+    return redireccion;
   }
 
   return respuesta;

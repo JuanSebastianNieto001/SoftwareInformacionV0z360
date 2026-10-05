@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Zona de selección de archivo con validación de tipo y tamaño, y barra de
+ * progreso de subida.
+ */
 import { useId, useRef } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

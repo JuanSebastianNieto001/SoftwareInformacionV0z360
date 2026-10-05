@@ -889,6 +889,52 @@ await prueba("con Vista no se agregan cumpleaños; con Edición sí, y solo en s
   igual(p.rows[0].g, "2028-02-29", "año bisiesto");
 });
 
+console.log("\nEndurecimiento (015)");
+grupo("Endurecimiento (015)");
+
+await prueba("una notificación propia solo admite cambiar leida_en", async () => {
+  await comoDebeFallar(
+    U.lector,
+    (tx) => tx.query(`update notificaciones set titulo = 'reescrito' where usuario_id = $1`, [U.lector]),
+    /permission denied/i,
+  );
+  await comoDebeFallar(
+    U.lector,
+    (tx) => tx.query(`update notificaciones set clave = 'otra' where usuario_id = $1`, [U.lector]),
+    /permission denied/i,
+  );
+  const ok = await como(U.lector, (tx) => tx.query(`update notificaciones set leida_en = now() where usuario_id = $1`, [U.lector]));
+  igual(ok.affectedRows >= 1, true, "leida_en sí se puede");
+});
+
+await prueba("intentos_login no se lee ni se escribe directamente", async () => {
+  await comoDebeFallar(U.admin, (tx) => tx.query(`select count(*) from intentos_login`), /permission denied/i);
+  await comoDebeFallar(U.admin, (tx) => tx.query(`insert into intentos_login (correo) values ('x@y.z')`), /permission denied/i);
+});
+
+await prueba("el cargo de una evaluación con calificaciones no cambia, ni para el admin", async () => {
+  const cargo2 = (await db.query(`select id from evaluacion_cargos where codigo = 'CARGO-02'`)).rows[0].id;
+  const ins = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into evaluaciones (area_id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, creado_por)
+       values ($1, $2, '2027', 'Prueba Cargo', 'Eva', $3) returning id`,
+      [EVA, CARGO, U.editor],
+    ),
+  );
+  const ev = ins[0].id;
+  // Sin calificaciones el cargo aún se puede corregir.
+  const libre = await como(U.editor, (tx) => tx.query(`update evaluaciones set cargo_id = $2 where id = $1`, [ev, cargo2]));
+  igual(libre.affectedRows, 1, "sin notas, se cambia");
+  await como(U.editor, (tx) => tx.query(`update evaluaciones set cargo_id = $2 where id = $1`, [ev, CARGO]));
+  await como(U.editor, (tx) =>
+    tx.query(`insert into evaluacion_calificaciones (evaluacion_id, criterio_id, perspectiva, calificacion) values ($1, $2, 'pares', 4)`, [ev, CRITERIOS[0]]),
+  );
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update evaluaciones set cargo_id = $2 where id = $1`, [ev, cargo2]), /No se puede cambiar el cargo/);
+  await comoDebeFallar(U.admin, (tx) => tx.query(`update evaluaciones set cargo_id = $2 where id = $1`, [ev, cargo2]), /No se puede cambiar el cargo/);
+  await db.query(`delete from evaluaciones where id = $1`, [ev]);
+});
+
 // ---------------------------------------------------------------------------
 // 5. Resumen
 // ---------------------------------------------------------------------------

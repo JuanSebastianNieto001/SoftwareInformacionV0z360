@@ -1,3 +1,7 @@
+/**
+ * Cambio de contraseña: obligatorio en el primer ingreso o cuando TI lo
+ * marca; voluntario el resto del tiempo.
+ */
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { KeyRound } from "lucide-react";

@@ -1,5 +1,6 @@
 "use client";
 
+// La hoja de calificación por cargo, con recálculo en vivo.
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import {
@@ -19,7 +20,7 @@ import {
   guardarCalificaciones,
   reabrirEvaluacion,
 } from "@/app/acciones/evaluacion";
-import { BotonEliminar } from "@/components/evaluacion/boton-eliminar";
+import { BotonEliminar } from "@/components/comunes/boton-eliminar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

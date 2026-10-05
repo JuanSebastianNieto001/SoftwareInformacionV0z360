@@ -1,3 +1,4 @@
+// Listado de evaluaciones por cargo, con filtros por cargo, periodo y estado.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, Filter } from "lucide-react";
@@ -11,7 +12,7 @@ import {
   nivelFormato,
   varianteNota,
 } from "@/lib/evaluacion";
-import { exigirModuloEvaluacion } from "@/lib/evaluacion-acceso";
+import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFecha } from "@/lib/formato";
 import { ESTADOS_EVALUACION } from "@/lib/validaciones";
 import type { EstadoEvaluacion } from "@/lib/supabase/tipos";
@@ -24,7 +25,7 @@ const SELECT =
 /** El listado de hojas de cargo: una fila por evaluación hecha. */
 export default async function PaginaFormatos({ searchParams }: PageProps<"/evaluacion/formatos">) {
   const sp = await searchParams;
-  const { supabase, puedeEditar } = await exigirModuloEvaluacion();
+  const { supabase, puedeEditar } = await exigirModulo("evaluacion");
 
   const cargoId = typeof sp.cargo === "string" ? sp.cargo : "";
   const periodo = typeof sp.periodo === "string" ? sp.periodo.trim() : "";

@@ -1,3 +1,7 @@
+/**
+ * Buzón para quien reporta: el formulario de PQR y el estado de sus propios
+ * registros.
+ */
 import type { Metadata } from "next";
 import { Inbox } from "lucide-react";
 import { FormularioSugerencia } from "@/components/buzon/formulario-sugerencia";

@@ -1,3 +1,8 @@
+/**
+ * Inicio · Mis áreas: los cuadros a los que se tiene acceso (RLS filtra),
+ * cada uno con su diseño, más el buzón. Quien puede publicar ve además lo
+ * que vence en la semana.
+ */
 import Link from "next/link";
 import { ChevronRight, FolderOpen, MessageSquareText, Upload } from "lucide-react";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";

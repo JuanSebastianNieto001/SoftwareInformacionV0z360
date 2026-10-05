@@ -1,3 +1,7 @@
+/**
+ * Manifiesto PWA: nombre, colores e iconos para instalar la aplicación en el
+ * escritorio o el celular.
+ */
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {

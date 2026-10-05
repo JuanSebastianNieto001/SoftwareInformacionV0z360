@@ -1,4 +1,5 @@
 import type { PerspectivaEvaluacion } from "./supabase/tipos";
+import { PERSPECTIVAS_FORMATO } from "./validaciones";
 
 /**
  * Evaluación de desempeño 360°: etiquetas, escalas y las FÓRMULAS del
@@ -13,14 +14,12 @@ import type { PerspectivaEvaluacion } from "./supabase/tipos";
 // Perspectivas y pesos
 // ---------------------------------------------------------------------------
 
-/** Las cuatro del formato por cargo (columnas C..J de cada hoja). */
-export const PERSPECTIVAS_FORMATO = [
-  "autoevaluacion",
-  "jefe_inmediato",
-  "pares",
-  "subordinados",
-] as const;
-
+/**
+ * Las cuatro del formato por cargo (columnas C..J de cada hoja). La lista
+ * vive en validaciones.ts, que es donde la usa el esquema; aquí solo se
+ * reexporta para que quien calcula no tenga dos fuentes de verdad.
+ */
+export { PERSPECTIVAS_FORMATO };
 export type PerspectivaFormato = (typeof PERSPECTIVAS_FORMATO)[number];
 
 /**
@@ -138,15 +137,6 @@ export function nivelCompetencia(promedio: number | null | undefined): string | 
   if (promedio >= 4) return "Competente";
   if (promedio >= 3) return "En desarrollo";
   return "A mejorar";
-}
-
-/** Columna E del Resumen General por cargo (E12..E26). */
-export function nivelCargoResumen(nota: number | null | undefined): string | null {
-  if (nota === null || nota === undefined) return null;
-  if (nota >= 4.5) return "Excelente";
-  if (nota >= 3.8) return "Satisfactorio Alto";
-  if (nota >= 3) return "En desarrollo";
-  return "Plan de mejora";
 }
 
 /** E28 del Resumen y J22/K22 del Dashboard: el corte general es 3. */

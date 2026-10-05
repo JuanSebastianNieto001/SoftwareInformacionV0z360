@@ -113,10 +113,13 @@ Es inevitable: el navegador la necesita para subir archivos directamente a
 Storage y saltarse el límite de tamaño de las funciones de Vercel. El CSP es
 lo que compensa este riesgo, porque cierra la vía de salida de un XSS.
 
-### No hay caducidad por inactividad
+### ~~No hay caducidad por inactividad~~ · resuelto el 5 de octubre
 
-Una sesión abierta sigue abierta. En un equipo compartido, quien se siente
-después entra sin más. Es lo que conviene atacar a continuación.
+Una sesión abierta seguía abierta: en un equipo compartido, quien se
+sentara después entraba sin más. Desde el 5 de octubre el middleware guarda
+la última actividad en una cookie `httpOnly` y, pasados **30 minutos** sin
+ninguna petición, la siguiente cierra la sesión y lleva a `/login` con el
+aviso correspondiente. Ver `lib/supabase/proxy.ts`.
 
 ---
 
@@ -131,6 +134,77 @@ con la misma cuenta de Google—.
 **Las URL de despliegue antiguas.** Vercel conserva una copia de cada versión
 en su propia dirección. Apuntan a la **misma base de datos** con código viejo.
 Conviene borrarlas después de cada despliegue y usar solo la dirección corta.
+
+---
+
+## Revisión del 5 de octubre de 2026
+
+Segunda pasada, tras añadir los módulos de evaluación de desempeño (012,
+013) y cumpleaños con notificaciones (014). Mismo método: superficie de
+escritura (acciones de servidor, rutas API, funciones `SECURITY DEFINER`),
+políticas nuevas, dependencias y configuración.
+
+### Corregido
+
+**Vulnerabilidad crítica en Next.js · CRÍTICO.** `npm audit` señalaba en la
+versión instalada (16.3.4) una ejecución remota de código en `next/og`
+(GHSA-vcvr-r3jv-pc5j) y otras siete altas en dependencias de la
+herramienta `shadcn`. La aplicación no usa `next/og`, pero una dependencia
+con una crítica conocida no se deja. Next.js a 16.3.8; `shadcn` —que es
+una herramienta de línea de comandos, no código de la aplicación— pasa a
+`devDependencies`; el resto con `npm audit fix`. Resultado en producción:
+**0 vulnerabilidades**. `npm audit --omit=dev` queda como comprobación
+previa a cada despliegue.
+
+**Sesiones sin caducidad · MEDIO.** Resuelto (ver arriba).
+
+**`'unsafe-eval'` en producción · MEDIO.** La política de contenido lo
+concedía siempre; solo lo necesita el servidor de desarrollo. Ahora
+condicionado a `NODE_ENV !== 'production'`.
+
+**Notificaciones editables · BAJO.** La política de `update` limitaba a las
+filas propias, pero dentro de ellas cualquier columna era modificable. Con
+un privilegio a nivel de columna, `leida_en` es lo único que acepta un
+cambio (015).
+
+**Cargo de una evaluación mutable · BAJO.** El disparador de coherencia
+comprobaba cada calificación contra el cargo, pero no impedía cambiar el
+cargo después de calificar. Nuevo disparador (015).
+
+**Comparación del secreto del cron · BAJO.** `!==` filtra por tiempo cuántos
+caracteres iniciales acertó quien prueba; ahora `timingSafeEqual`.
+
+**`intentos_login` con privilegio de tabla · BAJO.** Sin políticas ya estaba
+cerrada; se revoca también el privilegio por defensa en profundidad (015).
+
+Además: `X-Robots-Tag: noindex` (herramienta interna) y, en estructura, las
+acciones de administración y el botón de borrado compartido en su sitio.
+
+### Revisado y correcto
+
+- Las funciones `SECURITY DEFINER` nuevas (`area_modulo`,
+  `generar_alertas_cumpleanos`) solo actúan sobre `auth.uid()` y comprueban
+  `nivel_en_area` antes de crear nada. `area_modulo` devuelve el id de un
+  área a cualquier autenticado: un uuid solo no concede nada.
+- Toda escritura de los módulos exige `area_id = area_modulo(...)` en el
+  `with check`: no se pueden colar filas en otro cuadro.
+- Las acciones de servidor validan con Zod en el servidor aunque el cliente
+  ya haya validado, y ninguna decide permisos en TypeScript.
+- Los guiones de carga (asesores, cumpleaños, datos del Excel) leen claves
+  del entorno y no las imprimen; los archivos con datos personales siguen
+  fuera del repositorio (`*.xlsx` en `.gitignore`).
+
+### Sigue abierto
+
+- **Registro público habilitado** en el panel de Supabase (solo el
+  propietario puede desactivarlo). Las cuentas nacen inertes, pero ensucian.
+- **Rotar** la contraseña de la base, la clave de servicio y el token de
+  Vercel que pasaron por el chat de desarrollo.
+- **Datos personales.** El módulo de cumpleaños guarda fechas de nacimiento
+  y el de evaluación, valoraciones sobre personas: ambos limitados por
+  permisos a Gestión Humana, Selección y administradores, y con rastro en
+  la auditoría. Falta el aviso de privacidad y las autorizaciones de
+  tratamiento (Ley 1581), que no son tarea de TI.
 
 ---
 

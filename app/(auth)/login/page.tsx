@@ -1,3 +1,8 @@
+/**
+ * Pantalla de entrada: panel de marca y formulario. Los avisos (sesión
+ * caducada por inactividad, cuenta desactivada) llegan en el parámetro
+ * ?motivo=.
+ */
 import type { Metadata } from "next";
 import Image from "next/image";
 import { FormularioLogin } from "./formulario-login";
@@ -8,6 +13,8 @@ const MENSAJES: Record<string, string> = {
   inactivo:
     "Tu usuario está desactivado o no tiene perfil. Comunícate con el administrador.",
   sesion: "Tu sesión terminó. Vuelve a iniciar sesión.",
+  inactividad:
+    "Tu sesión se cerró por inactividad (30 minutos sin usar la aplicación). Vuelve a iniciar sesión.",
 };
 
 export default async function PaginaLogin({ searchParams }: PageProps<"/login">) {

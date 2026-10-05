@@ -1,5 +1,6 @@
 "use server";
 
+// Acciones del módulo de cumpleaños (alta, edición, borrado).
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { mensajePostgrest } from "@/lib/api-errores";
@@ -12,9 +13,10 @@ export type Resultado = { ok: true; id?: string } | { ok: false; error: string }
 const esUuid = (v: string) => z.uuid().safeParse(v).success;
 
 /**
- * Cumpleaños y notificaciones. Como en el resto de la aplicación, nada
- * comprueba permisos en TypeScript: el cliente de sesión deja que las
- * políticas de `cumpleanos` y `notificaciones` acepten o rechacen.
+ * Alta, edición y borrado de cumpleaños. Como en el resto de la
+ * aplicación, nada comprueba permisos en TypeScript: el cliente de sesión
+ * deja que las políticas de `cumpleanos` acepten o rechacen. Las alertas no
+ * se tocan desde aquí: las genera la base al entrar (ver lib/notificaciones.ts).
  */
 
 export async function crearCumple(datos: unknown): Promise<Resultado> {
@@ -67,35 +69,5 @@ export async function eliminarCumple(id: string): Promise<Resultado> {
   if (!data) return { ok: false, error: "No se pudo eliminar: no existe o no tienes nivel Total." };
 
   revalidatePath("/cumpleanos");
-  return { ok: true };
-}
-
-// ---------------------------------------------------------------------------
-// Notificaciones
-// ---------------------------------------------------------------------------
-
-export async function marcarNotificacionLeida(id: string): Promise<Resultado> {
-  if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
-  const { supabase } = await exigirSesion();
-  // RLS limita a las propias: marcar la de otro no afecta ninguna fila.
-  const { error } = await supabase
-    .from("notificaciones")
-    .update({ leida_en: new Date().toISOString() })
-    .eq("id", id)
-    .is("leida_en", null);
-  if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
-  revalidatePath("/", "layout");
-  return { ok: true };
-}
-
-export async function marcarTodasLeidas(): Promise<Resultado> {
-  const { supabase, user } = await exigirSesion();
-  const { error } = await supabase
-    .from("notificaciones")
-    .update({ leida_en: new Date().toISOString() })
-    .eq("usuario_id", user.id)
-    .is("leida_en", null);
-  if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
-  revalidatePath("/", "layout");
   return { ok: true };
 }

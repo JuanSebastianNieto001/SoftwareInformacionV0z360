@@ -1,3 +1,5 @@
+// Barra de búsqueda y filtros de la lista de documentos. limpiarBusqueda
+// recorta y sanea lo que se manda a la consulta.
 import { Search } from "lucide-react";
 import { ETIQUETA_ESTADO } from "@/components/documentos/estado-badge";
 import { Button } from "@/components/ui/button";

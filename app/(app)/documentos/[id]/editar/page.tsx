@@ -1,3 +1,7 @@
+/**
+ * Editar un documento: metadatos, vigencia y reemplazo del archivo (sube el
+ * número de versión).
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";

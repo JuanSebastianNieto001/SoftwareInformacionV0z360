@@ -1,5 +1,9 @@
 "use server";
 
+// Entrada y salida de sesión. Traduce el número de Poliedro a correo, aplica
+// el freno de fuerza bruta (login_frenado / anotar_intento_login) y deja
+// rastro del inicio de sesión en la auditoría. El mensaje de error es el mismo
+// exista o no la cuenta.
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ipDePeticion, registrarAcceso } from "@/lib/auditoria";

@@ -1,3 +1,8 @@
+/**
+ * Detalle de un documento. Registra la apertura en la auditoría; para el
+ * administrador muestra además quién lo abrió y quién tiene acceso y aún no
+ * lo ha leído.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

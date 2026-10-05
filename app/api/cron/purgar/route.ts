@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { respuestaError } from "@/lib/api-errores";
 import { urlSupabase } from "@/lib/supabase/env";
 
@@ -14,7 +15,11 @@ export async function GET(req: Request) {
   const secreto = process.env.CRON_SECRET;
   if (!secreto) return respuestaError("CRON_SECRET no configurado en el servidor.", 500);
 
-  if (req.headers.get("authorization") !== `Bearer ${secreto}`) {
+  // Comparación en tiempo constante: con `!==` el tiempo de respuesta
+  // revela cuántos caracteres iniciales acertó quien prueba secretos.
+  const recibido = Buffer.from(req.headers.get("authorization") ?? "");
+  const esperado = Buffer.from(`Bearer ${secreto}`);
+  if (recibido.length !== esperado.length || !timingSafeEqual(recibido, esperado)) {
     return respuestaError("No autorizado", 401);
   }
 

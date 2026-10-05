@@ -1,5 +1,7 @@
 "use client";
 
+// Marco de la aplicación: cabecera con la navegación que corresponde al rol,
+// campana de notificaciones y menú de usuario; en móvil, panel lateral.
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

@@ -1,3 +1,4 @@
+// Dashboard y resumen del módulo de evaluación, por periodo.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
@@ -18,7 +19,7 @@ import {
   nivelDashboard,
   varianteNota,
 } from "@/lib/evaluacion";
-import { exigirModuloEvaluacion } from "@/lib/evaluacion-acceso";
+import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 import { PERSPECTIVAS_360 } from "@/lib/validaciones";
 
@@ -39,7 +40,7 @@ export default async function PaginaDashboardEvaluacion({
   searchParams,
 }: PageProps<"/evaluacion">) {
   const sp = await searchParams;
-  const { supabase, puedeEditar } = await exigirModuloEvaluacion();
+  const { supabase, puedeEditar } = await exigirModulo("evaluacion");
 
   const periodoParam = typeof sp.periodo === "string" ? sp.periodo.trim() : "";
   const periodo = periodoParam || anioActual();

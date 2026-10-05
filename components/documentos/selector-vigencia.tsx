@@ -1,5 +1,6 @@
 "use client";
 
+// Selector de vigencia (desde y hasta) con atajos de plazo.
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { hoyIso, sumarADia } from "@/lib/formato";

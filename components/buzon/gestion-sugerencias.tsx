@@ -1,5 +1,7 @@
 "use client";
 
+// Tratamiento de una PQR: estados, análisis de causa (obligatorio en quejas y
+// no conformidades), evidencia adjunta y respuesta a quien reportó.
 import { useMemo, useState, useTransition } from "react";
 import { Ban, Loader2, Paperclip, Wrench } from "lucide-react";
 import { toast } from "sonner";
