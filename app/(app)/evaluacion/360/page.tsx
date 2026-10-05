@@ -85,7 +85,12 @@ export default async function PaginaMatriz360() {
                       {radicado360(r.consecutivo)}
                     </TableCell>
                     <TableCell className="font-medium">{r.evaluado_nombre}</TableCell>
-                    <TableCell>{r.evaluador_nombre}</TableCell>
+                    <TableCell>
+                      {r.evaluador_nombre}
+                      {r.evaluador_cargo && (
+                        <span className="block text-xs text-muted-foreground">{r.evaluador_cargo}</span>
+                      )}
+                    </TableCell>
                     <TableCell>{r.cargo_nombre}</TableCell>
                     <TableCell>{ETIQUETA_PERSPECTIVA[r.perspectiva]}</TableCell>
                     <TableCell className="whitespace-nowrap">{formatearFecha(r.fecha)}</TableCell>

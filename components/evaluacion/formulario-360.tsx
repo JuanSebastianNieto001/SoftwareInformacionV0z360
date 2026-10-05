@@ -54,6 +54,7 @@ export function Formulario360({ cargos, preguntas, evaluadorPorDefecto }: Props)
     cargo_id: cargos[0]?.id ?? "",
     evaluado_nombre: "",
     evaluador_nombre: evaluadorPorDefecto,
+    evaluador_cargo: "",
     perspectiva: "" as string,
     fecha: hoyIso(),
     comentarios: "",
@@ -75,6 +76,7 @@ export function Formulario360({ cargos, preguntas, evaluadorPorDefecto }: Props)
     setError(null);
     const datos = {
       ...f,
+      evaluador_cargo: f.evaluador_cargo || null,
       comentarios: f.comentarios || null,
       respuestas: numeros,
     };
@@ -131,6 +133,19 @@ export function Formulario360({ cargos, preguntas, evaluadorPorDefecto }: Props)
                 maxLength={120}
                 disabled={pendiente}
                 required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="evaluador-cargo">
+                Cargo del evaluador <span className="text-muted-foreground">(opcional)</span>
+              </Label>
+              <Input
+                id="evaluador-cargo"
+                value={f.evaluador_cargo}
+                onChange={(e) => set("evaluador_cargo", e.target.value)}
+                placeholder="Gerente de Operaciones"
+                maxLength={120}
+                disabled={pendiente}
               />
             </div>
             <div className="space-y-1.5">

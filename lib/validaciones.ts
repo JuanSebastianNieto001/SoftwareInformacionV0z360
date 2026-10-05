@@ -696,6 +696,8 @@ export const esquemaRespuesta360 = z.object({
   evaluado_nombre: nombrePersona,
   evaluado_id: uuid.nullish().transform((v) => v || null),
   evaluador_nombre: nombrePersona,
+  /** Cargo de quien responde (columna D de la hoja), no el del evaluado. */
+  evaluador_cargo: textoOpcional(120),
   perspectiva: z.enum(PERSPECTIVAS_360, { message: "Elige la perspectiva" }),
   fecha: z.iso.date({ message: "Fecha inválida" }),
   comentarios: textoOpcional(2000),

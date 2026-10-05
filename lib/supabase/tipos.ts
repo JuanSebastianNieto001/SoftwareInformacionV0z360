@@ -608,6 +608,7 @@ export type Database = {
           perspectiva: PerspectivaEvaluacion;
           fecha: string;
           comentarios: string | null;
+          evaluador_cargo: string | null;
           p1: number;
           p2: number;
           p3: number;
@@ -634,6 +635,7 @@ export type Database = {
           perspectiva: PerspectivaEvaluacion;
           fecha?: string;
           comentarios?: string | null;
+          evaluador_cargo?: string | null;
           p1: number;
           p2: number;
           p3: number;
@@ -658,6 +660,7 @@ export type Database = {
           perspectiva?: PerspectivaEvaluacion;
           fecha?: string;
           comentarios?: string | null;
+          evaluador_cargo?: string | null;
           p1?: number;
           p2?: number;
           p3?: number;
