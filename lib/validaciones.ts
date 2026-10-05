@@ -599,6 +599,114 @@ export const esquemaRechazo = z.object({
 // ---------------------------------------------------------------------------
 
 /** Devuelve el primer mensaje de error legible de un ZodError. */
+// ---------------------------------------------------------------------------
+// Evaluación de desempeño
+// ---------------------------------------------------------------------------
+
+export const PERSPECTIVAS_360 = [
+  "autoevaluacion",
+  "jefe_inmediato",
+  "pares",
+  "subordinados",
+  "alta_direccion",
+] as const;
+
+/** Las cuatro del formato por cargo: la matriz 360 añade alta dirección. */
+export const PERSPECTIVAS_FORMATO = [
+  "autoevaluacion",
+  "jefe_inmediato",
+  "pares",
+  "subordinados",
+] as const;
+
+export const ESTADOS_EVALUACION = ["borrador", "cerrada"] as const;
+
+/**
+ * Entre 1 y 5 con decimales, como la validación "decimal between 1,5" de
+ * las hojas. Se redondea a centésimas porque la columna es numeric(3,2):
+ * mandar 4.333333 y que la base lo recorte a 4.33 sin avisar es peor que
+ * hacerlo aquí, donde el cliente ve lo mismo que se va a guardar.
+ */
+const calificacion = z.coerce
+  .number({ message: "Escribe un número" })
+  .min(1, "La calificación mínima es 1")
+  .max(5, "La calificación máxima es 5")
+  .transform((v) => Math.round(v * 100) / 100);
+
+const nombrePersona = z
+  .string()
+  .trim()
+  .min(2, "Escribe el nombre completo")
+  .max(120, "No puede superar 120 caracteres");
+
+export const esquemaEvaluacionNueva = z.object({
+  cargo_id: uuid,
+  periodo: z
+    .string()
+    .trim()
+    .min(2, "Indica el periodo (p. ej. 2026)")
+    .max(20, "No puede superar 20 caracteres"),
+  evaluado_nombre: nombrePersona,
+  evaluado_id: uuid.nullish().transform((v) => v || null),
+  campana: textoOpcional(120),
+  fecha_evaluacion: z.iso.date({ message: "Fecha inválida" }),
+  evaluador_nombre: nombrePersona,
+  evaluador_cargo: textoOpcional(120),
+});
+
+export type DatosEvaluacionNueva = z.infer<typeof esquemaEvaluacionNueva>;
+
+/** Lo editable de la cabecera después de creada (el cargo ya no cambia). */
+export const esquemaEvaluacionCabecera = esquemaEvaluacionNueva
+  .omit({ cargo_id: true })
+  .extend({ plan_accion: textoOpcional(4000) });
+
+export type DatosEvaluacionCabecera = z.infer<typeof esquemaEvaluacionCabecera>;
+
+/**
+ * Lo que manda la hoja de calificación al guardar: todas las celdas de una
+ * vez. Una calificación null significa "borrar la celda". 12 criterios × 4
+ * perspectivas = 48 como máximo.
+ */
+export const esquemaCalificaciones = z.object({
+  evaluacion_id: uuid,
+  calificaciones: z
+    .array(
+      z.object({
+        criterio_id: uuid,
+        perspectiva: z.enum(PERSPECTIVAS_FORMATO),
+        calificacion: calificacion.nullable(),
+      }),
+    )
+    .max(48, "Demasiadas calificaciones"),
+  observaciones: z
+    .array(
+      z.object({
+        criterio_id: uuid,
+        observacion: textoOpcional(1000),
+      }),
+    )
+    .max(12, "Demasiadas observaciones"),
+});
+
+export type DatosCalificaciones = z.infer<typeof esquemaCalificaciones>;
+
+export const esquemaRespuesta360 = z.object({
+  cargo_id: uuid,
+  evaluado_nombre: nombrePersona,
+  evaluado_id: uuid.nullish().transform((v) => v || null),
+  evaluador_nombre: nombrePersona,
+  perspectiva: z.enum(PERSPECTIVAS_360, { message: "Elige la perspectiva" }),
+  fecha: z.iso.date({ message: "Fecha inválida" }),
+  comentarios: textoOpcional(2000),
+  /** P1..P12, en orden. Las doce son obligatorias, como en la hoja. */
+  respuestas: z
+    .array(calificacion, { message: "Responde las doce preguntas" })
+    .length(12, "Responde las doce preguntas"),
+});
+
+export type DatosRespuesta360 = z.infer<typeof esquemaRespuesta360>;
+
 export function primerError(error: z.ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "Datos inválidos";

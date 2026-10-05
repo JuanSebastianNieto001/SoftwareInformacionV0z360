@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, FolderOpen, MessageSquareText, Upload } from "lucide-react";
+import { ChevronRight, ClipboardCheck, FolderOpen, MessageSquareText, Upload } from "lucide-react";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ export default async function PaginaInicio() {
     // RLS: solo devuelve las áreas donde nivel_en_area() no es null.
     supabase
       .from("areas")
-      .select("id, nombre, slug, descripcion, documentos(count)")
+      .select("id, nombre, slug, descripcion, modulo, documentos(count)")
       .eq("activa", true)
       .order("nombre"),
     supabase.from("permisos_area").select("area_id, nivel").eq("usuario_id", perfil.id),
@@ -77,15 +77,22 @@ export default async function PaginaInicio() {
         {(areas ?? []).map((area) => {
           const nivel = nivelEfectivo(perfil.rol, perfil.activo, nivelPorArea.get(area.id));
           const cantidad = area.documentos?.[0]?.count ?? 0;
+          // Un cuadro-módulo se ve igual que una carpeta —es una puerta más—
+          // pero abre su pantalla propia y no cuenta documentos.
+          const esModulo = area.modulo === "evaluacion";
           return (
             <li key={area.id}>
               <Link
-                href={`/areas/${area.slug}`}
+                href={esModulo ? "/evaluacion" : `/areas/${area.slug}`}
                 className="group flex h-full min-h-[150px] flex-col gap-3 rounded-[20px] border bg-card p-[22px] transition-all duration-150 hover:-translate-y-0.5 hover:border-borde-acento hover:shadow-tarjeta"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="flex size-10 items-center justify-center rounded-xl bg-tinte text-primary">
-                    <FolderOpen className="size-5" aria-hidden />
+                    {esModulo ? (
+                      <ClipboardCheck className="size-5" aria-hidden />
+                    ) : (
+                      <FolderOpen className="size-5" aria-hidden />
+                    )}
                   </span>
                   {nivel && (
                     <Badge variant={nivel === "edicion" ? "default" : "secondary"}>
@@ -102,7 +109,7 @@ export default async function PaginaInicio() {
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2 text-[12.5px] text-muted-foreground">
-                  <span>{plural(cantidad, "documento", "documentos")}</span>
+                  <span>{esModulo ? "Módulo de evaluación 360°" : plural(cantidad, "documento", "documentos")}</span>
                   <ChevronRight className="size-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>

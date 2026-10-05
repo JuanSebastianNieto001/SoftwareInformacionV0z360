@@ -643,6 +643,181 @@ await prueba("marcar_purgados marca, reescribe storage_path y es idempotente", a
   igual(r.rows.length, 0, "ya no hay candidatos");
 });
 
+console.log("\nEvaluación de desempeño");
+grupo("Evaluación de desempeño");
+
+// Montaje: el área del módulo y el catálogo los crea la migración 012.
+// Aquí solo se conceden niveles, como haría el panel: Luis (lector) ve,
+// Eva (editor) califica. Nora (sinPermiso) no tiene nada.
+const EVA = (await db.query(`select public.area_evaluacion() as id`)).rows[0].id;
+await db.query(
+  `insert into permisos_area (usuario_id, area_id, nivel) values ($1, $3, 'lectura'), ($2, $3, 'edicion')`,
+  [U.lector, U.editor, EVA],
+);
+const CARGO = (await db.query(`select id from evaluacion_cargos where codigo = 'CARGO-01'`)).rows[0].id;
+const CRITERIOS = (
+  await db.query(`select id from evaluacion_criterios where cargo_id = $1 order by orden`, [CARGO])
+).rows.map((r) => r.id);
+const CRITERIO_AJENO = (
+  await db.query(
+    `select c.id from evaluacion_criterios c join evaluacion_cargos g on g.id = c.cargo_id where g.codigo = 'CARGO-02' order by c.orden limit 1`,
+  )
+).rows[0].id;
+let EVALUACION = null;
+
+await prueba("el módulo es un área: sin permiso no se ve el cuadro, ni cargos, ni criterios", async () => {
+  const r = await como(U.sinPermiso, (tx) =>
+    filas(
+      tx,
+      `select (select count(*) from areas where modulo = 'evaluacion') as areas,
+              (select count(*) from evaluacion_cargos)        as cargos,
+              (select count(*) from evaluacion_criterios)     as criterios,
+              (select count(*) from evaluacion_360_preguntas) as preguntas,
+              public.nivel_en_area(public.area_evaluacion())::text as nivel`,
+    ),
+  );
+  igual(Number(r[0].areas), 0, "el cuadro no aparece");
+  igual(Number(r[0].cargos), 0, "catálogo de cargos oculto");
+  igual(Number(r[0].criterios), 0, "criterios ocultos");
+  igual(Number(r[0].preguntas), 0, "preguntas 360 ocultas");
+  igual(r[0].nivel, null, "nivel_en_area del módulo es null");
+});
+
+await prueba("con Vista: ve los 15 cargos y 180 criterios, pero no crea evaluaciones ni respuestas 360", async () => {
+  const r = await como(U.lector, (tx) =>
+    filas(tx, `select (select count(*) from evaluacion_cargos) as cargos, (select count(*) from evaluacion_criterios) as criterios`),
+  );
+  igual(Number(r[0].cargos), 15, "cargos");
+  igual(Number(r[0].criterios), 180, "criterios");
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(
+      `insert into evaluaciones (area_id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, creado_por) values ($1, $2, '2026', 'Alguien', 'Luis', $3)`,
+      [EVA, CARGO, U.lector],
+    ),
+  );
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(
+      `insert into evaluacion_360_respuestas (area_id, evaluado_nombre, evaluador_nombre, cargo_id, perspectiva, creado_por, p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12)
+       values ($1, 'A', 'B', $2, 'pares', $3, 3,3,3,3,3,3,3,3,3,3,3,3)`,
+      [EVA, CARGO, U.lector],
+    ),
+  );
+});
+
+await prueba("con Edición: crea, califica, y la vista calcula como la hoja (K24 = suma de ponderados / 12)", async () => {
+  const ins = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into evaluaciones (area_id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, creado_por)
+       values ($1, $2, '2026', 'Marko Vélez', 'Clemencia García', $3) returning id`,
+      [EVA, CARGO, U.editor],
+    ),
+  );
+  EVALUACION = ins[0].id;
+  // Tres celdas: jefe 4 en el criterio 1 (→1,6), autoevaluación 5 en el 1
+  // (→0,5) y pares 4 en el 2 (→1,0). Lo demás en blanco cuenta 0.
+  await como(U.editor, (tx) =>
+    tx.query(
+      `insert into evaluacion_calificaciones (evaluacion_id, criterio_id, perspectiva, calificacion)
+       values ($1, $2, 'jefe_inmediato', 4), ($1, $2, 'autoevaluacion', 5), ($1, $3, 'pares', 4)`,
+      [EVALUACION, CRITERIOS[0], CRITERIOS[1]],
+    ),
+  );
+  const v = await como(U.editor, (tx) => filas(tx, `select * from v_evaluacion_resultados where evaluacion_id = $1`, [EVALUACION]));
+  igual(Number(v[0].n_criterios), 12, "12 criterios por cargo");
+  igual(Number(v[0].n_calificaciones), 3, "celdas calificadas");
+  igual(Number(v[0].jefe_inmediato), 4, "F24: promedio de la perspectiva");
+  igual(Number(v[0].autoevaluacion), 5, "D24");
+  igual(Number(v[0].pares), 4, "H24");
+  igual(v[0].subordinados, null, "J24 sin calificar: AVERAGE da vacío, no 0");
+  const esperado = (4 * 0.4 + 5 * 0.1 + 4 * 0.25) / 12;
+  igual(Math.abs(Number(v[0].nota_final) - esperado) < 1e-9, true, `K24 ${v[0].nota_final} ≈ ${esperado}`);
+});
+
+await prueba("un criterio de otro cargo no se puede calificar (disparador)", () =>
+  comoDebeFallar(
+    U.editor,
+    (tx) =>
+      tx.query(
+        `insert into evaluacion_calificaciones (evaluacion_id, criterio_id, perspectiva, calificacion) values ($1, $2, 'pares', 3)`,
+        [EVALUACION, CRITERIO_AJENO],
+      ),
+    /no pertenece/,
+  ),
+);
+
+await prueba("una evaluación no se cuela en otro cuadro, ni a nombre de otro", async () => {
+  await comoDebeFallar(U.editor, (tx) =>
+    tx.query(
+      `insert into evaluaciones (area_id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, creado_por) values ($1, $2, '2026', 'X', 'Y', $3)`,
+      [AREA.x, CARGO, U.editor],
+    ),
+  );
+  await comoDebeFallar(U.editor, (tx) =>
+    tx.query(
+      `insert into evaluaciones (area_id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, creado_por) values ($1, $2, '2026', 'X', 'Y', $3)`,
+      [EVA, CARGO, U.admin],
+    ),
+  );
+});
+
+await prueba("cerrada: el editor ya no toca celdas ni cabecera; el administrador la reabre", async () => {
+  const c = await como(U.editor, (tx) =>
+    tx.query(`update evaluaciones set estado = 'cerrada', cerrada_en = now() where id = $1`, [EVALUACION]),
+  );
+  igual(c.affectedRows, 1, "cerrar es editar un borrador");
+  const u = await como(U.editor, (tx) =>
+    tx.query(`update evaluacion_calificaciones set calificacion = 1 where evaluacion_id = $1`, [EVALUACION]),
+  );
+  igual(u.affectedRows ?? 0, 0, "las celdas quedan como están");
+  await comoDebeFallar(U.editor, (tx) =>
+    tx.query(
+      `insert into evaluacion_calificaciones (evaluacion_id, criterio_id, perspectiva, calificacion) values ($1, $2, 'subordinados', 5)`,
+      [EVALUACION, CRITERIOS[2]],
+    ),
+  );
+  const h = await como(U.editor, (tx) =>
+    tx.query(`update evaluaciones set plan_accion = 'tarde' where id = $1`, [EVALUACION]),
+  );
+  igual(h.affectedRows ?? 0, 0, "la cabecera tampoco");
+  const r = await como(U.admin, (tx) =>
+    tx.query(`update evaluaciones set estado = 'borrador', cerrada_en = null where id = $1`, [EVALUACION]),
+  );
+  igual(r.affectedRows, 1, "el admin reabre");
+});
+
+await prueba("matriz 360: con Edición se registra y la vista calcula; sin permiso no se ve", async () => {
+  const ins = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into evaluacion_360_respuestas (area_id, evaluado_nombre, evaluador_nombre, cargo_id, perspectiva, creado_por, p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12)
+       values ($1, 'Marko', 'Kelmer', $2, 'pares', $3, 5,4,5, 3.5,4,4, 3.5,4,4, 3.5,4,3.5) returning id`,
+      [EVA, CARGO, U.editor],
+    ),
+  );
+  const v = await como(U.lector, (tx) =>
+    filas(tx, `select promedio, liderazgo, trabajo_equipo, calidad_resultados, adaptabilidad from v_evaluacion_360 where id = $1`, [ins[0].id]),
+  );
+  igual(v.length, 1, "con Vista se lee");
+  const aprox = (a, b, msg) => igual(Math.abs(Number(a) - b) < 1e-9, true, `${msg}: ${a} ≈ ${b}`);
+  aprox(v[0].promedio, 48 / 12, "H: promedio");
+  aprox(v[0].liderazgo, 14 / 3, "J: liderazgo");
+  aprox(v[0].trabajo_equipo, 11.5 / 3, "K: equipo");
+  aprox(v[0].calidad_resultados, 11.5 / 3, "L: calidad");
+  aprox(v[0].adaptabilidad, 11 / 3, "M: adaptabilidad");
+  const n = await como(U.sinPermiso, (tx) => filas(tx, `select count(*) as n from evaluacion_360_respuestas`));
+  igual(Number(n[0].n), 0, "sin permiso: cero filas");
+});
+
+await prueba("eliminar exige Total (o admin): con Edición no se borra nada", async () => {
+  const d = await como(U.editor, (tx) => tx.query(`delete from evaluaciones where id = $1`, [EVALUACION]));
+  igual(d.affectedRows ?? 0, 0, "con Edición no borra");
+  await db.query(`update permisos_area set nivel = 'total' where usuario_id = $1 and area_id = $2`, [U.editor, EVA]);
+  const d2 = await como(U.editor, (tx) => tx.query(`delete from evaluaciones where id = $1`, [EVALUACION]));
+  igual(d2.affectedRows, 1, "con Total sí");
+  await db.query(`update permisos_area set nivel = 'edicion' where usuario_id = $1 and area_id = $2`, [U.editor, EVA]);
+});
+
 // ---------------------------------------------------------------------------
 // 5. Resumen
 // ---------------------------------------------------------------------------

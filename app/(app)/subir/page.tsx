@@ -17,7 +17,8 @@ export default async function PaginaSubir({ searchParams }: PageProps<"/subir">)
   if (!puedeSubir(perfil)) redirect("/");
 
   const [{ data: areas }, { data: permisos }] = await Promise.all([
-    supabase.from("areas").select("id, nombre").eq("activa", true).order("nombre"),
+    // Un cuadro-módulo (evaluación) no recibe documentos: fuera del selector.
+    supabase.from("areas").select("id, nombre").eq("activa", true).is("modulo", null).order("nombre"),
     supabase.from("permisos_area").select("area_id, nivel").eq("usuario_id", perfil.id),
   ]);
 

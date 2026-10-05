@@ -84,6 +84,7 @@ export type Database = {
           slug: string;
           descripcion: string | null;
           activa: boolean;
+          modulo: string | null;
           creado_en: string;
         };
         Insert: {
@@ -92,6 +93,7 @@ export type Database = {
           slug: string;
           descripcion?: string | null;
           activa?: boolean;
+          modulo?: string | null;
           creado_en?: string;
         };
         Update: {
@@ -100,6 +102,7 @@ export type Database = {
           slug?: string;
           descripcion?: string | null;
           activa?: boolean;
+          modulo?: string | null;
           creado_en?: string;
         };
         Relationships: [];
@@ -451,8 +454,251 @@ export type Database = {
           },
         ];
       };
+      evaluacion_pesos: {
+        Row: { perspectiva: PerspectivaEvaluacion; peso: number };
+        Insert: { perspectiva: PerspectivaEvaluacion; peso: number };
+        Update: { perspectiva?: PerspectivaEvaluacion; peso?: number };
+        Relationships: [];
+      };
+      evaluacion_cargos: {
+        Row: {
+          id: string;
+          codigo: string;
+          nombre: string;
+          area_departamento: string;
+          hoja: string;
+          etiqueta_evaluado: string;
+          campana_defecto: string | null;
+          orden: number;
+          activo: boolean;
+        };
+        Insert: {
+          id?: string;
+          codigo: string;
+          nombre: string;
+          area_departamento: string;
+          hoja: string;
+          etiqueta_evaluado: string;
+          campana_defecto?: string | null;
+          orden: number;
+          activo?: boolean;
+        };
+        Update: {
+          id?: string;
+          codigo?: string;
+          nombre?: string;
+          area_departamento?: string;
+          hoja?: string;
+          etiqueta_evaluado?: string;
+          campana_defecto?: string | null;
+          orden?: number;
+          activo?: boolean;
+        };
+        Relationships: [];
+      };
+      evaluacion_criterios: {
+        Row: { id: string; cargo_id: string; orden: number; categoria: string; criterio: string };
+        Insert: { id?: string; cargo_id: string; orden: number; categoria: string; criterio: string };
+        Update: { id?: string; cargo_id?: string; orden?: number; categoria?: string; criterio?: string };
+        Relationships: [];
+      };
+      evaluaciones: {
+        Row: {
+          id: string;
+          area_id: string;
+          cargo_id: string;
+          periodo: string;
+          evaluado_nombre: string;
+          evaluado_id: string | null;
+          campana: string | null;
+          fecha_evaluacion: string;
+          evaluador_nombre: string;
+          evaluador_cargo: string | null;
+          plan_accion: string | null;
+          estado: EstadoEvaluacion;
+          cerrada_en: string | null;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_por: string | null;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          cargo_id: string;
+          periodo: string;
+          evaluado_nombre: string;
+          evaluado_id?: string | null;
+          campana?: string | null;
+          fecha_evaluacion?: string;
+          evaluador_nombre: string;
+          evaluador_cargo?: string | null;
+          plan_accion?: string | null;
+          estado?: EstadoEvaluacion;
+          cerrada_en?: string | null;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_por?: string | null;
+          actualizado_en?: string;
+        };
+        Update: {
+          id?: string;
+          area_id?: string;
+          cargo_id?: string;
+          periodo?: string;
+          evaluado_nombre?: string;
+          evaluado_id?: string | null;
+          campana?: string | null;
+          fecha_evaluacion?: string;
+          evaluador_nombre?: string;
+          evaluador_cargo?: string | null;
+          plan_accion?: string | null;
+          estado?: EstadoEvaluacion;
+          cerrada_en?: string | null;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_por?: string | null;
+          actualizado_en?: string;
+        };
+        Relationships: [];
+      };
+      evaluacion_calificaciones: {
+        Row: {
+          evaluacion_id: string;
+          criterio_id: string;
+          perspectiva: PerspectivaEvaluacion;
+          calificacion: number;
+        };
+        Insert: {
+          evaluacion_id: string;
+          criterio_id: string;
+          perspectiva: PerspectivaEvaluacion;
+          calificacion: number;
+        };
+        Update: {
+          evaluacion_id?: string;
+          criterio_id?: string;
+          perspectiva?: PerspectivaEvaluacion;
+          calificacion?: number;
+        };
+        Relationships: [];
+      };
+      evaluacion_observaciones: {
+        Row: { evaluacion_id: string; criterio_id: string; observacion: string };
+        Insert: { evaluacion_id: string; criterio_id: string; observacion: string };
+        Update: { evaluacion_id?: string; criterio_id?: string; observacion?: string };
+        Relationships: [];
+      };
+      evaluacion_360_preguntas: {
+        Row: { codigo: string; orden: number; competencia: string; pregunta: string };
+        Insert: { codigo: string; orden: number; competencia: string; pregunta: string };
+        Update: { codigo?: string; orden?: number; competencia?: string; pregunta?: string };
+        Relationships: [];
+      };
+      evaluacion_360_respuestas: {
+        Row: {
+          id: string;
+          area_id: string;
+          consecutivo: number;
+          evaluado_nombre: string;
+          evaluado_id: string | null;
+          evaluador_nombre: string;
+          evaluador_id: string | null;
+          cargo_id: string;
+          perspectiva: PerspectivaEvaluacion;
+          fecha: string;
+          comentarios: string | null;
+          p1: number;
+          p2: number;
+          p3: number;
+          p4: number;
+          p5: number;
+          p6: number;
+          p7: number;
+          p8: number;
+          p9: number;
+          p10: number;
+          p11: number;
+          p12: number;
+          creado_por: string | null;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          evaluado_nombre: string;
+          evaluado_id?: string | null;
+          evaluador_nombre: string;
+          evaluador_id?: string | null;
+          cargo_id: string;
+          perspectiva: PerspectivaEvaluacion;
+          fecha?: string;
+          comentarios?: string | null;
+          p1: number;
+          p2: number;
+          p3: number;
+          p4: number;
+          p5: number;
+          p6: number;
+          p7: number;
+          p8: number;
+          p9: number;
+          p10: number;
+          p11: number;
+          p12: number;
+          creado_por?: string | null;
+          creado_en?: string;
+        };
+        Update: {
+          evaluado_nombre?: string;
+          evaluado_id?: string | null;
+          evaluador_nombre?: string;
+          evaluador_id?: string | null;
+          cargo_id?: string;
+          perspectiva?: PerspectivaEvaluacion;
+          fecha?: string;
+          comentarios?: string | null;
+          p1?: number;
+          p2?: number;
+          p3?: number;
+          p4?: number;
+          p5?: number;
+          p6?: number;
+          p7?: number;
+          p8?: number;
+          p9?: number;
+          p10?: number;
+          p11?: number;
+          p12?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: {
+      v_evaluacion_resultados: {
+        Row: {
+          evaluacion_id: string;
+          n_criterios: number;
+          autoevaluacion: number | null;
+          jefe_inmediato: number | null;
+          pares: number | null;
+          subordinados: number | null;
+          n_calificaciones: number;
+          nota_final: number | null;
+        };
+        Relationships: [];
+      };
+      v_evaluacion_360: {
+        Row: Database["public"]["Tables"]["evaluacion_360_respuestas"]["Row"] & {
+          cargo_nombre: string;
+          promedio: number;
+          liderazgo: number;
+          trabajo_equipo: number;
+          calidad_resultados: number;
+          adaptabilidad: number;
+        };
+        Relationships: [];
+      };
       v_documentos_estado: {
         Row: {
           id: string;
@@ -535,6 +781,10 @@ export type Database = {
         Args: { t: string };
         Returns: string | null;
       };
+      area_evaluacion: {
+        Args: Record<PropertyKey, never>;
+        Returns: string | null;
+      };
       estado_documento: {
         Args: { d: Database["public"]["Tables"]["documentos"]["Row"] };
         Returns: string;
@@ -557,6 +807,7 @@ export type Database = {
       nivel_acceso: NivelAcceso;
       tipo_sugerencia: TipoSugerencia;
       estado_sugerencia: EstadoSugerencia;
+      perspectiva_360: PerspectivaEvaluacion;
     };
     CompositeTypes: Record<PropertyKey, never>;
   };
@@ -570,6 +821,23 @@ export type PermisoArea = Tablas["permisos_area"]["Row"];
 export type Documento = Tablas["documentos"]["Row"];
 export type Acceso = Tablas["accesos"]["Row"];
 export type Sugerencia = Tablas["sugerencias"]["Row"];
+
+// ---------- Evaluación de desempeño ----------
+export type PerspectivaEvaluacion =
+  | "autoevaluacion"
+  | "jefe_inmediato"
+  | "pares"
+  | "subordinados"
+  | "alta_direccion";
+export type EstadoEvaluacion = "borrador" | "cerrada";
+export type CargoEvaluacion = Tablas["evaluacion_cargos"]["Row"];
+export type CriterioEvaluacion = Tablas["evaluacion_criterios"]["Row"];
+export type Evaluacion = Tablas["evaluaciones"]["Row"];
+export type CalificacionEvaluacion = Tablas["evaluacion_calificaciones"]["Row"];
+export type Pregunta360 = Tablas["evaluacion_360_preguntas"]["Row"];
+export type Respuesta360 = Tablas["evaluacion_360_respuestas"]["Row"];
+export type ResultadoEvaluacion = Database["public"]["Views"]["v_evaluacion_resultados"]["Row"];
+export type Respuesta360Calculada = Database["public"]["Views"]["v_evaluacion_360"]["Row"];
 export type DocumentoConEstado =
   Database["public"]["Views"]["v_documentos_estado"]["Row"];
 export type FilaAuditoria = Database["public"]["Views"]["v_auditoria"]["Row"];

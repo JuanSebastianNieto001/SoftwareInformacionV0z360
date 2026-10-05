@@ -83,6 +83,37 @@ El cálculo completo, en orden:
 
 ---
 
+## Un cuadro puede ser un módulo
+
+Desde la migración `012`, un área puede llevar `modulo = 'evaluacion'`. En
+«Mis áreas» se ve como un cuadro más, pero en lugar de listar documentos
+abre el módulo de evaluación de desempeño (`/evaluacion`).
+
+Lo importante es lo que **no** cambia: el acceso se decide igual que en
+cualquier otro cuadro, con `nivel_en_area()`, la matriz por persona y los
+grupos. Sin permiso, el cuadro no aparece y escribir la URL a mano responde
+404, porque `areas` no devuelve la fila. No hay una lista de correos en el
+código.
+
+Qué significa cada peldaño dentro del módulo:
+
+| Nivel | En el módulo de evaluación |
+|---|---|
+| `lectura` / `descarga` | Consultar evaluaciones, dashboard y resumen |
+| `edicion` | Crear evaluaciones, calificar, cerrar, registrar respuestas 360 |
+| `total` (o admin) | Además eliminar |
+
+Las tablas del módulo (`evaluaciones`, `evaluacion_calificaciones`,
+`evaluacion_360_respuestas`…) tienen sus propias políticas, todas escritas
+sobre `nivel_en_area(area_id)`. El catálogo (cargos, criterios, pesos,
+preguntas) se ve con cualquier nivel y solo lo modifica el administrador.
+
+Una evaluación **cerrada** no se modifica aunque se tenga Edición; solo un
+administrador la reabre. Está en la política `evaluaciones_update`, no en
+la pantalla.
+
+---
+
 ## El buzón va por libre
 
 Atender PQR no es un nivel de área: es la marca `perfiles.gestiona_buzon`.

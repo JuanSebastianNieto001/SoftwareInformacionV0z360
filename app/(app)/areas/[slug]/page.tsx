@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Upload } from "lucide-react";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { FiltrosDocumentos, limpiarBusqueda } from "@/components/documentos/filtros-documentos";
@@ -24,10 +24,13 @@ export default async function PaginaArea({ params, searchParams }: PageProps<"/a
   // RLS: si el usuario no tiene permiso sobre el área, no existe para él.
   const { data: area } = await supabase
     .from("areas")
-    .select("id, nombre, slug, descripcion, activa")
+    .select("id, nombre, slug, descripcion, activa, modulo")
     .eq("slug", slug)
     .maybeSingle();
   if (!area) notFound();
+  // Un cuadro-módulo no lista documentos: abre su propia pantalla. El
+  // permiso ya quedó comprobado arriba (sin él, la fila no vuelve).
+  if (area.modulo === "evaluacion") redirect("/evaluacion");
 
   const { data: nivel } = await supabase.rpc("nivel_en_area", { a: area.id });
   const puedeEditar = nivel === "edicion";

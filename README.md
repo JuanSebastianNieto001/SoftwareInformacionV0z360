@@ -30,15 +30,17 @@ lo arrastra al navegador sin darse cuenta.
 
 ```
 app/
-  (app)/        Pantallas del día a día: inicio, áreas, documentos, buzón
+  (app)/        Pantallas del día a día: inicio, áreas, documentos, buzón,
+                evaluación de desempeño (/evaluacion)
   (admin)/      Panel: documentos, usuarios, áreas, grupos, permisos, auditoría
   (auth)/       Login y cambio de contraseña
-  acciones/     Server actions compartidas (auth, buzón)
+  acciones/     Server actions compartidas (auth, buzón, evaluación)
   api/          Route handlers: subida, descarga, CSV, cron
 components/
   comunes/      Cabecera, encabezado de página, pantalla de error
   documentos/   Subir, editar, listar, filtrar, insignias de estado
   buzon/        Formulario de PQR, bandeja, tablero, tratamiento
+  evaluacion/   Hoja por cargo, matriz 360 y navegación del módulo de evaluación
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
@@ -47,6 +49,8 @@ lib/
   permisos.ts       Espejo en TypeScript de las reglas de RLS
   sesion.ts         exigirSesion / exigirAdmin / exigirGestorBuzon
   auditoria*.ts     Registro y consulta de accesos
+  evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
+  evaluacion-acceso.ts  Guardia del módulo: sin permiso sobre el cuadro, 404
 supabase/
   migrations/   El esquema, en orden. Es la fuente de verdad
   functions/    Edge Function `purgar` (borra archivos vencidos)
