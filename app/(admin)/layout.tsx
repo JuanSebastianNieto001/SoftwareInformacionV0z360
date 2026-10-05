@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell, NavAdmin } from "@/components/comunes/app-shell";
+import { cargarNotificaciones } from "@/lib/notificaciones";
 import { exigirAdmin } from "@/lib/sesion";
 
 /**
@@ -8,7 +9,8 @@ import { exigirAdmin } from "@/lib/sesion";
  * hiciera, RLS le devolvería listas vacías y rechazaría sus cambios.
  */
 export default async function LayoutAdmin({ children }: { children: ReactNode }) {
-  const { user, perfil } = await exigirAdmin();
+  const { supabase, user, perfil } = await exigirAdmin();
+  const notificaciones = await cargarNotificaciones(supabase);
 
   return (
     <AppShell
@@ -19,6 +21,7 @@ export default async function LayoutAdmin({ children }: { children: ReactNode })
         gestiona_buzon: perfil.gestiona_buzon,
       }}
       email={user.email ?? ""}
+      notificaciones={notificaciones}
     >
       <NavAdmin />
       {children}

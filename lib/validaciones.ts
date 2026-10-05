@@ -709,6 +709,42 @@ export const esquemaRespuesta360 = z.object({
 
 export type DatosRespuesta360 = z.infer<typeof esquemaRespuesta360>;
 
+// ---------------------------------------------------------------------------
+// Cumpleaños
+// ---------------------------------------------------------------------------
+
+/**
+ * Día y mes obligatorios; el año solo si se conoce (la sección "Estructura"
+ * del libro no lo trae). El team leader vacío significa que la persona es
+ * de la estructura y no de un equipo.
+ */
+export const esquemaCumple = z
+  .object({
+    nombre: nombrePersona,
+    usuario_id: uuid.nullish().transform((v) => v || null),
+    team_leader: textoOpcional(120),
+    cumple_mes: z.coerce.number().int().min(1, "Mes inválido").max(12, "Mes inválido"),
+    cumple_dia: z.coerce.number().int().min(1, "Día inválido").max(31, "Día inválido"),
+    anio_nacimiento: z.coerce
+      .number()
+      .int()
+      .min(1900, "Año inválido")
+      .max(2100, "Año inválido")
+      .nullish()
+      .transform((v) => v ?? null),
+    notas: textoOpcional(500),
+    activo: z.boolean().default(true),
+  })
+  .superRefine((d, ctx) => {
+    // Que el día exista en ese mes (el 30 de febrero no es una fecha).
+    const dias = new Date(Date.UTC(d.anio_nacimiento ?? 2024, d.cumple_mes, 0)).getUTCDate();
+    if (d.cumple_dia > dias) {
+      ctx.addIssue({ code: "custom", path: ["cumple_dia"], message: `Ese mes no tiene ${d.cumple_dia} días` });
+    }
+  });
+
+export type DatosCumple = z.infer<typeof esquemaCumple>;
+
 export function primerError(error: z.ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "Datos inválidos";

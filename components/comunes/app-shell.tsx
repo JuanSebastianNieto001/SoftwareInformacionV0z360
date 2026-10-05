@@ -21,6 +21,7 @@ import {
   Files,
 } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/auth";
+import { CampanaNotificaciones, type NotificacionShell } from "@/components/comunes/campana-notificaciones";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -76,10 +77,12 @@ export type PerfilShell = {
 export function AppShell({
   perfil,
   email,
+  notificaciones,
   children,
 }: {
   perfil: PerfilShell;
   email: string;
+  notificaciones: NotificacionShell[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -163,6 +166,7 @@ export function AppShell({
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            <CampanaNotificaciones notificaciones={notificaciones} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

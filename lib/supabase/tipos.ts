@@ -676,8 +676,89 @@ export type Database = {
         };
         Relationships: [];
       };
+      cumpleanos: {
+        Row: {
+          id: string;
+          area_id: string;
+          nombre: string;
+          usuario_id: string | null;
+          grupo: string;
+          team_leader: string | null;
+          cumple_mes: number;
+          cumple_dia: number;
+          anio_nacimiento: number | null;
+          activo: boolean;
+          notas: string | null;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          nombre: string;
+          usuario_id?: string | null;
+          grupo: string;
+          team_leader?: string | null;
+          cumple_mes: number;
+          cumple_dia: number;
+          anio_nacimiento?: number | null;
+          activo?: boolean;
+          notas?: string | null;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: {
+          nombre?: string;
+          usuario_id?: string | null;
+          grupo?: string;
+          team_leader?: string | null;
+          cumple_mes?: number;
+          cumple_dia?: number;
+          anio_nacimiento?: number | null;
+          activo?: boolean;
+          notas?: string | null;
+        };
+        Relationships: [];
+      };
+      notificaciones: {
+        Row: {
+          id: string;
+          usuario_id: string;
+          clave: string;
+          tipo: string;
+          titulo: string;
+          cuerpo: string | null;
+          enlace: string | null;
+          leida_en: string | null;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          usuario_id: string;
+          clave: string;
+          tipo: string;
+          titulo: string;
+          cuerpo?: string | null;
+          enlace?: string | null;
+          leida_en?: string | null;
+          creado_en?: string;
+        };
+        Update: { leida_en?: string | null };
+        Relationships: [];
+      };
     };
     Views: {
+      v_cumpleanos: {
+        Row: Database["public"]["Tables"]["cumpleanos"]["Row"] & {
+          proximo: string;
+          dias_faltan: number;
+          edad_que_cumple: number | null;
+          usuario_nombre: string | null;
+        };
+        Relationships: [];
+      };
       v_evaluacion_resultados: {
         Row: {
           evaluacion_id: string;
@@ -788,6 +869,18 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string | null;
       };
+      area_modulo: {
+        Args: { m: string };
+        Returns: string | null;
+      };
+      proximo_cumple: {
+        Args: { mes: number; dia: number; desde?: string };
+        Returns: string;
+      };
+      generar_alertas_cumpleanos: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       estado_documento: {
         Args: { d: Database["public"]["Tables"]["documentos"]["Row"] };
         Returns: string;
@@ -841,6 +934,11 @@ export type Pregunta360 = Tablas["evaluacion_360_preguntas"]["Row"];
 export type Respuesta360 = Tablas["evaluacion_360_respuestas"]["Row"];
 export type ResultadoEvaluacion = Database["public"]["Views"]["v_evaluacion_resultados"]["Row"];
 export type Respuesta360Calculada = Database["public"]["Views"]["v_evaluacion_360"]["Row"];
+
+// ---------- Cumpleaños y notificaciones ----------
+export type Cumple = Tablas["cumpleanos"]["Row"];
+export type CumpleProximo = Database["public"]["Views"]["v_cumpleanos"]["Row"];
+export type Notificacion = Tablas["notificaciones"]["Row"];
 export type DocumentoConEstado =
   Database["public"]["Views"]["v_documentos_estado"]["Row"];
 export type FilaAuditoria = Database["public"]["Views"]["v_auditoria"]["Row"];

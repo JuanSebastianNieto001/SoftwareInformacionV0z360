@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronRight, ClipboardCheck, FolderOpen, MessageSquareText, Upload } from "lucide-react";
+import { ChevronRight, FolderOpen, MessageSquareText, Upload } from "lucide-react";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isoDentroDe, plural } from "@/lib/formato";
+import { MODULOS, esModulo } from "@/lib/modulos";
 import { ETIQUETA_NIVEL, nivelEfectivo, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 
@@ -79,20 +80,17 @@ export default async function PaginaInicio() {
           const cantidad = area.documentos?.[0]?.count ?? 0;
           // Un cuadro-módulo se ve igual que una carpeta —es una puerta más—
           // pero abre su pantalla propia y no cuenta documentos.
-          const esModulo = area.modulo === "evaluacion";
+          const modulo = esModulo(area.modulo) ? MODULOS[area.modulo] : null;
+          const Icono = modulo?.icono ?? FolderOpen;
           return (
             <li key={area.id}>
               <Link
-                href={esModulo ? "/evaluacion" : `/areas/${area.slug}`}
+                href={modulo ? modulo.href : `/areas/${area.slug}`}
                 className="group flex h-full min-h-[150px] flex-col gap-3 rounded-[20px] border bg-card p-[22px] transition-all duration-150 hover:-translate-y-0.5 hover:border-borde-acento hover:shadow-tarjeta"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="flex size-10 items-center justify-center rounded-xl bg-tinte text-primary">
-                    {esModulo ? (
-                      <ClipboardCheck className="size-5" aria-hidden />
-                    ) : (
-                      <FolderOpen className="size-5" aria-hidden />
-                    )}
+                    <Icono className="size-5" aria-hidden />
                   </span>
                   {nivel && (
                     <Badge variant={nivel === "edicion" ? "default" : "secondary"}>
@@ -109,7 +107,7 @@ export default async function PaginaInicio() {
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2 text-[12.5px] text-muted-foreground">
-                  <span>{esModulo ? "Módulo de evaluación 360°" : plural(cantidad, "documento", "documentos")}</span>
+                  <span>{modulo ? modulo.pie : plural(cantidad, "documento", "documentos")}</span>
                   <ChevronRight className="size-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/comunes/app-shell";
+import { cargarNotificaciones } from "@/lib/notificaciones";
 import { exigirSesion } from "@/lib/sesion";
 
 /**
@@ -7,7 +8,8 @@ import { exigirSesion } from "@/lib/sesion";
  * cambiada. Si algo falla, exigirSesion() redirige.
  */
 export default async function LayoutApp({ children }: { children: ReactNode }) {
-  const { user, perfil } = await exigirSesion();
+  const { supabase, user, perfil } = await exigirSesion();
+  const notificaciones = await cargarNotificaciones(supabase);
 
   return (
     <AppShell
@@ -18,6 +20,7 @@ export default async function LayoutApp({ children }: { children: ReactNode }) {
         gestiona_buzon: perfil.gestiona_buzon,
       }}
       email={user.email ?? ""}
+      notificaciones={notificaciones}
     >
       {children}
     </AppShell>

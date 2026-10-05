@@ -7,6 +7,7 @@ import { FiltrosDocumentos, limpiarBusqueda } from "@/components/documentos/filt
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MODULOS, esModulo } from "@/lib/modulos";
 import { ETIQUETA_NIVEL } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 import type { EstadoDocumento } from "@/lib/supabase/tipos";
@@ -30,7 +31,7 @@ export default async function PaginaArea({ params, searchParams }: PageProps<"/a
   if (!area) notFound();
   // Un cuadro-módulo no lista documentos: abre su propia pantalla. El
   // permiso ya quedó comprobado arriba (sin él, la fila no vuelve).
-  if (area.modulo === "evaluacion") redirect("/evaluacion");
+  if (esModulo(area.modulo)) redirect(MODULOS[area.modulo].href);
 
   const { data: nivel } = await supabase.rpc("nivel_en_area", { a: area.id });
   const puedeEditar = nivel === "edicion";

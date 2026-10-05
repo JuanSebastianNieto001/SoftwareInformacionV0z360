@@ -818,6 +818,77 @@ await prueba("eliminar exige Total (o admin): con Edición no se borra nada", as
   await db.query(`update permisos_area set nivel = 'edicion' where usuario_id = $1 and area_id = $2`, [U.editor, EVA]);
 });
 
+console.log("\nCumpleaños y notificaciones");
+grupo("Cumpleaños y notificaciones");
+
+const CUMPLE_AREA = (await db.query(`select public.area_modulo('cumpleanos') as id`)).rows[0].id;
+await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'lectura')`, [U.lector, CUMPLE_AREA]);
+// Dos cumpleaños: uno mañana (debe avisar) y uno dentro de diez días (no).
+await db.query(
+  `insert into cumpleanos (area_id, nombre, grupo, team_leader, cumple_mes, cumple_dia, anio_nacimiento)
+   select $1::uuid, 'Persona Mañana', 'Kelmer', 'Kelmer', extract(month from current_date + 1)::int, extract(day from current_date + 1)::int, 1990
+   union all
+   select $1::uuid, 'Persona Lejana', 'Estructura', null, extract(month from current_date + 10)::int, extract(day from current_date + 10)::int, null`,
+  [CUMPLE_AREA],
+);
+
+await prueba("sin permiso: ni el cuadro, ni la lista, ni alertas", async () => {
+  const r = await como(U.sinPermiso, (tx) =>
+    filas(tx, `select (select count(*) from v_cumpleanos) as n, public.generar_alertas_cumpleanos() as alertas, (select count(*) from notificaciones) as notis`),
+  );
+  igual(Number(r[0].n), 0, "no ve cumpleaños");
+  igual(Number(r[0].alertas), 0, "la función no le genera nada");
+  igual(Number(r[0].notis), 0, "cero notificaciones");
+});
+
+await prueba("con Vista: ve la lista y la vista calcula el próximo; recibe la alerta de mañana, y solo esa", async () => {
+  const v = await como(U.lector, (tx) => filas(tx, `select nombre, dias_faltan, edad_que_cumple from v_cumpleanos order by dias_faltan`));
+  igual(v.length, 2, "ve los dos");
+  igual(Number(v[0].dias_faltan), 1, "mañana");
+  igual(Number(v[1].dias_faltan), 10, "en diez días");
+  igual(v[1].edad_que_cumple, null, "sin año no hay edad");
+  const a1 = await como(U.lector, (tx) => filas(tx, `select public.generar_alertas_cumpleanos() as n`));
+  igual(Number(a1[0].n), 1, "una alerta pendiente");
+  const a2 = await como(U.lector, (tx) => filas(tx, `select public.generar_alertas_cumpleanos() as n`));
+  igual(Number(a2[0].n), 1, "idempotente: repetir no duplica");
+  const n = await como(U.lector, (tx) => filas(tx, `select titulo, enlace from notificaciones`));
+  igual(n.length, 1, "exactamente una notificación");
+  igual(n[0].titulo.includes("Mañana cumple años Persona Mañana"), true, `título: ${n[0].titulo}`);
+  igual(n[0].enlace, "/cumpleanos", "enlace al cuadro");
+});
+
+await prueba("las notificaciones son de cada uno: otro no las ve ni las marca; el dueño sí", async () => {
+  const ajeno = await como(U.editor, (tx) => filas(tx, `select count(*) as n from notificaciones`));
+  igual(Number(ajeno[0].n), 0, "el editor no ve las del lector");
+  const u = await como(U.editor, (tx) => tx.query(`update notificaciones set leida_en = now()`));
+  igual(u.affectedRows ?? 0, 0, "ni las marca");
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`insert into notificaciones (usuario_id, clave, tipo, titulo) values ($1, 'x', 'cumpleanos', 'fabricada')`, [U.lector]),
+  );
+  const mia = await como(U.lector, (tx) => tx.query(`update notificaciones set leida_en = now() where leida_en is null`));
+  igual(mia.affectedRows, 1, "el dueño la marca leída");
+  const pend = await como(U.lector, (tx) => filas(tx, `select public.generar_alertas_cumpleanos() as n`));
+  igual(Number(pend[0].n), 0, "ya no hay pendientes");
+});
+
+await prueba("con Vista no se agregan cumpleaños; con Edición sí, y solo en su cuadro", async () => {
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`insert into cumpleanos (area_id, nombre, grupo, cumple_mes, cumple_dia, creado_por) values ($1, 'X', 'Estructura', 1, 1, $2)`, [CUMPLE_AREA, U.lector]),
+  );
+  await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'edicion')`, [U.editor, CUMPLE_AREA]);
+  const ok = await como(U.editor, (tx) =>
+    filas(tx, `insert into cumpleanos (area_id, nombre, grupo, cumple_mes, cumple_dia, creado_por) values ($1, 'Nuevo', 'Estructura', 2, 29, $2) returning id`, [CUMPLE_AREA, U.editor]),
+  );
+  igual(ok.length, 1, "editor agrega");
+  await comoDebeFallar(U.editor, (tx) =>
+    tx.query(`insert into cumpleanos (area_id, nombre, grupo, cumple_mes, cumple_dia, creado_por) values ($1, 'Colado', 'Estructura', 1, 1, $2)`, [AREA.x, U.editor]),
+  );
+  // El 29 de febrero cae el 28 cuando el año no lo tiene.
+  const p = await db.query(`select public.proximo_cumple(2, 29, '2027-01-01'::date)::text as f, public.proximo_cumple(2, 29, '2028-01-01'::date)::text as g`);
+  igual(p.rows[0].f, "2027-02-28", "año no bisiesto");
+  igual(p.rows[0].g, "2028-02-29", "año bisiesto");
+});
+
 // ---------------------------------------------------------------------------
 // 5. Resumen
 // ---------------------------------------------------------------------------
