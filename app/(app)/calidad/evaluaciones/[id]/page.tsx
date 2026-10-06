@@ -96,6 +96,11 @@ export default async function PaginaAuditoria({ params }: PageProps<"/calidad/ev
             </Badge>
           )}
         </p>
+        {ev.nota_importada !== null && (
+          <p className="mt-2 text-xs text-white/70">
+            Auditoría importada del formulario anterior, donde obtuvo <span className="font-semibold text-white">{formatearPorcentaje(Number(ev.nota_importada))}</span>. La nota de arriba se recalcula con los pesos actuales de la pauta.
+          </p>
+        )}
         {ev.detalle && <p className="mt-3 text-sm whitespace-pre-line text-white/85">{ev.detalle}</p>}
         {ev.puntos_mejora && (
           <p className="mt-2 text-sm text-white/85">

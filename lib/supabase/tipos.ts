@@ -866,6 +866,7 @@ export type Database = {
           duracion: string | null;
           detalle: string | null;
           puntos_mejora: string | null;
+          nota_importada: number | null;
           estado: EstadoEvaluacionCalidad;
           publicada_en: string | null;
           creado_por: string | null;
@@ -890,6 +891,7 @@ export type Database = {
           duracion?: string | null;
           detalle?: string | null;
           puntos_mejora?: string | null;
+          nota_importada?: number | null;
           estado?: EstadoEvaluacionCalidad;
           creado_por?: string | null;
         };
