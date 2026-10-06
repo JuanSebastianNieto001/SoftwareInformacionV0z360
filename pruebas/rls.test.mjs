@@ -935,6 +935,135 @@ await prueba("el cargo de una evaluación con calificaciones no cambia, ni para 
   await db.query(`delete from evaluaciones where id = $1`, [ev]);
 });
 
+console.log("\nCalidad");
+grupo("Calidad");
+
+// Montaje: Eva (editor) con edición en el cuadro; Luis (lector) es un ASESOR
+// de la estructura, sin acceso al cuadro; Nora (sinPermiso) no es nada.
+const CAL = (await db.query(`select public.area_modulo('calidad') as id`)).rows[0].id;
+await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'edicion')`, [U.editor, CAL]);
+const MATRIZ = (await db.query(`insert into calidad_matrices (area_id, nombre, nota_minima) values ($1, 'Pauta de prueba', 80) returning id`, [CAL])).rows[0].id;
+const ITEMS = (
+  await db.query(
+    `insert into calidad_items (matriz_id, orden, categoria, descripcion, peso, es_fatal) values
+       ($1, 1, 'Saludo', 'Saluda según protocolo', 50, false),
+       ($1, 2, 'Cierre', 'Cierra la venta', 50, false),
+       ($1, 3, 'Errores críticos', 'Miente al cliente', 0, true)
+     returning id, es_fatal`,
+    [MATRIZ],
+  )
+).rows;
+const ASESOR = (await db.query(`insert into calidad_asesores (area_id, cedula, nombre, team_leader, usuario_id) values ($1, '12345678', 'Luis Lector', 'Kelmer', $2) returning id`, [CAL, U.lector])).rows[0].id;
+
+await prueba("sin acceso al cuadro: no ve auditorías ni estructura, pero sí la pauta (son criterios, no personas)", async () => {
+  const r = await como(U.sinPermiso, (tx) =>
+    filas(tx, `select (select count(*) from calidad_evaluaciones) as ev, (select count(*) from calidad_asesores) as asesores, (select count(*) from calidad_items where matriz_id = $1) as items`, [MATRIZ]),
+  );
+  igual(Number(r[0].ev), 0, "evaluaciones");
+  igual(Number(r[0].asesores), 0, "estructura");
+  igual(Number(r[0].items), 3, "pauta legible");
+});
+
+let EVAL = null;
+await prueba("con Edición: crea, marca la pauta, la vista calcula y publica; un crítico anula la nota", async () => {
+  EVAL = (
+    await como(U.editor, (tx) =>
+      filas(
+        tx,
+        `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_nombre, fecha_interaccion, creado_por)
+         values ($1, $2, $3, 'Luis Lector', 'Eva', current_date, $4) returning id`,
+        [CAL, MATRIZ, ASESOR, U.editor],
+      ),
+    )
+  )[0].id;
+  // Publicar sin responder todo debe fallar.
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update calidad_evaluaciones set estado = 'publicada' where id = $1`, [EVAL]), /Faltan ítems/);
+  await como(U.editor, (tx) =>
+    tx.query(
+      `insert into calidad_respuestas (evaluacion_id, item_id, resultado) values ($1, $2, 'cumple'), ($1, $3, 'no_cumple'), ($1, $4, 'cumple')`,
+      [EVAL, ITEMS[0].id, ITEMS[1].id, ITEMS[2].id],
+    ),
+  );
+  let v = await como(U.editor, (tx) => filas(tx, `select nota_sin_ic, nota_final, aprobada from v_calidad_evaluaciones where id = $1`, [EVAL]));
+  igual(Number(v[0].nota_sin_ic), 50, "50 % de peso cumplido");
+  igual(Number(v[0].nota_final), 50, "sin crítico fallado, igual");
+  igual(v[0].aprobada, false, "por debajo del umbral 80");
+  // El crítico falla: nota final 0.
+  await como(U.editor, (tx) => tx.query(`update calidad_respuestas set resultado = 'no_cumple' where evaluacion_id = $1 and item_id = $2`, [EVAL, ITEMS[2].id]));
+  v = await como(U.editor, (tx) => filas(tx, `select nota_sin_ic, nota_final from v_calidad_evaluaciones where id = $1`, [EVAL]));
+  igual(Number(v[0].nota_sin_ic), 50, "la nota sin IC no cambia");
+  igual(Number(v[0].nota_final), 0, "la nota final se anula");
+  const pub = await como(U.editor, (tx) => tx.query(`update calidad_evaluaciones set estado = 'publicada' where id = $1`, [EVAL]));
+  igual(pub.affectedRows, 1, "publicada");
+  // Publicada: ni la pauta ni el asesor cambian.
+  const otro = (await db.query(`insert into calidad_asesores (area_id, nombre) values ($1, 'Otro') returning id`, [CAL])).rows[0].id;
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update calidad_evaluaciones set asesor_id = $2 where id = $1`, [EVAL, otro]), /no cambia de matriz ni de asesor/);
+  const cel = await como(U.editor, (tx) => tx.query(`update calidad_respuestas set resultado = 'cumple' where evaluacion_id = $1`, [EVAL]));
+  igual(cel.affectedRows ?? 0, 0, "las respuestas quedan como están");
+});
+
+await prueba("el asesor ve SU auditoría publicada sin tener el cuadro, y nada más", async () => {
+  const mias = await como(U.lector, (tx) => filas(tx, `select id from calidad_evaluaciones`));
+  igual(mias.length, 1, "exactamente la suya");
+  igual(mias[0].id, EVAL);
+  const otra = (
+    await db.query(
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_nombre, fecha_interaccion, estado) values ($1, $2, (select id from calidad_asesores where nombre = 'Otro'), 'Otro', 'Eva', current_date, 'publicada') returning id`,
+      [CAL, MATRIZ],
+    )
+  ).rows[0].id;
+  const ajena = await como(U.lector, (tx) => filas(tx, `select id from calidad_evaluaciones where id = $1`, [otra]));
+  igual(ajena.length, 0, "la de otro asesor no");
+  const borrador = (
+    await db.query(
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_nombre, fecha_interaccion) values ($1, $2, $3, 'Luis Lector', 'Eva', current_date) returning id`,
+      [CAL, MATRIZ, ASESOR],
+    )
+  ).rows[0].id;
+  const b = await como(U.lector, (tx) => filas(tx, `select id from calidad_evaluaciones where id = $1`, [borrador]));
+  igual(b.length, 0, "un borrador suyo tampoco: solo lo publicado");
+  await db.query(`delete from calidad_evaluaciones where id in ($1, $2)`, [otra, borrador]);
+});
+
+await prueba("la firma: solo el asesor, solo por la función, y solo con compromisos", async () => {
+  const RETRO = (
+    await como(U.editor, (tx) =>
+      filas(tx, `insert into calidad_retroalimentaciones (evaluacion_id, area_id, realizada_por, realizada_por_nombre, estado) values ($1, $2, $3, 'Eva', 'en_proceso') returning id`, [EVAL, CAL, U.editor]),
+    )
+  )[0].id;
+  // Nadie llega a 'firmada' por update directo, ni quien hizo la sesión.
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update calidad_retroalimentaciones set estado = 'firmada' where id = $1`, [RETRO]), /la firma el asesor/);
+  // Sin compromisos el asesor tampoco puede firmar.
+  await comoDebeFallar(U.lector, (tx) => tx.query(`select public.firmar_retroalimentacion($1, null)`, [RETRO]), /sin al menos un compromiso/);
+  await como(U.editor, (tx) => tx.query(`insert into calidad_compromisos (retro_id, descripcion, fecha_limite) values ($1, 'Mejorar el saludo', current_date + 15)`, [RETRO]));
+  // Otro usuario no puede firmar por él.
+  await comoDebeFallar(U.sinPermiso, (tx) => tx.query(`select public.firmar_retroalimentacion($1, null)`, [RETRO]), /Solo el asesor evaluado/);
+  await como(U.lector, (tx) => tx.query(`select public.firmar_retroalimentacion($1, 'De acuerdo')`, [RETRO]));
+  const r = await como(U.lector, (tx) => filas(tx, `select estado, comentarios_asesor, firmada_en is not null as firmada from calidad_retroalimentaciones where id = $1`, [RETRO]));
+  igual(r[0].estado, "firmada");
+  igual(r[0].comentarios_asesor, "De acuerdo");
+  igual(r[0].firmada, true);
+  // Firmada: el editor ya no la edita; queda rastro en la auditoría.
+  const u = await como(U.editor, (tx) => tx.query(`update calidad_retroalimentaciones set fortalezas = 'tarde' where id = $1`, [RETRO]));
+  igual(u.affectedRows ?? 0, 0, "firmada es firmada");
+  const acc = await db.query(`select count(*) as n from accesos where doc_titulo like 'Firma de retroalimentación%' and usuario_id = $1`, [U.lector]);
+  igual(Number(acc.rows[0].n), 1, "la firma quedó en accesos");
+});
+
+await prueba("las alertas de calidad llegan al asesor (su evaluación) y a quien tiene el cuadro (compromisos por vencer)", async () => {
+  const a = await como(U.lector, (tx) => filas(tx, `select public.generar_alertas_calidad() as n`));
+  igual(Number(a[0].n) >= 1, true, "el asesor recibe la de su evaluación publicada");
+  const titulos = await como(U.lector, (tx) => filas(tx, `select titulo from notificaciones where tipo = 'calidad' order by titulo`));
+  igual(titulos.some((t) => t.titulo.includes("Nueva evaluación de calidad")), true, "aviso de evaluación");
+  // Un compromiso que vence pasado mañana alerta al gestor; uno a 10 días no.
+  await db.query(`update calidad_compromisos set fecha_limite = current_date + 2`);
+  await como(U.editor, (tx) => tx.query(`select public.generar_alertas_calidad()`));
+  const g = await como(U.editor, (tx) => filas(tx, `select titulo from notificaciones where tipo = 'calidad'`));
+  igual(g.some((t) => t.titulo.includes("Compromiso por vencer")), true, "aviso de vencimiento al gestor");
+  const nadie = await como(U.sinPermiso, (tx) => filas(tx, `select public.generar_alertas_calidad() as n`));
+  igual(Number(nadie[0].n), 0, "quien no es nada, nada recibe");
+});
+
 // ---------------------------------------------------------------------------
 // 5. Resumen
 // ---------------------------------------------------------------------------

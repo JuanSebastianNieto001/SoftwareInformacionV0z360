@@ -179,3 +179,8 @@
   0%, 100% { opacity: 0.55; transform: scale(0.9) rotate(0deg); }
   50% { opacity: 1; transform: scale(1.1) rotate(18deg); }
 }
+
+@keyframes marcar {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}

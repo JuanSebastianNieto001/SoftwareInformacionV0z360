@@ -745,6 +745,106 @@ export const esquemaCumple = z
 
 export type DatosCumple = z.infer<typeof esquemaCumple>;
 
+// ---------------------------------------------------------------------------
+// Calidad
+// ---------------------------------------------------------------------------
+
+export const RESULTADOS_CALIDAD = ["cumple", "no_cumple", "no_aplica"] as const;
+export const TIPOS_AUDITORIA = ["Venta", "No venta"] as const;
+export const ETAPAS_AUDITORIA = ["Contratados", "Seguimiento", "OJT", "PQR"] as const;
+export const CANALES_AUDITORIA = ["llamada", "chat", "correo", "otro"] as const;
+export const ESTADOS_COMPROMISO = ["pendiente", "en_seguimiento", "cumplido", "no_cumplido"] as const;
+
+/** Cabecera de una auditoría (lo que identifica la interacción). */
+export const esquemaAuditoria = z.object({
+  matriz_id: uuid,
+  asesor_id: uuid,
+  fecha_interaccion: z.iso.date({ message: "Fecha de la interacción inválida" }),
+  fecha_auditoria: z.iso.date({ message: "Fecha de auditoría inválida" }),
+  tipo: z.enum(TIPOS_AUDITORIA, { message: "Elige el tipo" }),
+  etapa: z.enum(ETAPAS_AUDITORIA).nullish().transform((v) => v ?? null),
+  canal: z.enum(CANALES_AUDITORIA),
+  referencia: textoOpcional(120),
+  duracion: textoOpcional(20),
+  detalle: textoOpcional(6000),
+  puntos_mejora: textoOpcional(4000),
+});
+export type DatosAuditoria = z.infer<typeof esquemaAuditoria>;
+
+/** Todas las respuestas de la pauta de una vez; null deja el ítem sin responder. */
+export const esquemaRespuestasCalidad = z.object({
+  evaluacion_id: uuid,
+  respuestas: z
+    .array(
+      z.object({
+        item_id: uuid,
+        resultado: z.enum(RESULTADOS_CALIDAD).nullable(),
+        hallazgo: textoOpcional(1000),
+      }),
+    )
+    .max(200),
+});
+export type DatosRespuestasCalidad = z.infer<typeof esquemaRespuestasCalidad>;
+
+export const esquemaRetro = z.object({
+  fortalezas: textoOpcional(4000),
+  oportunidades: textoOpcional(4000),
+  estado: z.enum(["pendiente", "en_proceso"]),
+});
+export type DatosRetro = z.infer<typeof esquemaRetro>;
+
+export const esquemaCompromiso = z.object({
+  descripcion: z
+    .string()
+    .trim()
+    .min(5, "Describe el compromiso")
+    .max(500, "No puede superar 500 caracteres"),
+  fecha_limite: z.iso.date({ message: "Fecha límite inválida" }),
+  estado: z.enum(ESTADOS_COMPROMISO).default("pendiente"),
+  avance: textoOpcional(1000),
+});
+export type DatosCompromiso = z.infer<typeof esquemaCompromiso>;
+
+export const esquemaFirmaRetro = z.object({
+  retro_id: uuid,
+  comentarios: textoOpcional(2000),
+});
+
+export const esquemaItemCalidad = z.object({
+  orden: z.coerce.number().int().min(1).max(500),
+  categoria: z.string().trim().min(2, "Indica la categoría").max(80),
+  descripcion: z.string().trim().min(5, "Describe el ítem").max(400),
+  peso: z.coerce.number().min(0, "El peso no puede ser negativo").max(100, "El peso no puede superar 100"),
+  es_fatal: z.boolean().default(false),
+  activo: z.boolean().default(true),
+});
+export type DatosItemCalidad = z.infer<typeof esquemaItemCalidad>;
+
+export const esquemaMatrizCalidad = z.object({
+  nombre: z.string().trim().min(2).max(120),
+  descripcion: textoOpcional(500),
+  nota_minima: z.coerce.number().min(0).max(100),
+  error_fatal_anula: z.boolean(),
+  activa: z.boolean(),
+});
+export type DatosMatrizCalidad = z.infer<typeof esquemaMatrizCalidad>;
+
+export const esquemaAsesorCalidad = z.object({
+  nombre: nombrePersona,
+  cedula: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{5,15}$/, "Cédula: solo números")
+    .nullish()
+    .transform((v) => v || null),
+  team_leader: textoOpcional(120),
+  campana: textoOpcional(120),
+  fecha_contratacion: z.iso.date().nullish().transform((v) => v || null),
+  usuario_id: uuid.nullish().transform((v) => v || null),
+  activo: z.boolean().default(true),
+});
+export type DatosAsesorCalidad = z.infer<typeof esquemaAsesorCalidad>;
+
 export function primerError(error: z.ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "Datos inválidos";

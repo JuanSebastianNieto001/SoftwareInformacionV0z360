@@ -87,9 +87,10 @@ El cálculo completo, en orden:
 
 Desde la migración `012`, un área puede llevar `modulo`. En «Mis áreas» se
 ve como un cuadro más, pero en lugar de listar documentos abre una pantalla
-propia. Hay dos: `evaluacion` (`/evaluacion`, evaluación de desempeño) y
-`cumpleanos` (`/cumpleanos`, cumpleaños con alertas). Cómo se añade otro
-está en `docs/modulos.md`.
+propia. Hay tres: `evaluacion` (`/evaluacion`, evaluación de desempeño),
+`cumpleanos` (`/cumpleanos`, cumpleaños con alertas) y `calidad`
+(`/calidad`, auditorías de calidad con retroalimentación firmada). Cómo se
+añade otro está en `docs/modulos.md`.
 
 Lo importante es lo que **no** cambia: el acceso se decide igual que en
 cualquier otro cuadro, con `nivel_en_area()`, la matriz por persona y los
@@ -104,6 +105,16 @@ Qué significa cada peldaño dentro del módulo:
 | `lectura` / `descarga` | Consultar evaluaciones, dashboard y resumen | Ver la lista y recibir las alertas |
 | `edicion` | Crear evaluaciones, calificar, cerrar, registrar respuestas 360 | Agregar, corregir y desactivar cumpleaños |
 | `total` (o admin) | Además eliminar | Además eliminar |
+
+**Calidad** sigue la misma escalera (Vista consulta; Edición audita, abre
+retroalimentaciones y mantiene la pauta y la estructura; Total elimina),
+con una excepción deliberada: **el asesor evaluado ve sus propias
+auditorías publicadas y firma su retroalimentación sin tener el cuadro**.
+Lo resuelve RLS comparando la cuenta con la fila de la estructura
+(`calidad_asesores.usuario_id`), y la firma solo entra por la función
+`firmar_retroalimentacion()`, que exige que firme el evaluado y que haya al
+menos un compromiso. La pauta (matriz e ítems) la lee cualquier
+autenticado: son criterios de calidad, no datos de personas.
 
 Las **alertas de cumpleaños** las recibe quien tiene cualquier nivel sobre
 ese cuadro: `generar_alertas_cumpleanos()` comprueba `nivel_en_area` antes

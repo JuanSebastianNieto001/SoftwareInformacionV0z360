@@ -18,13 +18,50 @@ export type TemaCuadro = Modulo | "documentos";
 export const FONDO_CUADRO: Record<TemaCuadro, string> = {
   cumpleanos: "linear-gradient(135deg, #fff5f9 0%, #fff8ec 55%, #f1f8ff 100%)",
   evaluacion: "linear-gradient(135deg, #f4f3ff 0%, #eef6ff 60%, #ffffff 100%)",
+  calidad: "linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 60%, #ffffff 100%)",
   documentos: "linear-gradient(160deg, #ffffff 55%, #eef5fd 100%)",
 };
 
 export function DecoracionCuadro({ tema, semilla = "" }: { tema: TemaCuadro; semilla?: string }) {
   if (tema === "cumpleanos") return <Cumpleanos />;
   if (tema === "evaluacion") return <Evaluacion />;
+  if (tema === "calidad") return <Calidad />;
   return <Documentos semilla={semilla} />;
+}
+
+// ---------------------------------------------------------------------------
+// Calidad: una lista de verificación con marcas que se van encendiendo
+// ---------------------------------------------------------------------------
+
+function Calidad() {
+  const filas = [0, 1, 2, 3];
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <svg className="absolute right-4 bottom-8 h-[74px] w-[92px] opacity-85" viewBox="0 0 92 74">
+        <rect x="2" y="2" width="88" height="70" rx="10" fill="#fff" stroke="#a7f3d0" />
+        {filas.map((i) => (
+          <g key={i} className="motion-safe:animate-[marcar_3.2s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.5}s` }}>
+            <rect x="12" y={12 + i * 15} width="11" height="11" rx="3" fill="#d1fae5" stroke="#10b981" />
+            <path d={`M14.5 ${18 + i * 15} l2.5 2.5 l5 -5.5`} fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="30" y={15 + i * 15} width={i === 3 ? 28 : 46} height="5" rx="2.5" fill="#99f6e4" opacity={0.8 - i * 0.12} />
+          </g>
+        ))}
+      </svg>
+      <svg
+        className="absolute top-12 right-5 size-7 text-emerald-500 motion-safe:animate-[brillar_2.8s_ease-in-out_infinite]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2l7 3v6c0 5-3.5 9-7 11-3.5-2-7-6-7-11V5z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+      <span className="absolute -right-10 -bottom-12 size-36 rounded-full bg-emerald-200/25" />
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -5,12 +5,13 @@ import type { ClienteServidor } from "./supabase/server";
 
 /**
  * Lo que la campana de la cabecera necesita: las notificaciones sin leer
- * de quien navega. Antes de leerlas se generan las que falten (hoy solo
- * cumpleaños); la función es idempotente y no crea nada para quien no
- * tiene acceso al cuadro, así que llamarla en cada petición es barato.
+ * de quien navega. Antes de leerlas se generan las que falten (cumpleaños
+ * y calidad); las funciones son idempotentes y no crean nada para quien no
+ * tiene acceso o no es el destinatario, así que llamarlas en cada petición
+ * es barato.
  */
 export async function cargarNotificaciones(supabase: ClienteServidor): Promise<NotificacionShell[]> {
-  await supabase.rpc("generar_alertas_cumpleanos");
+  await Promise.all([supabase.rpc("generar_alertas_cumpleanos"), supabase.rpc("generar_alertas_calidad")]);
   const { data } = await supabase
     .from("notificaciones")
     .select("id, titulo, cuerpo, enlace, creado_en")

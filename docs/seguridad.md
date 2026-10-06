@@ -208,6 +208,30 @@ acciones de administración y el botón de borrado compartido en su sitio.
 
 ---
 
+## Módulo de calidad (6 de octubre de 2026)
+
+Añadido con la migración `016` a partir del formulario de requerimientos de
+Calidad. Lo relevante para seguridad:
+
+- **Datos de desempeño de personas.** Las auditorías, hallazgos y
+  retroalimentaciones son información laboral sensible. El cuadro lo ven
+  Calidad, Formación y administradores; **el asesor evaluado ve únicamente
+  sus auditorías publicadas**, por RLS sobre `calidad_asesores.usuario_id`,
+  y nunca los borradores ni las de otros.
+- **La firma es del asesor.** El estado «firmada» solo se alcanza con la
+  función `firmar_retroalimentacion()`, que exige que firme el evaluado y
+  que exista al menos un compromiso; un disparador bloquea cualquier otro
+  camino. Cada firma queda en `accesos` con fecha, hora e IP.
+- **Lo publicado no se altera.** Publicar exige pauta completa y pesos que
+  sumen 100; después, ni la matriz ni el asesor ni las respuestas cambian.
+- **El histórico cargado** (535 auditorías del formulario anterior) **no
+  incluye el teléfono del cliente**, que el formulario sí recogía: no hace
+  falta para el fin del módulo (minimización, Ley 1581).
+- La pauta (ítems y pesos) la lee cualquier autenticado: son criterios de
+  calidad, no datos de personas.
+
+---
+
 ## Al terminar una sesión de trabajo
 
 Si en el proceso se han pegado claves en algún chat, herramienta o ticket,

@@ -36,7 +36,8 @@ sin añadir nada. Cómo se añade uno está en `docs/modulos.md`.
 ```
 app/
   (app)/        Pantallas del día a día: Mis áreas, documentos, buzón,
-                /evaluacion (desempeño 360°) y /cumpleanos
+                /evaluacion (desempeño 360°), /cumpleanos, /calidad
+                (auditorías QualityCore) y /mis-evaluaciones (el asesor)
   (admin)/      Panel: documentos, usuarios, áreas, grupos, permisos, auditoría
   (auth)/       Entrada y cambio de contraseña
   acciones/     Server actions: auth, buzón, evaluación, cumpleaños,
@@ -50,6 +51,8 @@ components/
   buzon/        Formulario de PQR, bandeja, tablero, tratamiento
   evaluacion/   Hoja por cargo, matriz 360, alta, pestañas del módulo
   cumpleanos/   Alta y edición de cumpleaños
+  calidad/      Pauta en vivo, retroalimentación y compromisos, firma del
+                asesor, editor de la pauta, estructura operativa
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
@@ -62,6 +65,7 @@ lib/
   auditoria*.ts     Registro y consulta de accesos
   evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
   cumpleanos.ts     Etiquetas y utilidades del módulo de cumpleaños
+  calidad.ts        Estados, etiquetas y la fórmula de la nota de calidad
   notificaciones.ts Carga de avisos para la campana (genera los pendientes)
 supabase/
   migrations/   El esquema, en orden. Es la fuente de verdad

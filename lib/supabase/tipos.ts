@@ -748,8 +748,251 @@ export type Database = {
         Update: { leida_en?: string | null };
         Relationships: [];
       };
+      calidad_asesores: {
+        Row: {
+          id: string;
+          area_id: string;
+          cedula: string | null;
+          nombre: string;
+          team_leader: string | null;
+          campana: string | null;
+          fecha_contratacion: string | null;
+          usuario_id: string | null;
+          activo: boolean;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          cedula?: string | null;
+          nombre: string;
+          team_leader?: string | null;
+          campana?: string | null;
+          fecha_contratacion?: string | null;
+          usuario_id?: string | null;
+          activo?: boolean;
+        };
+        Update: {
+          cedula?: string | null;
+          nombre?: string;
+          team_leader?: string | null;
+          campana?: string | null;
+          fecha_contratacion?: string | null;
+          usuario_id?: string | null;
+          activo?: boolean;
+        };
+        Relationships: [];
+      };
+      calidad_matrices: {
+        Row: {
+          id: string;
+          area_id: string;
+          nombre: string;
+          descripcion: string | null;
+          version: number;
+          activa: boolean;
+          error_fatal_anula: boolean;
+          nota_minima: number;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          nombre: string;
+          descripcion?: string | null;
+          version?: number;
+          activa?: boolean;
+          error_fatal_anula?: boolean;
+          nota_minima?: number;
+        };
+        Update: {
+          nombre?: string;
+          descripcion?: string | null;
+          activa?: boolean;
+          error_fatal_anula?: boolean;
+          nota_minima?: number;
+        };
+        Relationships: [];
+      };
+      calidad_items: {
+        Row: {
+          id: string;
+          matriz_id: string;
+          orden: number;
+          categoria: string;
+          descripcion: string;
+          peso: number;
+          es_fatal: boolean;
+          activo: boolean;
+        };
+        Insert: {
+          id?: string;
+          matriz_id: string;
+          orden: number;
+          categoria: string;
+          descripcion: string;
+          peso?: number;
+          es_fatal?: boolean;
+          activo?: boolean;
+        };
+        Update: {
+          orden?: number;
+          categoria?: string;
+          descripcion?: string;
+          peso?: number;
+          es_fatal?: boolean;
+          activo?: boolean;
+        };
+        Relationships: [];
+      };
+      calidad_evaluaciones: {
+        Row: {
+          id: string;
+          area_id: string;
+          matriz_id: string;
+          asesor_id: string;
+          asesor_nombre: string;
+          team_leader: string | null;
+          analista_id: string | null;
+          analista_nombre: string;
+          fecha_interaccion: string;
+          fecha_auditoria: string;
+          tipo: string;
+          etapa: string | null;
+          canal: string;
+          referencia: string | null;
+          duracion: string | null;
+          detalle: string | null;
+          puntos_mejora: string | null;
+          estado: EstadoEvaluacionCalidad;
+          publicada_en: string | null;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          matriz_id: string;
+          asesor_id: string;
+          asesor_nombre: string;
+          team_leader?: string | null;
+          analista_id?: string | null;
+          analista_nombre: string;
+          fecha_interaccion: string;
+          fecha_auditoria?: string;
+          tipo?: string;
+          etapa?: string | null;
+          canal?: string;
+          referencia?: string | null;
+          duracion?: string | null;
+          detalle?: string | null;
+          puntos_mejora?: string | null;
+          estado?: EstadoEvaluacionCalidad;
+          creado_por?: string | null;
+        };
+        Update: {
+          fecha_interaccion?: string;
+          fecha_auditoria?: string;
+          tipo?: string;
+          etapa?: string | null;
+          canal?: string;
+          referencia?: string | null;
+          duracion?: string | null;
+          detalle?: string | null;
+          puntos_mejora?: string | null;
+          estado?: EstadoEvaluacionCalidad;
+        };
+        Relationships: [];
+      };
+      calidad_respuestas: {
+        Row: { evaluacion_id: string; item_id: string; resultado: CalidadResultado; hallazgo: string | null };
+        Insert: { evaluacion_id: string; item_id: string; resultado: CalidadResultado; hallazgo?: string | null };
+        Update: { resultado?: CalidadResultado; hallazgo?: string | null };
+        Relationships: [];
+      };
+      calidad_retroalimentaciones: {
+        Row: {
+          id: string;
+          evaluacion_id: string;
+          area_id: string;
+          realizada_por: string | null;
+          realizada_por_nombre: string;
+          fortalezas: string | null;
+          oportunidades: string | null;
+          comentarios_asesor: string | null;
+          estado: EstadoRetro;
+          firmada_en: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          evaluacion_id: string;
+          area_id: string;
+          realizada_por?: string | null;
+          realizada_por_nombre: string;
+          fortalezas?: string | null;
+          oportunidades?: string | null;
+          estado?: EstadoRetro;
+        };
+        Update: {
+          fortalezas?: string | null;
+          oportunidades?: string | null;
+          estado?: EstadoRetro;
+        };
+        Relationships: [];
+      };
+      calidad_compromisos: {
+        Row: {
+          id: string;
+          retro_id: string;
+          descripcion: string;
+          fecha_limite: string;
+          estado: EstadoCompromiso;
+          avance: string | null;
+          cerrado_en: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          retro_id: string;
+          descripcion: string;
+          fecha_limite: string;
+          estado?: EstadoCompromiso;
+          avance?: string | null;
+        };
+        Update: {
+          descripcion?: string;
+          fecha_limite?: string;
+          estado?: EstadoCompromiso;
+          avance?: string | null;
+          cerrado_en?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
+      v_calidad_evaluaciones: {
+        Row: Database["public"]["Tables"]["calidad_evaluaciones"]["Row"] & {
+          matriz_nombre: string;
+          nota_minima: number;
+          error_fatal_anula: boolean;
+          n_items: number;
+          n_respondidos: number;
+          n_no_cumple: number;
+          n_fatales_fallados: number;
+          nota_sin_ic: number | null;
+          nota_final: number | null;
+          aprobada: boolean | null;
+          retro_id: string | null;
+          retro_estado: EstadoRetro | null;
+        };
+        Relationships: [];
+      };
       v_cumpleanos: {
         Row: Database["public"]["Tables"]["cumpleanos"]["Row"] & {
           proximo: string;
@@ -881,6 +1124,22 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      generar_alertas_calidad: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      firmar_retroalimentacion: {
+        Args: { p_retro: string; p_comentarios?: string | null };
+        Returns: undefined;
+      };
+      calidad_pesos_suman_cien: {
+        Args: { m: string };
+        Returns: boolean;
+      };
+      calidad_es_mi_evaluacion: {
+        Args: { ev: string };
+        Returns: boolean;
+      };
       estado_documento: {
         Args: { d: Database["public"]["Tables"]["documentos"]["Row"] };
         Returns: string;
@@ -904,6 +1163,7 @@ export type Database = {
       tipo_sugerencia: TipoSugerencia;
       estado_sugerencia: EstadoSugerencia;
       perspectiva_360: PerspectivaEvaluacion;
+      calidad_resultado: CalidadResultado;
     };
     CompositeTypes: Record<PropertyKey, never>;
   };
@@ -939,6 +1199,20 @@ export type Respuesta360Calculada = Database["public"]["Views"]["v_evaluacion_36
 export type Cumple = Tablas["cumpleanos"]["Row"];
 export type CumpleProximo = Database["public"]["Views"]["v_cumpleanos"]["Row"];
 export type Notificacion = Tablas["notificaciones"]["Row"];
+
+// ---------- Calidad ----------
+export type CalidadResultado = "cumple" | "no_cumple" | "no_aplica";
+export type EstadoEvaluacionCalidad = "borrador" | "publicada";
+export type EstadoRetro = "pendiente" | "en_proceso" | "firmada";
+export type EstadoCompromiso = "pendiente" | "en_seguimiento" | "cumplido" | "no_cumplido";
+export type AsesorCalidad = Tablas["calidad_asesores"]["Row"];
+export type MatrizCalidad = Tablas["calidad_matrices"]["Row"];
+export type ItemCalidad = Tablas["calidad_items"]["Row"];
+export type EvaluacionCalidad = Tablas["calidad_evaluaciones"]["Row"];
+export type RespuestaCalidad = Tablas["calidad_respuestas"]["Row"];
+export type Retroalimentacion = Tablas["calidad_retroalimentaciones"]["Row"];
+export type Compromiso = Tablas["calidad_compromisos"]["Row"];
+export type EvaluacionCalidadConNota = Database["public"]["Views"]["v_calidad_evaluaciones"]["Row"];
 export type DocumentoConEstado =
   Database["public"]["Views"]["v_documentos_estado"]["Row"];
 export type FilaAuditoria = Database["public"]["Views"]["v_auditoria"]["Row"];
