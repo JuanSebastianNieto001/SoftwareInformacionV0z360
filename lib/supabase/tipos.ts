@@ -972,6 +972,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      calidad_penalizaciones: {
+        Row: {
+          id: string;
+          area_id: string;
+          orden: number;
+          item_critico: string;
+          variante: string | null;
+          pauta_evaluada: string | null;
+          gravedad: string;
+          tratamiento_primera: string;
+          tratamiento_segunda: string | null;
+          impacto_comisiones: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          orden?: number;
+          item_critico: string;
+          variante?: string | null;
+          pauta_evaluada?: string | null;
+          gravedad: string;
+          tratamiento_primera: string;
+          tratamiento_segunda?: string | null;
+          impacto_comisiones?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["calidad_penalizaciones"]["Insert"]>;
+        Relationships: [];
+      };
       calidad_items: {
         Row: {
           id: string;
@@ -1393,6 +1425,7 @@ export type EstadoCompromiso = "pendiente" | "en_seguimiento" | "cumplido" | "no
 export type AsesorCalidad = Tablas["calidad_asesores"]["Row"];
 export type MatrizCalidad = Tablas["calidad_matrices"]["Row"];
 export type ItemCalidad = Tablas["calidad_items"]["Row"];
+export type PenalizacionCalidad = Tablas["calidad_penalizaciones"]["Row"];
 export type EvaluacionCalidad = Tablas["calidad_evaluaciones"]["Row"];
 export type RespuestaCalidad = Tablas["calidad_respuestas"]["Row"];
 export type Retroalimentacion = Tablas["calidad_retroalimentaciones"]["Row"];

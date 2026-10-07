@@ -964,6 +964,19 @@ await prueba("sin acceso al cuadro: no ve auditorías ni estructura, pero sí la
   igual(Number(r[0].items), 3, "pauta legible");
 });
 
+await prueba("la matriz de penalización es referencia: cualquiera la lee, solo Edición la cambia", async () => {
+  const todos = await como(U.sinPermiso, (tx) => filas(tx, `select count(*) as n from calidad_penalizaciones`));
+  igual(Number(todos[0].n), 12, "las 12 filas de la política son legibles por cualquier autenticado");
+  await comoDebeFallar(U.lector, (tx) =>
+    tx.query(`insert into calidad_penalizaciones (area_id, item_critico, gravedad, tratamiento_primera) values ($1, 'X', 'Leve', 'Feedback')`, [CAL]),
+  );
+  const ok = await como(U.editor, (tx) =>
+    filas(tx, `insert into calidad_penalizaciones (area_id, orden, item_critico, gravedad, tratamiento_primera) values ($1, 99, 'Prueba', 'Leve', 'Feedback') returning id`, [CAL]),
+  );
+  igual(ok.length, 1, "con Edición sí");
+  await como(U.editor, (tx) => tx.query(`delete from calidad_penalizaciones where orden = 99`));
+});
+
 let EVAL = null;
 await prueba("con Edición: crea, marca la pauta, la vista calcula y publica; un crítico anula la nota", async () => {
   EVAL = (

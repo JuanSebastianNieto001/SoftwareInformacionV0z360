@@ -44,7 +44,7 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
 
   let consulta = supabase
     .from("v_calidad_evaluaciones")
-    .select("id, asesor_id, asesor_nombre, team_leader, nota_final, nota_minima, aprobada, n_fatales_fallados, retro_estado, canal, tipo")
+    .select("id, asesor_id, asesor_nombre, team_leader, nota_final, nota_sin_ic, nota_minima, aprobada, n_fatales_fallados, retro_estado, canal, tipo")
     .eq("estado", "publicada")
     .limit(5000);
   if (!todos) consulta = consulta.gte("fecha_auditoria", `${mes}-01`).lte("fecha_auditoria", `${mes}-31`);
@@ -67,8 +67,11 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
   const teamLeaders = [...new Set((tls ?? []).map((t) => t.team_leader as string))].sort();
   const notas = lista.map((e) => (e.nota_final === null ? null : Number(e.nota_final)));
   const promedio = media(notas);
+  // Calidad operativa: promedia la nota sin anular por crítico (el "desempeño neto de proceso" del informe gerencial).
+  const promedioOperativo = media(lista.map((e) => (e.nota_sin_ic === null ? null : Number(e.nota_sin_ic))));
   const aprobadas = lista.filter((e) => e.aprobada === true).length;
   const conCritico = lista.filter((e) => Number(e.n_fatales_fallados) > 0).length;
+  const pctCritico = lista.length ? Math.round((conCritico / lista.length) * 100) : 0;
   const conRetro = lista.filter((e) => e.retro_estado).length;
   const firmadas = lista.filter((e) => e.retro_estado === "firmada").length;
 
@@ -150,9 +153,11 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
         <EstadoVacio icono={<ClipboardList />} titulo={todos ? "Todavía no hay auditorías publicadas" : `Sin auditorías publicadas en ${etiquetaMes(mes)}`} descripcion="El dashboard se calcula solo con lo que se publique." />
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Indicador etiqueta="Promedio del periodo" valor={formatearPorcentaje(promedio)} detalle={`${lista.length} ${lista.length === 1 ? "auditoría" : "auditorías"}`} />
-        <Indicador etiqueta="Aprobadas" valor={lista.length ? `${Math.round((aprobadas / lista.length) * 100)} %` : "—"} detalle={`${aprobadas} de ${lista.length}${conCritico ? ` · ${conCritico} con error crítico` : ""}`} tono={lista.length && aprobadas / lista.length >= 0.8 ? "bien" : lista.length ? "alerta" : "neutro"} />
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Indicador etiqueta="Calidad con IC" valor={formatearPorcentaje(promedio)} detalle={`${lista.length} ${lista.length === 1 ? "auditoría" : "auditorías"} · anula si falla un crítico`} />
+        <Indicador etiqueta="Calidad operativa (sin IC)" valor={formatearPorcentaje(promedioOperativo)} detalle="Desempeño del proceso, sin anular por crítico" />
+        <Indicador etiqueta="Con error crítico" valor={lista.length ? `${pctCritico} %` : "—"} detalle={`${conCritico} de ${lista.length} ${conCritico === 1 ? "auditoría" : "auditorías"}`} tono={conCritico > 0 ? "alerta" : "neutro"} />
+        <Indicador etiqueta="Aprobadas" valor={lista.length ? `${Math.round((aprobadas / lista.length) * 100)} %` : "—"} detalle={`${aprobadas} de ${lista.length}`} tono={lista.length && aprobadas / lista.length >= 0.8 ? "bien" : lista.length ? "alerta" : "neutro"} />
         <Indicador etiqueta="Con retroalimentación" valor={lista.length ? `${Math.round((conRetro / lista.length) * 100)} %` : "—"} detalle={`${firmadas} firmadas de ${conRetro}`} />
         <Indicador etiqueta="Compromisos abiertos" valor={String(compPend.length)} detalle={`${compVenc} vencidos · ${compCumpl} cumplidos en total`} tono={compVenc > 0 ? "alerta" : "neutro"} />
       </section>
