@@ -1,7 +1,7 @@
 "use client";
 
 // Configuración de la pauta: umbral, regla de error crítico y los ítems con
-// categoría, peso y marca de crítico. Avisa cuando los pesos no suman 100,
+// categoría, peso y marca de crítico. Avisa si los pesos no son válidos,
 // que es lo que la base exige para poder publicar una auditoría.
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -77,10 +77,16 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
         )}
       </section>
 
-      <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-5 py-3", Math.abs(suma - 100) < 0.01 ? "border-emerald-200 bg-emerald-50" : "border-amber-300 bg-amber-50")}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-5 py-3", suma > 0 && suma <= 100.01 ? "border-emerald-200 bg-emerald-50" : "border-amber-300 bg-amber-50")}>
         <p className="text-sm">
           Suma de pesos de los ítems activos (sin críticos): <span className="font-semibold tabular-nums">{suma} %</span>
-          {Math.abs(suma - 100) >= 0.01 && <span className="ml-2 text-amber-800">— debe ser 100 % para poder publicar auditorías</span>}
+          {suma <= 0 ? (
+            <span className="ml-2 text-amber-800">— debe ser mayor que 0 para poder publicar auditorías</span>
+          ) : suma > 100.01 ? (
+            <span className="ml-2 text-amber-800">— no puede superar 100 %</span>
+          ) : (
+            <span className="ml-2 text-muted-foreground">— la nota de cada auditoría se reparte sobre los ítems que apliquen (los «No aplica» no cuentan)</span>
+          )}
         </p>
         {editable && <DialogoItem matrizId={matriz.id} ordenSugerido={(items.at(-1)?.orden ?? 0) + 1} categorias={categorias} />}
       </div>
