@@ -856,44 +856,92 @@ export function primerError(error: z.ZodError): string {
 // PDA
 // ---------------------------------------------------------------------------
 
-export const SENTIDOS_PDA = ["mayor", "menor"] as const;
-export const AGREGACIONES_PDA = ["ultimo", "suma", "promedio"] as const;
+/** Tipos de archivo que acepta el bucket `pda` (evidencias). 25 MB por archivo. */
+export const MIME_PDA = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+] as const;
+export type MimePda = (typeof MIME_PDA)[number];
+export const TAMANO_MAXIMO_PDA_BYTES = 25 * 1024 * 1024;
 
-/** Número desde un input: acepta coma decimal ("99,5"). */
-const numeroPda = (mensaje: string) =>
+/** Porcentaje desde un input: acepta coma decimal ("87,5") y el signo %. */
+const porcentajePda = (mensaje: string) =>
   z.preprocess(
-    (v) => (typeof v === "string" ? v.trim().replace(",", ".") : v),
-    z.coerce.number({ message: mensaje }).refine(Number.isFinite, mensaje),
+    (v) => (typeof v === "string" ? v.trim().replace("%", "").replace(",", ".") : v),
+    z.coerce
+      .number({ message: mensaje })
+      .refine(Number.isFinite, mensaje)
+      .min(0, "El porcentaje va de 0 a 100")
+      .max(100, "El porcentaje va de 0 a 100"),
   );
 
-/** El PDA de un mes: `periodo` llega como "YYYY-MM" y se guarda como el día 1. */
+const textoPda = (max: number) => textoOpcional(max);
+
+/** El PDA de un mes y un cargo: `periodo` llega como "YYYY-MM" y se guarda como el día 1. */
 export const esquemaPlanPda = z.object({
   periodo: z
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Elige el mes")
     .transform((v) => `${v}-01`),
-  titulo: z.string().trim().min(2, "Escribe un título").max(200, "No puede superar 200 caracteres"),
-  objetivo: textoOpcional(2000),
+  cargo: z.string().trim().min(2, "Indica el cargo (Líder de TI, Soporte TI…)").max(80, "No puede superar 80 caracteres"),
+  responsable: z.string().trim().min(2, "Escribe el nombre del responsable").max(160, "No puede superar 160 caracteres"),
+  titulo: z.string().trim().min(2, "Escribe un título").max(300, "No puede superar 300 caracteres"),
+  codigo: z.string().trim().min(2, "Indica el código del formato").max(40, "No puede superar 40 caracteres").default("FTM-SINF-005"),
+  version: z.string().trim().min(1, "Indica la versión").max(20, "No puede superar 20 caracteres").default("1.0"),
+  antecedentes: textoPda(6000),
+  objetivo_general: textoPda(4000),
+  entregables: textoPda(4000),
 });
 export type DatosPlanPda = z.infer<typeof esquemaPlanPda>;
 
-export const esquemaIndicadorPda = z.object({
-  nombre: z.string().trim().min(2, "Escribe el nombre del indicador").max(200, "No puede superar 200 caracteres"),
-  descripcion: textoOpcional(2000),
-  responsable: textoOpcional(120),
-  unidad: z.string().trim().min(1, "Indica la unidad").max(30, "Unidad demasiado larga"),
-  sentido: z.enum(SENTIDOS_PDA, { message: "Elige si la meta es un mínimo o un máximo" }),
-  meta: numeroPda("Meta inválida").pipe(z.number().min(0, "La meta no puede ser negativa")),
-  agregacion: z.enum(AGREGACIONES_PDA, { message: "Elige cómo se consolida" }),
-  peso: numeroPda("Peso inválido").pipe(z.number().gt(0, "El peso debe ser mayor que 0").max(100, "Peso máximo 100")),
+/** Una fila de la matriz (columnas A–K del formato). */
+export const esquemaObjetivoPda = z.object({
+  frente: textoPda(200),
+  fecha_inicial: fechaOpcional,
+  indicador: z.string().trim().min(2, "Escribe el indicador").max(1000, "No puede superar 1000 caracteres"),
+  indicador_anterior: textoPda(1000),
+  objetivo: textoPda(3000),
+  causa_raiz: textoPda(3000),
+  que_se_hara: textoPda(3000),
+  como_se_hara: textoPda(3000),
+  recursos: textoPda(2000),
+  periodicidad: textoPda(1000),
+  responsable: textoPda(160),
+  proyeccion: porcentajePda("Proyección inválida").default(100),
   orden: z.coerce.number().int().min(0).max(999).default(0),
 });
-export type DatosIndicadorPda = z.infer<typeof esquemaIndicadorPda>;
+export type DatosObjetivoPda = z.infer<typeof esquemaObjetivoPda>;
 
-export const esquemaMedicionPda = z.object({
-  indicador_id: uuid,
-  fecha: z.iso.date({ message: "Fecha inválida" }),
-  valor: numeroPda("Valor inválido"),
-  observacion: textoOpcional(1000),
+/** El cierre de un objetivo (columnas L–N): datos finales, % de cumplimiento y observación. */
+export const esquemaCierreObjetivoPda = z.object({
+  datos_cierre: textoPda(3000),
+  cumplimiento: z.preprocess(
+    (v) => (v === "" || v === undefined ? null : v),
+    porcentajePda("Cumplimiento inválido").nullable(),
+  ),
+  observacion: textoPda(3000),
 });
-export type DatosMedicionPda = z.infer<typeof esquemaMedicionPda>;
+export type DatosCierreObjetivoPda = z.infer<typeof esquemaCierreObjetivoPda>;
+
+export const esquemaTareaPda = z.object({
+  descripcion: z.string().trim().min(2, "Escribe la actividad").max(500, "No puede superar 500 caracteres"),
+  fecha_limite: fechaOpcional,
+  observacion: textoPda(1000),
+  orden: z.coerce.number().int().min(0).max(999).default(0),
+});
+export type DatosTareaPda = z.infer<typeof esquemaTareaPda>;
+
+/** Metadatos de una evidencia ya subida al bucket `pda`. */
+export const esquemaEvidenciaPda = z.object({
+  objetivo_id: uuid,
+  nombre_archivo: nombreArchivo,
+  mime: z.enum(MIME_PDA, { message: "Tipo de archivo no permitido (imágenes, PDF, Word, Excel o PowerPoint)" }),
+  tamano_bytes: z.number().int().nonnegative().max(TAMANO_MAXIMO_PDA_BYTES, "El archivo no puede superar 25 MB"),
+  descripcion: textoPda(500),
+});
+export type DatosEvidenciaPda = z.infer<typeof esquemaEvidenciaPda>;

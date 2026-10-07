@@ -90,8 +90,9 @@ ve como un cuadro más, pero en lugar de listar documentos abre una pantalla
 propia. Hay cuatro: `evaluacion` (`/evaluacion`, evaluación de desempeño),
 `cumpleanos` (`/cumpleanos`, cumpleaños con alertas), `calidad`
 (`/calidad`, auditorías de calidad con retroalimentación firmada) y `pda`
-(`/pda`, el plan mensual de TI con indicadores y metas). Cómo se
-añade otro está en `docs/modulos.md`.
+(`/pda`, el plan de trabajo mensual de TI: la matriz FTM-SINF-005 con su
+lista de chequeo y sus evidencias). Cómo se añade otro está en
+`docs/modulos.md`.
 
 Lo importante es lo que **no** cambia: el acceso se decide igual que en
 cualquier otro cuadro, con `nivel_en_area()`, la matriz por persona y los
@@ -118,12 +119,17 @@ menos un compromiso. La pauta (matriz e ítems) la lee cualquier
 autenticado: son criterios de calidad, no datos de personas.
 
 **PDA** también sigue la escalera: Vista (soporte técnico) consulta los
-PDA, sus indicadores y el cumplimiento; Edición (líder de TI) crea el PDA
-del mes, sus indicadores, registra y corrige mediciones, y cierra o reabre
-el mes; Total o admin además elimina un PDA o un indicador. Un PDA cerrado
-queda congelado en la base: ni indicadores ni mediciones aceptan cambios
-hasta reabrirlo. El resultado, el avance y si se cumple la meta los
-calculan las vistas `v_pda_indicadores` y `v_pda_planes`.
+PDA, sus objetivos, la lista de chequeo y abre las evidencias; Edición
+(líder de TI) crea el PDA del mes y sus objetivos, marca actividades, sube
+y retira evidencias, registra el cierre de cada objetivo y cierra o reabre
+el mes; Total o admin además elimina un PDA o un objetivo. Un PDA cerrado
+queda congelado en la base: ni objetivos, ni actividades, ni evidencias
+aceptan cambios hasta reabrirlo (019). Las evidencias viven en el bucket
+privado `pda`, cuyas políticas preguntan por el mismo
+`nivel_en_area(area_modulo('pda'))`, y solo se sirven por URL firmada de
+60 segundos desde `/api/pda/evidencias/[id]`, con rastro en `accesos`.
+Los conteos y el cumplimiento (promedio de la columna M del formato) los
+calculan `v_pda_objetivos` y `v_pda_planes`.
 
 Las **alertas de cumpleaños** las recibe quien tiene cualquier nivel sobre
 ese cuadro: `generar_alertas_cumpleanos()` comprueba `nivel_en_area` antes

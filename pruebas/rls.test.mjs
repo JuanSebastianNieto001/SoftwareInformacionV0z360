@@ -1064,17 +1064,18 @@ await prueba("las alertas de calidad llegan al asesor (su evaluación) y a quien
   igual(Number(nadie[0].n), 0, "quien no es nada, nada recibe");
 });
 
-console.log("\nPDA (018)");
-grupo("PDA (018)");
+console.log("\nPDA (019)");
+grupo("PDA (019)");
 
 const PDA = (await db.query(`select public.area_modulo('pda') as id`)).rows[0].id;
 await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'lectura')`, [U.lector, PDA]);
 await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'edicion')`, [U.editor, PDA]);
 let PLAN_PDA = null;
+let OBJ_PDA = {};
 
 await prueba("sin permiso no hay PDA; con Vista se consulta pero no se crea", async () => {
   await db.query(
-    `insert into pda_planes (id, area_id, periodo, titulo) values ('30000000-0000-4000-8000-000000000001', $1, '2026-09-01', 'PDA septiembre')`,
+    `insert into pda_planes (id, area_id, periodo, cargo, responsable, titulo) values ('30000000-0000-4000-8000-000000000001', $1, '2026-09-01', 'Soporte TI', 'Mateo', 'PDA septiembre')`,
     [PDA],
   );
   const nada = await como(U.sinPermiso, (tx) => filas(tx, `select count(*) as n from v_pda_planes`));
@@ -1082,102 +1083,152 @@ await prueba("sin permiso no hay PDA; con Vista se consulta pero no se crea", as
   const ve = await como(U.lector, (tx) => filas(tx, `select titulo from v_pda_planes`));
   igual(ve.length, 1, "con Vista lo ve");
   await comoDebeFallar(U.lector, (tx) =>
-    tx.query(`insert into pda_planes (area_id, periodo, titulo, creado_por) values ($1, '2026-10-01', 'X', $2)`, [PDA, U.lector]),
+    tx.query(`insert into pda_planes (area_id, periodo, cargo, responsable, titulo, creado_por) values ($1, '2026-10-01', 'Líder de TI', 'X', 'X', $2)`, [PDA, U.lector]),
   );
 });
 
-await prueba("con Edición se crea el PDA, solo en su cuadro y uno por mes", async () => {
+await prueba("con Edición se crea el PDA, solo en su cuadro y uno por mes y cargo", async () => {
   const r = await como(U.editor, (tx) =>
-    filas(tx, `insert into pda_planes (area_id, periodo, titulo, creado_por) values ($1, '2026-10-01', 'PDA octubre', $2) returning id`, [PDA, U.editor]),
+    filas(
+      tx,
+      `insert into pda_planes (area_id, periodo, cargo, responsable, titulo, creado_por) values ($1, '2026-10-01', 'Líder de TI', 'Juan', 'PDA octubre', $2) returning id`,
+      [PDA, U.editor],
+    ),
   );
   PLAN_PDA = r[0].id;
   await comoDebeFallar(U.editor, (tx) =>
-    tx.query(`insert into pda_planes (area_id, periodo, titulo, creado_por) values ($1, '2026-11-01', 'Colado', $2)`, [AREA.x, U.editor]),
+    tx.query(`insert into pda_planes (area_id, periodo, cargo, responsable, titulo, creado_por) values ($1, '2026-11-01', 'Líder de TI', 'Juan', 'Colado', $2)`, [AREA.x, U.editor]),
   );
   await comoDebeFallar(
     U.editor,
-    (tx) => tx.query(`insert into pda_planes (area_id, periodo, titulo, creado_por) values ($1, '2026-10-01', 'Repetido', $2)`, [PDA, U.editor]),
+    (tx) => tx.query(`insert into pda_planes (area_id, periodo, cargo, responsable, titulo, creado_por) values ($1, '2026-10-01', 'Líder de TI', 'Juan', 'Repetido', $2)`, [PDA, U.editor]),
     /duplicate|unique/i,
   );
+  const otroCargo = await como(U.editor, (tx) =>
+    filas(tx, `insert into pda_planes (area_id, periodo, cargo, responsable, titulo, creado_por) values ($1, '2026-10-01', 'Soporte TI', 'Mateo', 'PDA octubre soporte', $2) returning id`, [PDA, U.editor]),
+  );
+  igual(otroCargo.length, 1, "el mismo mes para otro cargo sí");
 });
 
-await prueba("resultado, avance y cumplimiento según sentido y agregación", async () => {
+await prueba("objetivos, lista de chequeo y cumplimiento: promedio de la columna M, actividades hechas sobre el total", async () => {
   const ind = await como(U.editor, (tx) =>
     filas(
       tx,
-      `insert into pda_indicadores (plan_id, area_id, nombre, unidad, sentido, meta, agregacion, creado_por) values
-         ($1, $2, 'Disponibilidad', '%', 'mayor', 99, 'ultimo', $3),
-         ($1, $2, 'Tickets fuera de SLA', 'tickets', 'menor', 5, 'suma', $3),
-         ($1, $2, 'Satisfacción', 'puntos', 'mayor', 4, 'promedio', $3),
-         ($1, $2, 'Sin medir', '%', 'mayor', 100, 'ultimo', $3)
-       returning id, nombre`,
-      [PLAN_PDA, PDA, U.editor],
+      `insert into pda_objetivos (plan_id, area_id, indicador, proyeccion, creado_por) values
+         ($1, $2, 'Tickets en producción', 100, $3),
+         ($1, $2, 'Reporte automático', 100, $3),
+         ($1, $2, 'Página web', 80, $3)
+       returning id, indicador`,
+      [PLAN_PDA, AREA.x, U.editor],
     ),
   );
-  const id = Object.fromEntries(ind.map((x) => [x.nombre, x.id]));
+  OBJ_PDA = Object.fromEntries(ind.map((x) => [x.indicador, x.id]));
+  const area = await db.query(`select distinct area_id from pda_objetivos where plan_id = $1`, [PLAN_PDA]);
+  igual(area.rows.length, 1, "una sola área");
+  igual(area.rows[0].area_id, PDA, "el área se corrige a la del PDA aunque se envíe otra");
+
   await como(U.editor, (tx) =>
     tx.query(
-      `insert into pda_mediciones (indicador_id, area_id, fecha, valor, registrado_por) values
-         ($1, $4, '2026-10-05', 97, $5), ($1, $4, '2026-10-20', 99.5, $5),
-         ($2, $4, '2026-10-05', 3, $5),  ($2, $4, '2026-10-20', 4, $5),
-         ($3, $4, '2026-10-05', 5, $5),  ($3, $4, '2026-10-20', 4, $5)`,
-      [id["Disponibilidad"], id["Tickets fuera de SLA"], id["Satisfacción"], PDA, U.editor],
+      `insert into pda_tareas (objetivo_id, area_id, descripcion, fecha_limite, completada, creado_por) values
+         ($1, $3, 'Desplegar', '2026-10-05', true, $4),
+         ($1, $3, 'Capacitar', '2026-10-20', false, $4),
+         ($2, $3, 'Registrar tarea programada', '2026-10-02', true, $4),
+         ($2, $3, 'Probar desatendido', '2026-10-05', true, $4)`,
+      [OBJ_PDA["Tickets en producción"], OBJ_PDA["Reporte automático"], PDA, U.editor],
     ),
   );
-  const v = await como(U.lector, (tx) => filas(tx, `select nombre, resultado, cumple, avance from v_pda_indicadores order by nombre`));
-  const por = Object.fromEntries(v.map((x) => [x.nombre, x]));
-  igual(Number(por["Disponibilidad"].resultado), 99.5, "último valor");
-  igual(por["Disponibilidad"].cumple, true, "99,5 ≥ 99");
-  igual(Number(por["Tickets fuera de SLA"].resultado), 7, "suma");
-  igual(por["Tickets fuera de SLA"].cumple, false, "7 > 5 no cumple");
-  igual(Number(por["Tickets fuera de SLA"].avance), 71.4, "menor: meta/resultado");
-  igual(Number(por["Satisfacción"].resultado), 4.5, "promedio");
-  igual(por["Sin medir"].resultado, null, "sin mediciones no hay resultado");
-  igual(por["Sin medir"].cumple, null, "ni veredicto");
-  const p = await como(U.lector, (tx) => filas(tx, `select indicadores, medidos, cumplen, cumplimiento, meta_alcanzada from v_pda_planes where id = $1`, [PLAN_PDA]));
-  igual(p[0].indicadores, 4, "indicadores");
-  igual(p[0].medidos, 3, "medidos");
-  igual(p[0].cumplen, 2, "cumplen");
-  igual(Number(p[0].cumplimiento), 67.9, "(100 + 71,4 + 100 + 0) / 4");
-  igual(p[0].meta_alcanzada, false, "no todos cumplen");
+  const marcada = await db.query(`select completada_por, completada_en from pda_tareas where descripcion = 'Desplegar'`);
+  igual(marcada.rows[0].completada_por, U.editor, "quién marcó lo pone la base");
+  igual(marcada.rows[0].completada_en !== null, true, "y cuándo");
+
+  await como(U.editor, (tx) => tx.query(`update pda_objetivos set cumplimiento = 100, datos_cierre = '42 tickets' where id = $1`, [OBJ_PDA["Tickets en producción"]]));
+  await como(U.editor, (tx) => tx.query(`update pda_objetivos set cumplimiento = 25 where id = $1`, [OBJ_PDA["Reporte automático"]]));
+
+  const v = await como(U.lector, (tx) => filas(tx, `select indicador, n_tareas, n_tareas_hechas, avance_tareas, cumplimiento from v_pda_objetivos where plan_id = $1 order by indicador`, [PLAN_PDA]));
+  const por = Object.fromEntries(v.map((x) => [x.indicador, x]));
+  igual(por["Tickets en producción"].n_tareas, 2, "actividades");
+  igual(Number(por["Tickets en producción"].avance_tareas), 50, "1 de 2 hechas");
+  igual(Number(por["Reporte automático"].avance_tareas), 100, "2 de 2 hechas");
+  igual(por["Página web"].avance_tareas, null, "sin actividades no hay avance");
+  const p = await como(U.lector, (tx) => filas(tx, `select n_objetivos, n_objetivos_cerrados, n_objetivos_cumplidos, n_tareas, n_tareas_hechas, proyeccion, cumplimiento, avance_tareas from v_pda_planes where id = $1`, [PLAN_PDA]));
+  igual(p[0].n_objetivos, 3, "objetivos");
+  igual(p[0].n_objetivos_cerrados, 2, "con cierre");
+  igual(p[0].n_objetivos_cumplidos, 1, "al 100");
+  igual(Number(p[0].cumplimiento), 62.5, "(100 + 25) / 2: solo los cerrados");
+  igual(Number(p[0].proyeccion), 93.3, "(100 + 100 + 80) / 3");
+  igual(Number(p[0].avance_tareas), 75, "3 de 4 actividades");
 });
 
-await prueba("con Vista no se mide; el área de una medición la impone su indicador", async () => {
-  const i = (await db.query(`select id from pda_indicadores where nombre = 'Sin medir'`)).rows[0].id;
+await prueba("con Vista no se marca ni se sube; la evidencia debe colgar de su objetivo", async () => {
+  const t = (await db.query(`select id from pda_tareas where descripcion = 'Capacitar'`)).rows[0].id;
+  // Un update que RLS no deja ver no falla: no toca ninguna fila.
+  const sinEfecto = await como(U.lector, (tx) => tx.query(`update pda_tareas set completada = true where id = $1`, [t]));
+  igual(sinEfecto.affectedRows ?? 0, 0, "con Vista el update no toca ninguna fila");
+  const sigue = await db.query(`select completada from pda_tareas where id = $1`, [t]);
+  igual(sigue.rows[0].completada, false, "sigue sin marcar");
+  const o = OBJ_PDA["Página web"];
   await comoDebeFallar(U.lector, (tx) =>
-    tx.query(`insert into pda_mediciones (indicador_id, area_id, fecha, valor, registrado_por) values ($1, $2, '2026-10-10', 1, $3)`, [i, PDA, U.lector]),
+    tx.query(`insert into pda_evidencias (objetivo_id, area_id, storage_path, nombre_archivo, mime, tamano_bytes, subido_por) values ($1, $2, $3 || '/' || $1::uuid::text || '/a.png', 'a.png', 'image/png', 10, $4)`, [o, PDA, PLAN_PDA, U.lector]),
   );
-  const m = await como(U.editor, (tx) =>
-    filas(tx, `insert into pda_mediciones (indicador_id, area_id, fecha, valor, registrado_por) values ($1, $2, '2026-10-10', 100, $3) returning area_id`, [i, AREA.x, U.editor]),
+  await comoDebeFallar(
+    U.editor,
+    (tx) => tx.query(`insert into pda_evidencias (objetivo_id, area_id, storage_path, nombre_archivo, mime, tamano_bytes, subido_por) values ($1, $2, 'otra/carpeta/a.png', 'a.png', 'image/png', 10, $3)`, [o, PDA, U.editor]),
+    /carpeta de su objetivo/i,
   );
-  igual(m[0].area_id, PDA, "el área se corrige a la del PDA");
+  const ok = await como(U.editor, (tx) =>
+    filas(tx, `insert into pda_evidencias (objetivo_id, area_id, storage_path, nombre_archivo, mime, tamano_bytes, subido_por) values ($1, $2, $3 || '/' || $1::uuid::text || '/a.png', 'a.png', 'image/png', 10, $4) returning id`, [o, PDA, PLAN_PDA, U.editor]),
+  );
+  igual(ok.length, 1, "con Edición y en su carpeta, entra");
+  const vista = await como(U.lector, (tx) => filas(tx, `select n_evidencias from v_pda_objetivos where id = $1`, [o]));
+  igual(vista[0].n_evidencias, 1, "y se cuenta");
+});
+
+await prueba("el bucket pda: quien ve el cuadro lee, quien edita sube y retira, quien no tiene nada no toca", async () => {
+  await db.query(`insert into storage.buckets (id, name, public) values ('pda', 'pda', false) on conflict (id) do nothing`);
+  const ruta = `${PLAN_PDA}/${OBJ_PDA["Página web"]}/b.png`;
+  await comoDebeFallar(U.lector, (tx) => tx.query(`insert into storage.objects (bucket_id, name) values ('pda', $1)`, [ruta]));
+  await comoDebeFallar(U.sinPermiso, (tx) => tx.query(`insert into storage.objects (bucket_id, name) values ('pda', $1)`, [ruta]));
+  await como(U.editor, (tx) => tx.query(`insert into storage.objects (bucket_id, name, owner) values ('pda', $1, $2)`, [ruta, U.editor]));
+  const lee = await como(U.lector, (tx) => filas(tx, `select name from storage.objects where bucket_id = 'pda'`));
+  igual(lee.length, 1, "con Vista lo lee");
+  const nadie = await como(U.sinPermiso, (tx) => filas(tx, `select name from storage.objects where bucket_id = 'pda'`));
+  igual(nadie.length, 0, "sin permiso no lo ve");
+  const borra = await como(U.editor, (tx) => tx.query(`delete from storage.objects where bucket_id = 'pda' and name = $1`, [ruta]));
+  igual(borra.affectedRows, 1, "con Edición lo retira");
 });
 
 await prueba("un PDA cerrado queda congelado hasta reabrirlo", async () => {
   await como(U.editor, (tx) => tx.query(`update pda_planes set estado = 'cerrado' where id = $1`, [PLAN_PDA]));
-  const i = (await db.query(`select id from pda_indicadores where nombre = 'Sin medir'`)).rows[0].id;
-  await comoDebeFallar(
-    U.editor,
-    (tx) => tx.query(`insert into pda_mediciones (indicador_id, area_id, fecha, valor, registrado_por) values ($1, $2, '2026-10-30', 1, $3)`, [i, PDA, U.editor]),
-    /cerrado/i,
-  );
+  const c = await db.query(`select cerrado_en from pda_planes where id = $1`, [PLAN_PDA]);
+  igual(c.rows[0].cerrado_en !== null, true, "queda la fecha de cierre");
+  const t = (await db.query(`select id from pda_tareas where descripcion = 'Capacitar'`)).rows[0].id;
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update pda_tareas set completada = true where id = $1`, [t]), /cerrado/i);
+  await comoDebeFallar(U.editor, (tx) => tx.query(`update pda_objetivos set cumplimiento = 50 where id = $1`, [OBJ_PDA["Página web"]]), /cerrado/i);
   await como(U.editor, (tx) => tx.query(`update pda_planes set estado = 'abierto' where id = $1`, [PLAN_PDA]));
-  const ok = await como(U.editor, (tx) =>
-    filas(tx, `insert into pda_mediciones (indicador_id, area_id, fecha, valor, registrado_por) values ($1, $2, '2026-10-30', 1, $3) returning id`, [i, PDA, U.editor]),
-  );
-  igual(ok.length, 1, "reabierto se puede medir");
+  const r = await db.query(`select cerrado_en from pda_planes where id = $1`, [PLAN_PDA]);
+  igual(r.rows[0].cerrado_en, null, "reabierto: sin fecha de cierre");
+  const ok = await como(U.editor, (tx) => tx.query(`update pda_tareas set completada = true where id = $1`, [t]));
+  igual(ok.affectedRows, 1, "reabierto se puede marcar");
 });
 
-await prueba("borrar un PDA exige Total o admin; con Edición se borra una medición", async () => {
-  const m = await como(U.editor, (tx) => tx.query(`delete from pda_mediciones where valor = 1`));
-  igual(m.affectedRows, 1, "Edición corrige una medición");
+await prueba("borrar un PDA u objetivo exige Total o admin; con Edición se quita una actividad o evidencia", async () => {
+  const e = await como(U.editor, (tx) => tx.query(`delete from pda_evidencias where nombre_archivo = 'a.png'`));
+  igual(e.affectedRows, 1, "Edición retira una evidencia");
+  const t = await como(U.editor, (tx) => tx.query(`delete from pda_tareas where descripcion = 'Capacitar'`));
+  igual(t.affectedRows, 1, "Edición quita una actividad");
+  const o = await como(U.editor, (tx) => tx.query(`delete from pda_objetivos where id = $1`, [OBJ_PDA["Página web"]]));
+  igual(o.affectedRows ?? 0, 0, "Edición no borra un objetivo");
   const d = await como(U.editor, (tx) => tx.query(`delete from pda_planes where id = $1`, [PLAN_PDA]));
   igual(d.affectedRows ?? 0, 0, "Edición no borra el PDA");
+  await como(U.editor, (tx) => tx.query(`update pda_planes set estado = 'cerrado' where id = $1`, [PLAN_PDA]));
   const a = await como(U.admin, (tx) => tx.query(`delete from pda_planes where id = $1`, [PLAN_PDA]));
-  igual(a.affectedRows, 1, "admin sí, y en cascada sus indicadores");
-  const resto = await db.query(`select count(*)::int as n from pda_indicadores where plan_id = $1`, [PLAN_PDA]);
-  igual(resto.rows[0].n, 0, "sin indicadores huérfanos");
+  igual(a.affectedRows, 1, "admin sí, incluso cerrado, y en cascada sus objetivos");
+  const resto = await db.query(`select count(*)::int as n from pda_objetivos where plan_id = $1`, [PLAN_PDA]);
+  igual(resto.rows[0].n, 0, "sin objetivos huérfanos");
+  const tareas = await db.query(`select count(*)::int as n from pda_tareas`);
+  igual(tareas.rows[0].n, 0, "ni actividades");
 });
+
 
 // ---------------------------------------------------------------------------
 // 5. Resumen

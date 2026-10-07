@@ -232,6 +232,41 @@ Calidad. Lo relevante para seguridad:
 
 ---
 
+## Módulo PDA (7 de octubre de 2026)
+
+Migración `019`: el PDA deja de ser un tablero de indicadores numéricos y
+pasa a ser el plan de trabajo mensual real de TI (formato FTM-SINF-005),
+con lo que antes vivía en carpetas de Drive: la lista de chequeo y las
+evidencias de cada objetivo. Lo relevante para seguridad:
+
+- **Un bucket privado más, `pda`.** Pantallazos de consolas (FortiGate,
+  directorio activo), inventarios con seriales y responsables, actas e
+  informes. Las políticas del bucket preguntan por el mismo permiso del
+  cuadro (`nivel_en_area(area_modulo('pda'))`): quien ve, descarga; quien
+  edita, sube y retira; nadie más llega al objeto. 25 MB por archivo y
+  tipos acotados (imágenes, PDF, Office).
+- **Nunca por URL pública.** La única salida es
+  `/api/pda/evidencias/[id]`, que comprueba el cuadro, firma una URL de
+  60 segundos y anota la descarga en `accesos`. Subir y retirar también
+  quedan anotados.
+- **La fila y el archivo hablan del mismo objeto.** Un disparador exige que
+  `storage_path` cuelgue de `<plan>/<objetivo>/`; si la fila no entra, la
+  acción retira el binario para no dejar huérfanos; al borrar un objetivo o
+  un PDA, la acción borra primero los archivos (la cascada de la base no
+  llega al bucket).
+- **Quién marcó y cuándo lo escribe la base**, no el cliente
+  (`pda_marcar_tarea` toma `auth.uid()`), y un PDA cerrado congela
+  objetivos, actividades y evidencias hasta reabrirlo.
+- **Datos personales.** Las evidencias de julio y agosto contienen nombres
+  de colaboradores y seriales de equipos; el inventario de activos se cargó
+  como evidencia porque es la prueba del objetivo. Acceso limitado a TI y
+  administradores, con rastro.
+- **El Excel exportado** (`/api/pda/[id]/xlsx`) sale con el mismo RLS de la
+  sesión y queda en la auditoría como descarga. Las evidencias no viajan en
+  él: solo su índice.
+
+---
+
 ## Al terminar una sesión de trabajo
 
 Si en el proceso se han pegado claves en algún chat, herramienta o ticket,

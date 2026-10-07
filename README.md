@@ -37,14 +37,14 @@ sin añadir nada. Cómo se añade uno está en `docs/modulos.md`.
 app/
   (app)/        Pantallas del día a día: Mis áreas, documentos, buzón,
                 /evaluacion (desempeño 360°), /cumpleanos, /calidad
-                (auditorías QualityCore), /pda (indicadores de TI) y
-                /mis-evaluaciones (el asesor)
+                (auditorías QualityCore), /pda (plan de trabajo de TI con
+                chequeo y evidencias) y /mis-evaluaciones (el asesor)
   (admin)/      Panel: documentos, usuarios, áreas, grupos, permisos, auditoría
   (auth)/       Entrada y cambio de contraseña
   acciones/     Server actions: auth, buzón, evaluación, cumpleaños,
                 pda, notificaciones, admin
-  api/          Route handlers: subida y descarga, CSV, usuarios (service
-                role), cron de purga
+  api/          Route handlers: subida y descarga, CSV, Excel del PDA,
+                evidencias firmadas, usuarios (service role), cron de purga
 components/
   comunes/      Marco de la app, campana de notificaciones, encabezados,
                 diseño de los cuadros, botón de borrado, pantalla de error
@@ -54,7 +54,8 @@ components/
   cumpleanos/   Alta y edición de cumpleaños
   calidad/      Pauta en vivo, retroalimentación y compromisos, firma del
                 asesor, editor de la pauta, estructura operativa
-  pda/          PDA del mes, indicadores, mediciones y barra de avance
+  pda/          PDA del mes: cabecera del formato, objetivos (la matriz),
+                cierre, lista de chequeo, evidencias y barra de avance
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
@@ -68,7 +69,7 @@ lib/
   evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
   cumpleanos.ts     Etiquetas y utilidades del módulo de cumpleaños
   calidad.ts        Estados, etiquetas y la fórmula de la nota de calidad
-  pda.ts            Etiquetas y formato del módulo PDA
+  pda.ts            Las 14 columnas del formato FTM-SINF-005, estados y formato
   notificaciones.ts Carga de avisos para la campana (genera los pendientes)
 supabase/
   migrations/   El esquema, en orden. Es la fuente de verdad

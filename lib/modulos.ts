@@ -25,7 +25,7 @@ export const MODULOS = {
   pda: {
     href: "/pda",
     icono: Target,
-    pie: "Indicadores del mes y metas",
+    pie: "Plan del mes, chequeo y evidencias",
   },
 } as const satisfies Record<string, { href: string; icono: LucideIcon; pie: string }>;
 

@@ -1,29 +1,20 @@
-// Barra de avance hacia la meta y distintivo de estado de un indicador o PDA.
-import { CheckCircle2, CircleDashed, Clock, XCircle } from "lucide-react";
-import { porcentaje } from "@/lib/pda";
+// Barra de avance y distintivo de estado de un objetivo o de un PDA.
+import { CheckCircle2, CircleDashed, Clock, MinusCircle, XCircle } from "lucide-react";
+import { ETIQUETA_ESTADO_OBJETIVO, porcentaje, type EstadoObjetivo } from "@/lib/pda";
 import { cn } from "@/lib/utils";
 
-export type EstadoMeta = "cumple" | "en_curso" | "no_cumple" | "sin_medir";
+export type EstadoVisual = EstadoObjetivo | "sin_datos";
 
-/**
- * Veredicto que se muestra. Un indicador medido que aún no llega a la meta
- * está "en curso" mientras el PDA sigue abierto; al cerrarse, "no cumplió".
- */
-export function estadoMeta(cumple: boolean | null, cerrado: boolean): EstadoMeta {
-  if (cumple === null) return "sin_medir";
-  if (cumple) return "cumple";
-  return cerrado ? "no_cumple" : "en_curso";
-}
-
-const ESTILO: Record<EstadoMeta, { etiqueta: string; icono: typeof CheckCircle2; texto: string; relleno: string }> = {
-  cumple: { etiqueta: "Cumple", icono: CheckCircle2, texto: "text-emerald-700", relleno: "bg-emerald-600" },
-  en_curso: { etiqueta: "En curso", icono: Clock, texto: "text-amber-700", relleno: "bg-amber-500" },
-  no_cumple: { etiqueta: "No cumplió", icono: XCircle, texto: "text-red-700", relleno: "bg-red-600" },
-  sin_medir: { etiqueta: "Sin medir", icono: CircleDashed, texto: "text-muted-foreground", relleno: "bg-muted-foreground/40" },
+const ESTILO: Record<EstadoVisual, { etiqueta: string; icono: typeof CheckCircle2; texto: string; relleno: string }> = {
+  cumplido: { etiqueta: ETIQUETA_ESTADO_OBJETIVO.cumplido, icono: CheckCircle2, texto: "text-emerald-700", relleno: "bg-emerald-600" },
+  parcial: { etiqueta: ETIQUETA_ESTADO_OBJETIVO.parcial, icono: MinusCircle, texto: "text-amber-700", relleno: "bg-amber-500" },
+  no_cumplido: { etiqueta: ETIQUETA_ESTADO_OBJETIVO.no_cumplido, icono: XCircle, texto: "text-red-700", relleno: "bg-red-600" },
+  en_curso: { etiqueta: ETIQUETA_ESTADO_OBJETIVO.en_curso, icono: Clock, texto: "text-primary", relleno: "bg-primary" },
+  sin_datos: { etiqueta: "Sin datos", icono: CircleDashed, texto: "text-muted-foreground", relleno: "bg-muted-foreground/40" },
 };
 
 /** Estado con icono y texto: el color nunca va solo. */
-export function DistintivoMeta({ estado, etiqueta, className }: { estado: EstadoMeta; etiqueta?: string; className?: string }) {
+export function DistintivoEstado({ estado, etiqueta, className }: { estado: EstadoVisual; etiqueta?: string; className?: string }) {
   const e = ESTILO[estado];
   const Icono = e.icono;
   return (
@@ -34,10 +25,7 @@ export function DistintivoMeta({ estado, etiqueta, className }: { estado: Estado
   );
 }
 
-/**
- * Avance hacia la meta, donde el 100 % es la meta. Si se supera, la barra
- * se llena y el porcentaje real se lee en el texto.
- */
+/** Barra de 0 a 100 con el porcentaje al lado. */
 export function BarraAvance({
   avance,
   estado,
@@ -45,7 +33,7 @@ export function BarraAvance({
   className,
 }: {
   avance: number | null;
-  estado: EstadoMeta;
+  estado: EstadoVisual;
   /** Texto del tooltip con los valores exactos. */
   detalle?: string;
   className?: string;
@@ -59,7 +47,7 @@ export function BarraAvance({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={avance ?? 0}
-        aria-label={detalle ?? "Avance hacia la meta"}
+        aria-label={detalle ?? "Avance"}
       >
         <div className={cn("h-full rounded-full transition-[width]", ESTILO[estado].relleno)} style={{ width: `${ancho}%` }} />
       </div>
