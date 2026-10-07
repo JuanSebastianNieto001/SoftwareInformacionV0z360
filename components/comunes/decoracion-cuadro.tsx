@@ -19,6 +19,7 @@ export const FONDO_CUADRO: Record<TemaCuadro, string> = {
   cumpleanos: "linear-gradient(135deg, #fff5f9 0%, #fff8ec 55%, #f1f8ff 100%)",
   evaluacion: "linear-gradient(135deg, #f4f3ff 0%, #eef6ff 60%, #ffffff 100%)",
   calidad: "linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 60%, #ffffff 100%)",
+  pda: "linear-gradient(135deg, #ecfeff 0%, #eff6ff 60%, #ffffff 100%)",
   documentos: "linear-gradient(160deg, #ffffff 55%, #eef5fd 100%)",
 };
 
@@ -26,7 +27,49 @@ export function DecoracionCuadro({ tema, semilla = "" }: { tema: TemaCuadro; sem
   if (tema === "cumpleanos") return <Cumpleanos />;
   if (tema === "evaluacion") return <Evaluacion />;
   if (tema === "calidad") return <Calidad />;
+  if (tema === "pda") return <Pda />;
   return <Documentos semilla={semilla} />;
+}
+
+// ---------------------------------------------------------------------------
+// PDA: una diana con la flecha clavada y barras de avance que crecen
+// ---------------------------------------------------------------------------
+
+function Pda() {
+  const barras = [
+    { x: 4, h: 16 },
+    { x: 18, h: 24 },
+    { x: 32, h: 34 },
+  ];
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <svg className="absolute right-4 bottom-8 h-[70px] w-[104px] opacity-85" viewBox="0 0 104 70">
+        <line x1="2" y1="66" x2="46" y2="66" stroke="#a5f3fc" strokeWidth="1.5" />
+        {barras.map((b, i) => (
+          <rect
+            key={i}
+            x={b.x}
+            y={66 - b.h}
+            width="10"
+            height={b.h}
+            rx="3"
+            fill={["#a5f3fc", "#67e8f9", "#06b6d4"][i]}
+            className="origin-bottom motion-safe:animate-[crecer_1.1s_ease-out_both]"
+            style={{ animationDelay: `${i * 0.15}s`, transformBox: "fill-box" }}
+          />
+        ))}
+        <circle cx="76" cy="36" r="26" fill="#fff" stroke="#bae6fd" strokeWidth="2" />
+        <circle cx="76" cy="36" r="17" fill="none" stroke="#7dd3fc" strokeWidth="2" />
+        <circle cx="76" cy="36" r="8" fill="#e0f2fe" stroke="#0284c7" strokeWidth="2" />
+        <circle cx="76" cy="36" r="2.5" fill="#0369a1" />
+        <g className="motion-safe:animate-[marcar_2.6s_ease-in-out_infinite]">
+          <line x1="76" y1="36" x2="98" y2="14" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M98 14 l-1 6 M98 14 l-6 1" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" />
+        </g>
+      </svg>
+      <span className="absolute -right-8 -bottom-10 size-32 rounded-full bg-cyan-200/30" />
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------

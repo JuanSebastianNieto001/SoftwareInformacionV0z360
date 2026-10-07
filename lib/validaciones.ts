@@ -851,3 +851,49 @@ export function primerError(error: z.ZodError): string {
   const ruta = issue.path.length ? `${issue.path.join(".")}: ` : "";
   return `${ruta}${issue.message}`;
 }
+
+// ---------------------------------------------------------------------------
+// PDA
+// ---------------------------------------------------------------------------
+
+export const SENTIDOS_PDA = ["mayor", "menor"] as const;
+export const AGREGACIONES_PDA = ["ultimo", "suma", "promedio"] as const;
+
+/** Número desde un input: acepta coma decimal ("99,5"). */
+const numeroPda = (mensaje: string) =>
+  z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().replace(",", ".") : v),
+    z.coerce.number({ message: mensaje }).refine(Number.isFinite, mensaje),
+  );
+
+/** El PDA de un mes: `periodo` llega como "YYYY-MM" y se guarda como el día 1. */
+export const esquemaPlanPda = z.object({
+  periodo: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Elige el mes")
+    .transform((v) => `${v}-01`),
+  titulo: z.string().trim().min(2, "Escribe un título").max(200, "No puede superar 200 caracteres"),
+  objetivo: textoOpcional(2000),
+});
+export type DatosPlanPda = z.infer<typeof esquemaPlanPda>;
+
+export const esquemaIndicadorPda = z.object({
+  nombre: z.string().trim().min(2, "Escribe el nombre del indicador").max(200, "No puede superar 200 caracteres"),
+  descripcion: textoOpcional(2000),
+  responsable: textoOpcional(120),
+  unidad: z.string().trim().min(1, "Indica la unidad").max(30, "Unidad demasiado larga"),
+  sentido: z.enum(SENTIDOS_PDA, { message: "Elige si la meta es un mínimo o un máximo" }),
+  meta: numeroPda("Meta inválida").pipe(z.number().min(0, "La meta no puede ser negativa")),
+  agregacion: z.enum(AGREGACIONES_PDA, { message: "Elige cómo se consolida" }),
+  peso: numeroPda("Peso inválido").pipe(z.number().gt(0, "El peso debe ser mayor que 0").max(100, "Peso máximo 100")),
+  orden: z.coerce.number().int().min(0).max(999).default(0),
+});
+export type DatosIndicadorPda = z.infer<typeof esquemaIndicadorPda>;
+
+export const esquemaMedicionPda = z.object({
+  indicador_id: uuid,
+  fecha: z.iso.date({ message: "Fecha inválida" }),
+  valor: numeroPda("Valor inválido"),
+  observacion: textoOpcional(1000),
+});
+export type DatosMedicionPda = z.infer<typeof esquemaMedicionPda>;

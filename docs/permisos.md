@@ -87,9 +87,10 @@ El cálculo completo, en orden:
 
 Desde la migración `012`, un área puede llevar `modulo`. En «Mis áreas» se
 ve como un cuadro más, pero en lugar de listar documentos abre una pantalla
-propia. Hay tres: `evaluacion` (`/evaluacion`, evaluación de desempeño),
-`cumpleanos` (`/cumpleanos`, cumpleaños con alertas) y `calidad`
-(`/calidad`, auditorías de calidad con retroalimentación firmada). Cómo se
+propia. Hay cuatro: `evaluacion` (`/evaluacion`, evaluación de desempeño),
+`cumpleanos` (`/cumpleanos`, cumpleaños con alertas), `calidad`
+(`/calidad`, auditorías de calidad con retroalimentación firmada) y `pda`
+(`/pda`, el plan mensual de TI con indicadores y metas). Cómo se
 añade otro está en `docs/modulos.md`.
 
 Lo importante es lo que **no** cambia: el acceso se decide igual que en
@@ -115,6 +116,14 @@ Lo resuelve RLS comparando la cuenta con la fila de la estructura
 `firmar_retroalimentacion()`, que exige que firme el evaluado y que haya al
 menos un compromiso. La pauta (matriz e ítems) la lee cualquier
 autenticado: son criterios de calidad, no datos de personas.
+
+**PDA** también sigue la escalera: Vista (soporte técnico) consulta los
+PDA, sus indicadores y el cumplimiento; Edición (líder de TI) crea el PDA
+del mes, sus indicadores, registra y corrige mediciones, y cierra o reabre
+el mes; Total o admin además elimina un PDA o un indicador. Un PDA cerrado
+queda congelado en la base: ni indicadores ni mediciones aceptan cambios
+hasta reabrirlo. El resultado, el avance y si se cumple la meta los
+calculan las vistas `v_pda_indicadores` y `v_pda_planes`.
 
 Las **alertas de cumpleaños** las recibe quien tiene cualquier nivel sobre
 ese cuadro: `generar_alertas_cumpleanos()` comprueba `nivel_en_area` antes

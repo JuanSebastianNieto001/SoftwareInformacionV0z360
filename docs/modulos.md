@@ -2,7 +2,7 @@
 
 Un cuadro de «Mis áreas» es, de serie, una carpeta de documentos. Desde la
 migración `012` un cuadro puede ser además un **módulo**: una pantalla
-propia (evaluación de desempeño, cumpleaños) que se abre desde el mismo
+propia (evaluación de desempeño, cumpleaños, calidad, PDA) que se abre desde el mismo
 sitio y **hereda el sistema de permisos sin añadir nada**.
 
 Este documento explica el mecanismo y la lista de pasos para añadir otro.

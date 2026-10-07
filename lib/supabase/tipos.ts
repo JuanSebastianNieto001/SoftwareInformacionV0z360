@@ -748,6 +748,94 @@ export type Database = {
         Update: { leida_en?: string | null };
         Relationships: [];
       };
+      pda_planes: {
+        Row: {
+          id: string;
+          area_id: string;
+          periodo: string;
+          titulo: string;
+          objetivo: string | null;
+          estado: EstadoPda;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          periodo: string;
+          titulo: string;
+          objetivo?: string | null;
+          estado?: EstadoPda;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pda_planes"]["Insert"]>;
+        Relationships: [];
+      };
+      pda_indicadores: {
+        Row: {
+          id: string;
+          plan_id: string;
+          area_id: string;
+          orden: number;
+          nombre: string;
+          descripcion: string | null;
+          responsable: string | null;
+          unidad: string;
+          sentido: SentidoPda;
+          meta: number;
+          agregacion: AgregacionPda;
+          peso: number;
+          creado_por: string | null;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          plan_id: string;
+          area_id: string;
+          orden?: number;
+          nombre: string;
+          descripcion?: string | null;
+          responsable?: string | null;
+          unidad?: string;
+          sentido?: SentidoPda;
+          meta: number;
+          agregacion?: AgregacionPda;
+          peso?: number;
+          creado_por?: string | null;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pda_indicadores"]["Insert"]>;
+        Relationships: [];
+      };
+      pda_mediciones: {
+        Row: {
+          id: string;
+          indicador_id: string;
+          area_id: string;
+          fecha: string;
+          valor: number;
+          observacion: string | null;
+          registrado_por: string | null;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          indicador_id: string;
+          area_id: string;
+          fecha: string;
+          valor: number;
+          observacion?: string | null;
+          registrado_por?: string | null;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pda_mediciones"]["Insert"]>;
+        Relationships: [];
+      };
       calidad_asesores: {
         Row: {
           id: string;
@@ -995,6 +1083,26 @@ export type Database = {
         };
         Relationships: [];
       };
+      v_pda_indicadores: {
+        Row: Database["public"]["Tables"]["pda_indicadores"]["Row"] & {
+          mediciones: number;
+          ultima_fecha: string | null;
+          resultado: number | null;
+          cumple: boolean | null;
+          avance: number | null;
+        };
+        Relationships: [];
+      };
+      v_pda_planes: {
+        Row: Database["public"]["Tables"]["pda_planes"]["Row"] & {
+          indicadores: number;
+          medidos: number;
+          cumplen: number;
+          cumplimiento: number | null;
+          meta_alcanzada: boolean;
+        };
+        Relationships: [];
+      };
       v_cumpleanos: {
         Row: Database["public"]["Tables"]["cumpleanos"]["Row"] & {
           proximo: string;
@@ -1165,6 +1273,9 @@ export type Database = {
       tipo_sugerencia: TipoSugerencia;
       estado_sugerencia: EstadoSugerencia;
       perspectiva_360: PerspectivaEvaluacion;
+      pda_sentido: SentidoPda;
+      pda_agregacion: AgregacionPda;
+      pda_estado: EstadoPda;
       calidad_resultado: CalidadResultado;
     };
     CompositeTypes: Record<PropertyKey, never>;
@@ -1218,3 +1329,11 @@ export type EvaluacionCalidadConNota = Database["public"]["Views"]["v_calidad_ev
 export type DocumentoConEstado =
   Database["public"]["Views"]["v_documentos_estado"]["Row"];
 export type FilaAuditoria = Database["public"]["Views"]["v_auditoria"]["Row"];
+
+// ---------- PDA ----------
+export type SentidoPda = "mayor" | "menor";
+export type AgregacionPda = "ultimo" | "suma" | "promedio";
+export type EstadoPda = "abierto" | "cerrado";
+export type PlanPda = Database["public"]["Views"]["v_pda_planes"]["Row"];
+export type IndicadorPda = Database["public"]["Views"]["v_pda_indicadores"]["Row"];
+export type MedicionPda = Tablas["pda_mediciones"]["Row"];

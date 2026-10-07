@@ -1,4 +1,4 @@
-import { BadgeCheck, Cake, ClipboardCheck, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Cake, ClipboardCheck, Target, type LucideIcon } from "lucide-react";
 
 /**
  * Los cuadros que no son carpetas de documentos. Un área con
@@ -21,6 +21,11 @@ export const MODULOS = {
     href: "/calidad",
     icono: BadgeCheck,
     pie: "Auditorías, feedback y compromisos",
+  },
+  pda: {
+    href: "/pda",
+    icono: Target,
+    pie: "Indicadores del mes y metas",
   },
 } as const satisfies Record<string, { href: string; icono: LucideIcon; pie: string }>;
 
