@@ -951,6 +951,8 @@ export const CONFORMIDADES_FEEDBACK = ["aceptado", "observaciones", "rechazado"]
 export const esquemaFeedback = z.object({
   catalogo_id: uuid,
   colaborador_nombre: z.string().trim().min(2, "Escribe el nombre del colaborador").max(160, "No puede superar 160 caracteres"),
+  /** Cuenta elegida en el buscador (asesor o administrativo); null si el nombre es libre. */
+  colaborador_usuario_id: uuid.nullish().transform((v) => v ?? null),
   colaborador_cedula: textoOpcional(30),
   team_leader: textoOpcional(160),
   fecha: z.iso.date({ message: "Fecha inválida" }),

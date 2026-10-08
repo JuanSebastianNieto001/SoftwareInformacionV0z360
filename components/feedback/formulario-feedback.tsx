@@ -34,6 +34,7 @@ export function FormularioFeedback({
   const [f, setF] = useState({
     catalogo_id: feedback?.catalogo_id ?? "",
     colaborador_nombre: feedback?.colaborador_nombre ?? "",
+    colaborador_usuario_id: (feedback?.colaborador_usuario_id ?? null) as string | null,
     team_leader: feedback?.team_leader ?? "",
     fecha: feedback?.fecha ?? hoyIso(),
     gravedad: (feedback?.gravedad ?? "moderado") as FeedbackGravedad,
@@ -101,8 +102,15 @@ export function FormularioFeedback({
           <SelectorColaborador
             opciones={colaboradores}
             valor={f.colaborador_nombre}
-            alCambiar={(nombre, teamLeader) =>
-              setF((p) => ({ ...p, colaborador_nombre: nombre, team_leader: teamLeader !== undefined ? (teamLeader ?? "") : p.team_leader }))
+            alCambiar={(nombre, opcion) =>
+              setF((p) => ({
+                ...p,
+                colaborador_nombre: nombre,
+                // Al elegir de la lista se vincula su cuenta y se hereda el
+                // team leader; al teclear libre, el vínculo se suelta.
+                colaborador_usuario_id: opcion ? opcion.usuario_id : null,
+                team_leader: opcion ? (opcion.team_leader ?? "") : p.team_leader,
+              }))
             }
             disabled={pendiente}
           />

@@ -9,7 +9,16 @@ import { PenLine, UserRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-export type ColaboradorOpcion = { nombre: string; team_leader: string | null; con_cuenta: boolean };
+export type ColaboradorOpcion = {
+  nombre: string;
+  /** Asesores de la estructura: su team leader. Administración: null. */
+  team_leader: string | null;
+  /** Cuentas administrativas: su cargo (Team Leader, Back Office…). */
+  cargo: string | null;
+  con_cuenta: boolean;
+  /** Cuenta vinculada para la firma en línea, si la hay. */
+  usuario_id: string | null;
+};
 
 const normalizar = (s: string) =>
   s
@@ -25,8 +34,8 @@ export function SelectorColaborador({
 }: {
   opciones: ColaboradorOpcion[];
   valor: string;
-  /** Al teclear llega solo el nombre; al elegir de la lista, también su team leader. */
-  alCambiar: (nombre: string, teamLeader?: string | null) => void;
+  /** Al teclear llega solo el nombre; al elegir de la lista, también la opción completa. */
+  alCambiar: (nombre: string, opcion?: ColaboradorOpcion) => void;
   disabled?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
@@ -68,7 +77,7 @@ export function SelectorColaborador({
                 // onMouseDown para elegir antes de que el blur cierre la lista.
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  alCambiar(o.nombre, o.team_leader);
+                  alCambiar(o.nombre, o);
                   setAbierto(false);
                 }}
                 className={cn(
@@ -79,7 +88,9 @@ export function SelectorColaborador({
                 <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{o.nombre}</span>
-                  {o.team_leader && <span className="block truncate text-xs text-muted-foreground">{o.team_leader}</span>}
+                  {(o.team_leader ?? o.cargo) && (
+                    <span className="block truncate text-xs text-muted-foreground">{o.team_leader ?? o.cargo}</span>
+                  )}
                 </span>
                 {o.con_cuenta ? (
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">

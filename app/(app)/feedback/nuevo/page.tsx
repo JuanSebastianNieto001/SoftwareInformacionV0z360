@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FormularioFeedback } from "@/components/feedback/formulario-feedback";
+import { cargarColaboradores } from "@/lib/feedback-colaboradores";
 import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const metadata: Metadata = { title: "Nuevo feedback" };
@@ -14,11 +15,7 @@ export default async function PaginaNuevoFeedback() {
 
   let consulta = supabase.from("feedback_catalogo").select("*").eq("activo", true).order("orden");
   if (!esAdmin) consulta = consulta.eq("solo_direccion", false);
-  const [{ data: catalogo }, { data: asesores }] = await Promise.all([
-    consulta,
-    supabase.from("calidad_asesores").select("nombre, team_leader, usuario_id").eq("activo", true).order("nombre"),
-  ]);
-  const colaboradores = (asesores ?? []).map((a) => ({ nombre: a.nombre, team_leader: a.team_leader, con_cuenta: a.usuario_id !== null }));
+  const [{ data: catalogo }, colaboradores] = await Promise.all([consulta, cargarColaboradores(supabase)]);
 
   return (
     <div className="space-y-4">

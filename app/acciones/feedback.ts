@@ -45,9 +45,9 @@ export async function crearFeedback(datos: unknown): Promise<Resultado> {
   const { data: areaId } = await supabase.rpc("area_modulo", { m: "feedback" });
   if (!areaId) return { ok: false, error: "El módulo de retroalimentación no está disponible." };
 
-  // Si el nombre coincide con una persona de la estructura de calidad, se
-  // vincula su cuenta (para que pueda responder su conformidad) y se heredan
-  // cédula y team leader cuando no se enviaron.
+  // El buscador manda la cuenta elegida (asesor o administrativo). Si llegó
+  // solo el nombre, se intenta el vínculo con la estructura de calidad, y de
+  // ella se heredan cédula y team leader cuando no se enviaron.
   const { data: asesor } = await supabase
     .from("calidad_asesores")
     .select("usuario_id, cedula, team_leader")
@@ -62,7 +62,7 @@ export async function crearFeedback(datos: unknown): Promise<Resultado> {
       area_id: areaId,
       colaborador_nombre: d.colaborador_nombre,
       colaborador_cedula: d.colaborador_cedula ?? asesor?.cedula ?? null,
-      colaborador_usuario_id: asesor?.usuario_id ?? null,
+      colaborador_usuario_id: d.colaborador_usuario_id ?? asesor?.usuario_id ?? null,
       team_leader: d.team_leader ?? asesor?.team_leader ?? null,
       fecha: d.fecha,
       gravedad: d.gravedad,
@@ -93,6 +93,7 @@ export async function actualizarFeedback(id: string, datos: unknown): Promise<Re
     .update({
       catalogo_id: d.catalogo_id,
       colaborador_nombre: d.colaborador_nombre,
+      colaborador_usuario_id: d.colaborador_usuario_id,
       colaborador_cedula: d.colaborador_cedula,
       team_leader: d.team_leader,
       fecha: d.fecha,
