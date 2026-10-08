@@ -1500,6 +1500,20 @@ export type Database = {
         Args: { m: string };
         Returns: boolean;
       };
+      ranking_calidad_mes: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          posicion: number;
+          asesor_id: string;
+          asesor_nombre: string;
+          team_leader: string | null;
+          promedio: number;
+          auditorias: number;
+          aprobadas: number;
+          con_critico: number;
+          es_yo: boolean;
+        }[];
+      };
       publicar_borradores_calidad: {
         Args: { p_ids?: string[] | null };
         Returns: { evaluacion_id: string; asesor_nombre: string; publicada: boolean; motivo: string | null }[];

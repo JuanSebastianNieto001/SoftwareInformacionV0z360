@@ -1144,6 +1144,22 @@ await prueba("fechas: la interacción la pone la base y no cambia; la de auditor
   igual(fa.rows[0].f, "2026-10-07", "el auditor y el admin sí la ajustan");
 });
 
+await prueba("ranking del mes: lo ve todo el personal, solo con agregados, y cada asesor reconoce su fila", async () => {
+  // Una auditoría publicada este mes (la de la prueba de edición quedó publicada con fecha de hoy).
+  await db.query(`update calidad_evaluaciones set fecha_auditoria = (now() at time zone 'America/Bogota')::date where estado = 'publicada'`);
+  const asesor = await como(U.lector, (tx) => filas(tx, `select * from public.ranking_calidad_mes()`));
+  igual(asesor.length >= 1, true, "el asesor ve el ranking sin tener el cuadro");
+  igual(asesor.some((r) => r.es_yo), true, "y reconoce su fila");
+  igual(Object.keys(asesor[0]).sort().join(","), "aprobadas,asesor_id,asesor_nombre,auditorias,con_critico,es_yo,posicion,promedio,team_leader", "solo agregados, sin detalle de llamadas");
+  const otro = await como(U.sinPermiso, (tx) => filas(tx, `select * from public.ranking_calidad_mes()`));
+  igual(otro.length, asesor.length, "cualquier autenticado ve el mismo ranking");
+  igual(otro.some((r) => r.es_yo), false, "sin fila propia si no es asesor");
+  // Una del mes pasado no cuenta.
+  await db.query(`update calidad_evaluaciones set fecha_auditoria = (now() at time zone 'America/Bogota')::date - 40 where estado = 'publicada'`);
+  const viejo = await como(U.lector, (tx) => filas(tx, `select * from public.ranking_calidad_mes()`));
+  igual(viejo.length, 0, "solo el mes en curso");
+});
+
 console.log("\nPDA (019)");
 grupo("PDA (019)");
 

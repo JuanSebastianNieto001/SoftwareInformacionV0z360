@@ -23,6 +23,7 @@ import {
   Files,
   BadgeCheck,
   MessageSquareHeart,
+  Trophy,
 } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/auth";
 import { CampanaNotificaciones, type NotificacionShell } from "@/components/comunes/campana-notificaciones";
@@ -67,6 +68,8 @@ const BUZON_GESTION: Item = { href: "/buzon/gestion", etiqueta: "Buzón", icono:
 const LO_MIO: Item[] = [
   { href: "/mis-evaluaciones", etiqueta: "Mis evaluaciones", icono: BadgeCheck },
   { href: "/mis-feedback", etiqueta: "Mis feedback", icono: MessageSquareHeart },
+  // Público para todo el personal: el ranking de calidad del mes en curso.
+  { href: "/ranking", etiqueta: "Ranking", icono: Trophy },
 ];
 
 const ITEMS_ADMIN: Item[] = [
