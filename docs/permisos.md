@@ -87,12 +87,13 @@ El cálculo completo, en orden:
 
 Desde la migración `012`, un área puede llevar `modulo`. En «Mis áreas» se
 ve como un cuadro más, pero en lugar de listar documentos abre una pantalla
-propia. Hay cuatro: `evaluacion` (`/evaluacion`, evaluación de desempeño),
+propia. Hay cinco: `evaluacion` (`/evaluacion`, evaluación de desempeño),
 `cumpleanos` (`/cumpleanos`, cumpleaños con alertas), `calidad`
-(`/calidad`, auditorías de calidad con retroalimentación firmada) y `pda`
+(`/calidad`, auditorías de calidad con retroalimentación firmada), `pda`
 (`/pda`, el plan de trabajo mensual de TI: la matriz FTM-SINF-005 con su
-lista de chequeo y sus evidencias). Cómo se añade otro está en
-`docs/modulos.md`.
+lista de chequeo y sus evidencias) y `feedback` (`/feedback`,
+retroalimentación operativa con catálogo, plan de acción y conformidad).
+Cómo se añade otro está en `docs/modulos.md`.
 
 Lo importante es lo que **no** cambia: el acceso se decide igual que en
 cualquier otro cuadro, con `nivel_en_area()`, la matriz por persona y los
@@ -130,6 +131,19 @@ privado `pda`, cuyas políticas preguntan por el mismo
 60 segundos desde `/api/pda/evidencias/[id]`, con rastro en `accesos`.
 Los conteos y el cumplimiento (promedio de la columna M del formato) los
 calculan `v_pda_objetivos` y `v_pda_planes`.
+
+**Retroalimentación** (feedback) sigue la escalera (Vista consulta; Edición
+registra, gestiona el estado/seguimiento y puede dejar la conformidad;
+Total o admin elimina), con dos matices del documento de tipos y subtipos:
+el tipo «Gestión de Liderazgo y Equipo» **solo lo registra un
+administrador** (lo exige el disparador `feedback_coherencia`, no la
+pantalla), y **el colaborador ve y responde su conformidad desde
+`/mis-feedback`** sin tener el cuadro, por RLS sobre
+`feedback.colaborador_usuario_id`. La conformidad solo entra por
+`responder_feedback()`, que la acepta del colaborador vinculado o de quien
+edita el cuadro, sella fecha y hora y deja rastro en `accesos`. El catálogo
+(tipos, subtipos y detalles) lo lee cualquier autenticado: son criterios,
+no datos de personas.
 
 Las **alertas de cumpleaños** las recibe quien tiene cualquier nivel sobre
 ese cuadro: `generar_alertas_cumpleanos()` comprueba `nivel_en_area` antes

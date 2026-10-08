@@ -267,6 +267,32 @@ evidencias de cada objetivo. Lo relevante para seguridad:
 
 ---
 
+## Módulo de retroalimentación (8 de octubre de 2026)
+
+Migración `022`: cuadro `/feedback` a partir del documento «Tipos y Subtipos
+de Feedback». Lo relevante para seguridad:
+
+- **Datos de desempeño y disciplina de personas.** El feedback (adherencia,
+  métricas, calidad, liderazgo) es información laboral sensible. El cuadro lo
+  ven Calidad, Formación y administradores; **el colaborador ve únicamente lo
+  suyo** desde `/mis-feedback`, por RLS sobre `feedback.colaborador_usuario_id`,
+  nunca lo de otros.
+- **El feedback de liderazgo solo lo registra dirección.** El disparador
+  `feedback_coherencia` bloquea insertar un feedback de un motivo marcado
+  `solo_direccion` salvo que sea administrador; la pantalla además solo ofrece
+  ese tipo a admins. Hoy «dirección» se resuelve como administrador; si gerencia
+  (no admin) debe registrarlo, se crea un grupo «Dirección» y se amplía el
+  disparador.
+- **La conformidad es del colaborador.** Solo entra por `responder_feedback()`,
+  que la acepta del colaborador vinculado o de quien edita el cuadro, sella la
+  fecha y deja rastro en `accesos`. La función es null-safe: sin vínculo y sin
+  permiso, rechaza.
+- **El área se impone** en cada escritura (`area_id = area_modulo('feedback')`):
+  no se cuelan filas en otro cuadro. El catálogo lo lee cualquier autenticado
+  (son criterios, no datos de personas).
+
+---
+
 ## Al terminar una sesión de trabajo
 
 Si en el proceso se han pegado claves en algún chat, herramienta o ticket,

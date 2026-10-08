@@ -38,11 +38,12 @@ app/
   (app)/        Pantallas del día a día: Mis áreas, documentos, buzón,
                 /evaluacion (desempeño 360°), /cumpleanos, /calidad
                 (auditorías QualityCore), /pda (plan de trabajo de TI con
-                chequeo y evidencias) y /mis-evaluaciones (el asesor)
+                chequeo y evidencias), /feedback (retroalimentación operativa),
+                /mis-evaluaciones y /mis-feedback (lo del colaborador)
   (admin)/      Panel: documentos, usuarios, áreas, grupos, permisos, auditoría
   (auth)/       Entrada y cambio de contraseña
   acciones/     Server actions: auth, buzón, evaluación, cumpleaños,
-                pda, notificaciones, admin
+                calidad, pda, feedback, notificaciones, admin
   api/          Route handlers: subida y descarga, CSV, Excel del PDA,
                 evidencias firmadas, usuarios (service role), cron de purga
 components/
@@ -56,6 +57,8 @@ components/
                 asesor, editor de la pauta, estructura operativa
   pda/          PDA del mes: cabecera del formato, objetivos (la matriz),
                 cierre, lista de chequeo, evidencias y barra de avance
+  feedback/     Retroalimentación: formulario con catálogo, panel de gestión
+                y la respuesta de conformidad del colaborador
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
@@ -68,6 +71,7 @@ lib/
   auditoria*.ts     Registro y consulta de accesos
   evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
   cumpleanos.ts     Etiquetas y utilidades del módulo de cumpleaños
+  feedback.ts       Etiquetas de gravedad, severidad, estado y conformidad
   calidad.ts        Estados, etiquetas y la fórmula de la nota de calidad
   pda.ts            Las 14 columnas del formato FTM-SINF-005, estados y formato
   notificaciones.ts Carga de avisos para la campana (genera los pendientes)
