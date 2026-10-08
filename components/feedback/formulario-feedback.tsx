@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { actualizarFeedback, crearFeedback } from "@/app/acciones/feedback";
 import { SELECT_FEEDBACK } from "@/components/feedback/nav-feedback";
+import { SelectorColaborador, type ColaboradorOpcion } from "@/components/feedback/selector-colaborador";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,15 +19,13 @@ import { hoyIso } from "@/lib/formato";
 import type { CatalogoFeedback, Feedback, FeedbackGravedad, FeedbackSeveridad } from "@/lib/supabase/tipos";
 import { esquemaFeedback, primerError } from "@/lib/validaciones";
 
-type Asesor = { nombre: string; team_leader: string | null };
-
 export function FormularioFeedback({
   catalogo,
-  asesores,
+  colaboradores,
   feedback,
 }: {
   catalogo: CatalogoFeedback[];
-  asesores: Asesor[];
+  colaboradores: ColaboradorOpcion[];
   feedback?: Feedback;
 }) {
   const router = useRouter();
@@ -99,24 +98,14 @@ export function FormularioFeedback({
       <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
         <div className="space-y-1.5">
           <Label htmlFor="f-colab">Colaborador</Label>
-          <Input
-            id="f-colab"
-            list="feedback-asesores"
-            value={f.colaborador_nombre}
-            onChange={(e) => {
-              const v = e.target.value;
-              const a = asesores.find((x) => x.nombre.toLowerCase() === v.trim().toLowerCase());
-              setF((p) => ({ ...p, colaborador_nombre: v, team_leader: a?.team_leader ?? p.team_leader }));
-            }}
-            placeholder="Nombre completo"
-            maxLength={160}
+          <SelectorColaborador
+            opciones={colaboradores}
+            valor={f.colaborador_nombre}
+            alCambiar={(nombre, teamLeader) =>
+              setF((p) => ({ ...p, colaborador_nombre: nombre, team_leader: teamLeader !== undefined ? (teamLeader ?? "") : p.team_leader }))
+            }
             disabled={pendiente}
           />
-          <datalist id="feedback-asesores">
-            {asesores.map((a) => (
-              <option key={a.nombre} value={a.nombre} />
-            ))}
-          </datalist>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-fecha">Fecha del hecho</Label>

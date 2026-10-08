@@ -114,17 +114,29 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
           {/* Conformidad */}
           <Card className="rounded-[20px]">
             <CardContent className="space-y-3 px-[22px] py-5">
-              <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Conformidad del colaborador</p>
+              <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Firma del colaborador</p>
               {f.conformidad ? (
                 <div className="space-y-1">
                   <Badge variant={varianteConformidad(f.conformidad)}>{ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
                   {f.conformidad_comentario && <p className="text-sm">{f.conformidad_comentario}</p>}
-                  {f.conformidad_en && <p className="text-xs text-muted-foreground">Respondido el {formatearFechaHora(f.conformidad_en)}.</p>}
+                  {f.conformidad_en && <p className="text-xs text-muted-foreground">✍️ Firmado el {formatearFechaHora(f.conformidad_en)}.</p>}
                 </div>
+              ) : f.colaborador_usuario_id ? (
+                <>
+                  <p className="text-sm text-muted-foreground">Pendiente: el colaborador tiene cuenta y puede firmar desde «Mis feedback» (ya tiene el aviso en su campana).</p>
+                  {puedeEditar && (
+                    <details>
+                      <summary className="cursor-pointer text-xs font-medium text-muted-foreground select-none">¿Respondió en persona? Registra su firma aquí</summary>
+                      <div className="mt-2">
+                        <ResponderConformidad id={f.id} enNombreDelColaborador />
+                      </div>
+                    </details>
+                  )}
+                </>
               ) : puedeEditar ? (
                 <ResponderConformidad id={f.id} enNombreDelColaborador />
               ) : (
-                <p className="text-sm text-muted-foreground">Pendiente de la respuesta del colaborador.</p>
+                <p className="text-sm text-muted-foreground">Pendiente de la firma del colaborador.</p>
               )}
             </CardContent>
           </Card>

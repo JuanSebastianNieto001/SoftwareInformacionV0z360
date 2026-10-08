@@ -29,7 +29,7 @@ export default async function PaginaMisFeedback() {
 
   return (
     <>
-      <EncabezadoPagina kicker="Retroalimentación" titulo="Mis feedback" descripcion={`${perfil.nombre} · tu retroalimentación operativa y tu conformidad.`} />
+      <EncabezadoPagina kicker="Retroalimentación" titulo="Mis feedback" descripcion={`${perfil.nombre} · tu retroalimentación operativa y tu firma.`} />
       {lista.length === 0 ? (
         <EstadoVacio icono={<MessageSquareHeart />} titulo="No tienes feedback registrado" descripcion="Cuando te registren una retroalimentación la verás aquí y recibirás un aviso." />
       ) : (
@@ -61,12 +61,12 @@ export default async function PaginaMisFeedback() {
               )}
 
               <div className="rounded-[18px] border p-4">
-                <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Tu conformidad</p>
+                <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Tu firma</p>
                 {f.conformidad ? (
                   <div className="mt-2 space-y-1">
                     <Badge variant={varianteConformidad(f.conformidad)}>{ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
                     {f.conformidad_comentario && <p className="text-sm">{f.conformidad_comentario}</p>}
-                    {f.conformidad_en && <p className="text-xs text-muted-foreground">Respondiste el {formatearFechaHora(f.conformidad_en)}.</p>}
+                    {f.conformidad_en && <p className="text-xs text-muted-foreground">✍️ Firmado el {formatearFechaHora(f.conformidad_en)}. La firma queda en el registro de auditoría.</p>}
                   </div>
                 ) : (
                   <div className="mt-2">

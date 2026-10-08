@@ -20,13 +20,14 @@ export default async function PaginaEditarFeedback({ params }: PageProps<"/feedb
   if (!esAdmin) consulta = consulta.eq("solo_direccion", false);
   const [{ data: catalogo }, { data: asesores }] = await Promise.all([
     consulta,
-    supabase.from("calidad_asesores").select("nombre, team_leader").eq("activo", true).order("nombre"),
+    supabase.from("calidad_asesores").select("nombre, team_leader, usuario_id").eq("activo", true).order("nombre"),
   ]);
+  const colaboradores = (asesores ?? []).map((a) => ({ nombre: a.nombre, team_leader: a.team_leader, con_cuenta: a.usuario_id !== null }));
 
   return (
     <div className="space-y-4">
       <h2 className="text-xs font-semibold tracking-[0.12em] text-atenuado uppercase">Editar feedback</h2>
-      <FormularioFeedback catalogo={catalogo ?? []} asesores={asesores ?? []} feedback={feedback} />
+      <FormularioFeedback catalogo={catalogo ?? []} colaboradores={colaboradores} feedback={feedback} />
     </div>
   );
 }
