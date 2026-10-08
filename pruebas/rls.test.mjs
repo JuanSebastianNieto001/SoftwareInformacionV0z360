@@ -1247,6 +1247,8 @@ grupo("Retroalimentación (022)");
 
 const FB = (await db.query(`select public.area_modulo('feedback') as id`)).rows[0].id;
 await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'edicion')`, [U.editor, FB]);
+// El editor emite solo a los asesores (como un team leader), sin ver todo el panel.
+await db.query(`insert into feedback_alcance (emisor_id, destino_tipo) values ($1, 'asesores')`, [U.editor]);
 // Un colaborador con cuenta (el lector) para probar "lo mío" y la conformidad.
 const CAT_NORMAL = (await db.query(`select id from feedback_catalogo where not solo_direccion order by orden limit 1`)).rows[0].id;
 const CAT_LIDER = (await db.query(`select id from feedback_catalogo where solo_direccion order by orden limit 1`)).rows[0].id;
@@ -1260,8 +1262,13 @@ await prueba("el catálogo se sembró y es legible por cualquiera; de liderazgo 
 });
 
 await prueba("con Edición se registra feedback; sin permiso no", async () => {
-  await comoDebeFallar(U.sinPermiso, (tx) =>
-    tx.query(`insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Luis', current_date, 'leve', 'notificacion', 'x', $2)`, [CAT_NORMAL, U.sinPermiso]),
+  // El disparador de alcance corre antes que RLS: a quien no es nadie lo
+  // rechaza el alcance (y si no, lo rechazaría RLS).
+  await comoDebeFallar(
+    U.sinPermiso,
+    (tx) =>
+      tx.query(`insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Luis', current_date, 'leve', 'notificacion', 'x', $2)`, [CAT_NORMAL, U.sinPermiso]),
+    /alcance|row-level security/i,
   );
   const r = await como(U.editor, (tx) =>
     filas(tx, `insert into feedback (catalogo_id, colaborador_nombre, colaborador_usuario_id, fecha, gravedad, severidad, descripcion, fecha_seguimiento, creado_por) values ($1, 'Luis Lector', $2, current_date, 'moderado', 'plan_accion', 'Llegó tarde 3 veces', current_date - 1, $3) returning id, area_id`, [CAT_NORMAL, U.lector, U.editor]),
@@ -1287,6 +1294,20 @@ await prueba("el colaborador ve lo suyo sin tener el cuadro, y nada ajeno", asyn
   igual(Number(mios[0].n), 1, "solo el feedback dirigido a él (incluido el de liderazgo ajeno: no)");
   const detalle = await como(U.lector, (tx) => filas(tx, `select colaborador_nombre from feedback where id = $1`, [FB_ID]));
   igual(detalle.length, 1, "puede abrir el suyo");
+});
+
+await prueba("el alcance manda: fuera de él la base rechaza, y sin ve_todo cada emisor ve solo lo que registró", async () => {
+  // El editor emite a asesores; Nora Nadie no es asesora.
+  await comoDebeFallar(
+    U.editor,
+    (tx) => tx.query(`insert into feedback (catalogo_id, colaborador_nombre, colaborador_usuario_id, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Nora Nadie', $2, current_date, 'leve', 'notificacion', 'Fuera de su alcance', $3)`, [CAT_NORMAL, U.sinPermiso, U.editor]),
+    /alcance/i,
+  );
+  // Existen 2 feedback (el del editor y el de liderazgo del admin): el editor solo ve el suyo.
+  const ve = await como(U.editor, (tx) => filas(tx, `select count(*) as n from v_feedback`));
+  igual(Number(ve[0].n), 1, "sin ve_todo, solo lo que registró");
+  const admin = await como(U.admin, (tx) => filas(tx, `select count(*) as n from v_feedback`));
+  igual(Number(admin[0].n), 2, "el admin ve todo");
 });
 
 await prueba("la vista marca seguimiento vencido y sin conformidad", async () => {

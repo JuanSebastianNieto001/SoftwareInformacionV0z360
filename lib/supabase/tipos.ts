@@ -972,6 +972,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      feedback_alcance: {
+        Row: {
+          id: string;
+          emisor_id: string;
+          destino_tipo: "todos" | "asesores" | "cargo" | "usuario";
+          destino_usuario_id: string | null;
+          destino_cargo: string | null;
+          ve_todo: boolean;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          emisor_id: string;
+          destino_tipo: "todos" | "asesores" | "cargo" | "usuario";
+          destino_usuario_id?: string | null;
+          destino_cargo?: string | null;
+          ve_todo?: boolean;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["feedback_alcance"]["Insert"]>;
+        Relationships: [];
+      };
       feedback_catalogo: {
         Row: {
           id: string;

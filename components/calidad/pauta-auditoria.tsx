@@ -97,6 +97,18 @@ export function PautaAuditoria({ evaluacionId, items, respuestas, errorFatalAnul
         </Alert>
       )}
 
+      {!editable && (
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertTitle>Pauta de solo lectura</AlertTitle>
+          <AlertDescription>
+            Esta auditoría está publicada y su pauta queda congelada (las importadas del formulario anterior llegan ya
+            publicadas). Para marcar los ítems, crea una auditoría nueva desde «Nueva auditoría»: allí los botones de
+            Cumple / No cumple / No aplica quedan activos mientras es borrador.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Marcador en vivo */}
       <div className="flex flex-wrap items-center gap-4 rounded-[20px] border bg-card px-5 py-4">
         <div>
