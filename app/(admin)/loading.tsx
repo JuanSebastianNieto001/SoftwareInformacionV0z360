@@ -1,14 +1,11 @@
-/**
- * Esqueleto de carga del panel mientras llegan los datos.
- */
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
+/** Estado de carga instantáneo del panel de administración (ver app/(app)/loading.tsx). */
 export default function Cargando() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Cargando">
-      <Skeleton className="h-7 w-56" />
-      <Skeleton className="h-9 w-full max-w-xl" />
-      <Skeleton className="h-64 w-full rounded-lg" />
+    <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Cargando">
+      <Loader2 className="size-8 animate-spin text-primary" aria-hidden />
+      <span className="sr-only">Cargando…</span>
     </div>
   );
 }

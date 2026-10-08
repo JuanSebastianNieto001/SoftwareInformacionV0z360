@@ -1,20 +1,16 @@
-/**
- * Esqueleto de carga de la aplicación mientras llegan los datos.
- */
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
+/**
+ * Estado de carga instantáneo de las pantallas del día a día. Todas las
+ * páginas se renderizan en el servidor: sin esto, entre el clic a una
+ * pestaña y la respuesta no pasaba nada visible y parecía que el clic no
+ * había funcionado.
+ */
 export default function Cargando() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Cargando">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-56" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-lg" />
-        ))}
-      </div>
+    <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Cargando">
+      <Loader2 className="size-8 animate-spin text-primary" aria-hidden />
+      <span className="sr-only">Cargando…</span>
     </div>
   );
 }
