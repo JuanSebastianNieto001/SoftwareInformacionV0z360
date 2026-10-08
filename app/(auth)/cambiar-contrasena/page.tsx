@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { KeyRound } from "lucide-react";
+import { usuarioVisible } from "@/lib/formato";
 import { sesionOpcional } from "@/lib/sesion";
 import { FormularioContrasena } from "./formulario-contrasena";
 
@@ -25,7 +26,7 @@ export default async function PaginaCambiarContrasena() {
           </div>
           <div>
             <h1 className="text-lg font-semibold leading-tight">Cambiar contraseña</h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <p className="text-sm text-muted-foreground">{usuarioVisible(user.email)}</p>
           </div>
         </div>
 

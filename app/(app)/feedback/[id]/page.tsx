@@ -5,8 +5,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { eliminarFeedback } from "@/app/acciones/feedback";
-import { BotonEliminar } from "@/components/comunes/boton-eliminar";
+import { EliminarFeedback } from "@/components/feedback/eliminar-feedback";
 import { PanelGestion } from "@/components/feedback/panel-gestion";
 import { ResponderConformidad } from "@/components/feedback/responder-conformidad";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +28,9 @@ export const metadata: Metadata = { title: "Feedback" };
 
 export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feedback/[id]">) {
   const { id } = await params;
-  const { supabase, user, perfil, puedeEditar, puedeEliminar } = await exigirModulo("feedback");
+  const { supabase, user, perfil, puedeEditar } = await exigirModulo("feedback");
+  // Eliminar es solo para quien tiene Total explícito (coordinación de Formación).
+  const { data: puedeEliminar } = await supabase.rpc("feedback_puede_eliminar");
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const { data: f } = await supabase.from("v_feedback").select("*").eq("id", id).maybeSingle();
@@ -56,14 +57,7 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
               <Link href={`/feedback/${f.id}/editar`}>Editar</Link>
             </Button>
           )}
-          {puedeEliminar && (
-            <BotonEliminar
-              accion={eliminarFeedback.bind(null, f.id)}
-              titulo="Eliminar este feedback"
-              descripcion={`Se borra el feedback de ${f.colaborador_nombre}. No se puede deshacer.`}
-              volverA="/feedback"
-            />
-          )}
+          {puedeEliminar && <EliminarFeedback id={f.id} colaborador={f.colaborador_nombre} />}
         </div>
       </div>
 

@@ -184,3 +184,31 @@
   0%, 100% { opacity: 0.45; }
   50% { opacity: 1; }
 }
+
+/* ---------- Burbujas de la cabecera (components/comunes/app-shell.tsx) ----------
+   También van con motion-safe:. Cada mancha o burbuja fija su recorrido con
+   variables (--dx, --dy, --deriva, --opacidad) para que no se muevan al
+   unísono. */
+
+/* Manchas difusas de color que derivan despacio, como luz bajo el agua. */
+@keyframes burbujear {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(var(--dx, 24px), calc(var(--dy, 10px) * -1), 0) scale(1.08); }
+  66% { transform: translate3d(calc(var(--dx, 24px) * -0.6), var(--dy, 10px), 0) scale(0.94); }
+}
+
+/* Burbujitas que suben desde el borde inferior y se desvanecen arriba. */
+@keyframes ascender {
+  0% { transform: translate3d(0, 0, 0) scale(0.7); opacity: 0; }
+  20% { opacity: var(--opacidad, 0.75); }
+  50% { transform: translate3d(var(--deriva, 6px), -44px, 0) scale(0.9); }
+  80% { opacity: var(--opacidad, 0.75); }
+  100% { transform: translate3d(0, -88px, 0) scale(1); opacity: 0; }
+}
+
+/* La píldora activa se «infla» al llegar a su sección. */
+@keyframes inflar {
+  0% { transform: scale(0.9); }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}

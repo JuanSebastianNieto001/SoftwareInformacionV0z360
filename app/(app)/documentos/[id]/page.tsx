@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extensionVisible } from "@/lib/archivos";
-import { describirVencimiento, formatearBytes, formatearFecha, formatearFechaHora } from "@/lib/formato";
+import { describirVencimiento, formatearBytes, formatearFecha, formatearFechaHora, usuarioVisible } from "@/lib/formato";
 import { puedeDescargar, puedeEditarArea, puedeEliminarArea } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 import { ETIQUETA_MIME, type MimePermitido } from "@/lib/validaciones";
@@ -218,8 +218,8 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
                 <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
                   {pendientes.data.map((p) => (
                     <li key={p.usuario_id} className="flex flex-col">
-                      <span>{p.nombre || p.email}</span>
-                      <span className="text-xs text-muted-foreground">{p.email}</span>
+                      <span>{p.nombre || usuarioVisible(p.email)}</span>
+                      <span className="text-xs text-muted-foreground">{usuarioVisible(p.email)}</span>
                     </li>
                   ))}
                 </ul>

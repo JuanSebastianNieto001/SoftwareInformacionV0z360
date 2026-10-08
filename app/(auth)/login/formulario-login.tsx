@@ -51,7 +51,7 @@ export function FormularioLogin({
           autoCapitalize="none"
           spellCheck={false}
           required
-          placeholder="46350710"
+          placeholder="Colocar número de Poliedro o correo"
         />
       </div>
 

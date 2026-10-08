@@ -1411,11 +1411,24 @@ await prueba("la firma: la pone el colaborador (o el cuadro), no un tercero; exi
   igual(v[0].sin_conformidad, false, "ya no está pendiente");
 });
 
-await prueba("borrar un feedback exige Total o admin", async () => {
+await prueba("eliminar feedback: solo Total explícito y con motivo; sin DELETE directo; el admin lee la bitácora", async () => {
   const d = await como(U.editor, (tx) => tx.query(`delete from feedback where id = $1`, [FB_ID]));
-  igual(d.affectedRows ?? 0, 0, "Edición no borra");
+  igual(d.affectedRows ?? 0, 0, "sin DELETE directo para Edición");
   const a = await como(U.admin, (tx) => tx.query(`delete from feedback where id = $1`, [FB_ID]));
-  igual(a.affectedRows, 1, "admin sí");
+  igual(a.affectedRows ?? 0, 0, "ni para el admin");
+  await comoDebeFallar(U.admin, (tx) => tx.query(`select public.eliminar_feedback($1, 'Motivo suficientemente largo')`, [FB_ID]), /nivel Total/);
+  await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'total') on conflict (usuario_id, area_id) do update set nivel = 'total'`, [U.editorLector, FB]);
+  await comoDebeFallar(U.editorLector, (tx) => tx.query(`select public.eliminar_feedback($1, 'corto')`, [FB_ID]), /motivo/i);
+  await como(U.editorLector, (tx) => tx.query(`select public.eliminar_feedback($1, 'Se registró al colaborador equivocado')`, [FB_ID]));
+  const sigue = await db.query(`select count(*)::int n from feedback where id = $1`, [FB_ID]);
+  igual(sigue.rows[0].n, 0, "se borró");
+  const log = await como(U.admin, (tx) => filas(tx, `select motivo, eliminado_por, compromiso from feedback_eliminaciones where feedback_id = $1`, [FB_ID]));
+  igual(log.length, 1, "el admin ve la bitácora");
+  igual(log[0].motivo, "Se registró al colaborador equivocado", "con el motivo");
+  igual(log[0].eliminado_por, U.editorLector, "y quién lo borró");
+  igual(log[0].compromiso, "Me comprometo a llegar puntual", "con la foto de lo que tenía");
+  const ajeno = await como(U.editor, (tx) => filas(tx, `select count(*)::int n from feedback_eliminaciones`));
+  igual(ajeno[0].n, 0, "quien solo edita no ve la bitácora");
 });
 
 

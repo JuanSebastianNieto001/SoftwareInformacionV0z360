@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { iniciales } from "@/lib/formato";
+import { iniciales, usuarioVisible } from "@/lib/formato";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -315,7 +315,7 @@ export function GestionUsuarios({ miId }: { miId: string }) {
                             <span className="ml-1 text-xs text-muted-foreground">(tú)</span>
                           )}
                         </span>
-                        <span className="block text-xs text-muted-foreground">{u.email}</span>
+                        <span className="block text-xs text-muted-foreground">{usuarioVisible(u.email)}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -489,7 +489,7 @@ function DialogoUsuario({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <CampoCopiable etiqueta="Correo" valor={creado.email} onCopiar={copiar} />
+              <CampoCopiable etiqueta="Usuario" valor={usuarioVisible(creado.email)} onCopiar={copiar} />
               <CampoCopiable etiqueta="Contraseña temporal" valor={creado.password} onCopiar={copiar} mono />
             </div>
             <DialogFooter>
@@ -500,7 +500,7 @@ function DialogoUsuario({
           <form onSubmit={enviar} className="space-y-4" noValidate>
             <DialogHeader>
               <DialogTitle>{titulo}</DialogTitle>
-              {usuario && <DialogDescription>{usuario.email}</DialogDescription>}
+              {usuario && <DialogDescription>{usuarioVisible(usuario.email)}</DialogDescription>}
               {modo.tipo === "crear" && (
                 <DialogDescription>Se creará con la contraseña temporal indicada y deberá cambiarla al entrar.</DialogDescription>
               )}

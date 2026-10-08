@@ -126,3 +126,14 @@ export function plural(n: number, singular: string, pluralTxt: string): string {
 export function isoDentroDe(dias: number): string {
   return new Date(Date.now() + dias * 86_400_000).toISOString();
 }
+
+/**
+ * Cómo se muestra el usuario de una cuenta: los asesores entran con su
+ * número de Poliedro, y su correo interno (46439600@poliedro.voz360.co) se
+ * enseña solo como el número. El resto de correos, tal cual.
+ */
+export function usuarioVisible(email: string | null | undefined): string {
+  if (!email) return "";
+  const m = /^([0-9]{4,15})@poliedro\.voz360\.co$/i.exec(email.trim());
+  return m ? m[1] : email;
+}

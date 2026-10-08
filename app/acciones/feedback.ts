@@ -4,11 +4,9 @@
 // catálogo, gestionarlo (estado, plan, seguimiento) y la respuesta de
 // conformidad del colaborador. La autorización vive en RLS y en las funciones
 // de la base; aquí solo se valida la forma y se traducen los errores.
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { mensajePostgrest } from "@/lib/api-errores";
-import { registrarAcceso } from "@/lib/auditoria";
 import { exigirSesion } from "@/lib/sesion";
 import {
   esquemaConformidadFeedback,
@@ -131,21 +129,22 @@ export async function gestionarFeedback(id: string, datos: unknown): Promise<Res
   return { ok: true, id };
 }
 
-export async function eliminarFeedback(id: string): Promise<Resultado> {
+/**
+ * Eliminar exige motivo. Pasa por eliminar_feedback(), que comprueba el
+ * nivel Total explícito, guarda la foto en feedback_eliminaciones y el
+ * rastro en accesos antes de borrar.
+ */
+export async function eliminarFeedback(id: string, motivo: string): Promise<Resultado> {
   if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
-  const { supabase, user, perfil } = await exigirSesion();
+  const m = motivo.trim();
+  if (m.length < 10) return { ok: false, error: "Escribe el motivo de la eliminación (mínimo 10 caracteres)." };
+  const { supabase } = await exigirSesion();
 
-  const { data, error } = await supabase.from("feedback").delete().eq("id", id).select("id, colaborador_nombre").maybeSingle();
+  const { error } = await supabase.rpc("eliminar_feedback", { p_id: id, p_motivo: m.slice(0, 1000) });
   if (error) return { ok: false, error: traducir(error) };
-  if (!data) return { ok: false, error: "No se pudo eliminar: no existe o no tienes nivel Total." };
 
-  await registrarAcceso(supabase, user, {
-    accion: "eliminar",
-    documento: { id: null, titulo: `Feedback · ${data.colaborador_nombre}`, area_nombre: "Feedback" },
-    perfilNombre: perfil.nombre,
-    request: { headers: await headers() },
-  });
   refrescar();
+  revalidatePath("/feedback/eliminados");
   return { ok: true };
 }
 

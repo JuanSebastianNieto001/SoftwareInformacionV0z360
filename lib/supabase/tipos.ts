@@ -972,6 +972,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      feedback_eliminaciones: {
+        Row: {
+          id: string;
+          feedback_id: string;
+          colaborador_nombre: string;
+          team_leader: string | null;
+          tipo: string | null;
+          subtipo: string | null;
+          detalle: string | null;
+          fecha: string | null;
+          gravedad: string | null;
+          estado: string | null;
+          descripcion: string | null;
+          compromiso: string | null;
+          conformidad: string | null;
+          registrado_por_nombre: string | null;
+          motivo: string;
+          eliminado_por: string | null;
+          eliminado_por_nombre: string;
+          eliminado_en: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       calidad_eliminaciones: {
         Row: {
           id: string;
@@ -1499,6 +1524,14 @@ export type Database = {
       calidad_pesos_suman_cien: {
         Args: { m: string };
         Returns: boolean;
+      };
+      feedback_puede_eliminar: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      eliminar_feedback: {
+        Args: { p_id: string; p_motivo: string };
+        Returns: undefined;
       };
       ranking_calidad_mes: {
         Args: Record<PropertyKey, never>;

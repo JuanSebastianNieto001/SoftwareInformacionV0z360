@@ -2,19 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ListChecks, Plus } from "lucide-react";
+import { LayoutDashboard, ListChecks, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PESTANAS = [
   { href: "/feedback", etiqueta: "Panel", icono: LayoutDashboard, exacto: true },
   { href: "/feedback/nuevo", etiqueta: "Nuevo feedback", icono: Plus, soloEditar: true },
   { href: "/feedback/catalogo", etiqueta: "Catálogo", icono: ListChecks },
+  { href: "/feedback/eliminados", etiqueta: "Eliminados", icono: Trash2, soloBitacora: true },
 ] as const;
 
 /** Pestañas del módulo de retroalimentación. Registrar solo lo ven quienes editan. */
-export function NavFeedback({ puedeEditar }: { puedeEditar: boolean }) {
+export function NavFeedback({ puedeEditar, verEliminados = false }: { puedeEditar: boolean; verEliminados?: boolean }) {
   const pathname = usePathname();
-  const visibles = PESTANAS.filter((p) => puedeEditar || !("soloEditar" in p && p.soloEditar));
+  const visibles = PESTANAS.filter((p) => {
+    if ("soloBitacora" in p && p.soloBitacora) return verEliminados;
+    return puedeEditar || !("soloEditar" in p && p.soloEditar);
+  });
   return (
     <nav aria-label="Feedback" className="mb-6 flex flex-wrap gap-1 rounded-full border bg-card p-1">
       {visibles.map((p) => {

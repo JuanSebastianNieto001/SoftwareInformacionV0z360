@@ -10,7 +10,9 @@ import { ETIQUETA_NIVEL } from "@/lib/permisos";
 
 /** El guardia va aquí: sin permiso sobre el cuadro, ninguna ruta de /feedback se renderiza (404). */
 export default async function LayoutFeedback({ children }: { children: ReactNode }) {
-  const { area, nivel, puedeEditar } = await exigirModulo("feedback");
+  const { area, nivel, puedeEditar, supabase, perfil } = await exigirModulo("feedback");
+  const { data: puedeEliminar } = await supabase.rpc("feedback_puede_eliminar");
+  const verEliminados = perfil.rol === "admin" || puedeEliminar === true;
   return (
     <>
       <div className="mb-3">
@@ -30,7 +32,7 @@ export default async function LayoutFeedback({ children }: { children: ReactNode
         }
         descripcion="Feedback operativo por tipo y subtipo, con gravedad, plan de acción, seguimiento y la conformidad del colaborador."
       />
-      <NavFeedback puedeEditar={puedeEditar} />
+      <NavFeedback puedeEditar={puedeEditar} verEliminados={verEliminados} />
       {children}
     </>
   );
