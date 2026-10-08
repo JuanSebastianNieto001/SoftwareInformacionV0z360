@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Filter, Users } from "lucide-react";
+import { BotonActivoAsesor } from "@/components/calidad/boton-activo-asesor";
 import { FormularioAsesor } from "@/components/calidad/formulario-asesor";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +101,8 @@ export default async function PaginaAsesores({ searchParams }: PageProps<"/calid
                       <span className="text-xs text-muted-foreground">Sin vincular · no puede firmar</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap">
+                    <BotonActivoAsesor id={a.id} nombre={a.nombre} activo={a.activo} />
                     <FormularioAsesor asesor={a} teamLeaders={teamLeaders} perfiles={perfiles ?? []} />
                   </TableCell>
                 </TableRow>

@@ -47,7 +47,10 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
     .select("id, asesor_id, asesor_nombre, team_leader, nota_final, nota_sin_ic, nota_minima, aprobada, n_fatales_fallados, retro_estado, canal, tipo")
     .eq("estado", "publicada")
     .limit(5000);
-  if (!todos) consulta = consulta.gte("fecha_auditoria", `${mes}-01`).lte("fecha_auditoria", `${mes}-31`);
+  // Rango [día 1, día 1 del mes siguiente): "-31" era una fecha inválida en
+  // los meses de 30 días y la consulta entera fallaba (septiembre vacío).
+  const inicioSiguiente = new Date(Date.UTC(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 1)).toISOString().slice(0, 10);
+  if (!todos) consulta = consulta.gte("fecha_auditoria", `${mes}-01`).lt("fecha_auditoria", inicioSiguiente);
   if (tl) consulta = consulta.eq("team_leader", tl);
 
   const [{ data: evals }, { data: tls }, { data: items }] = await Promise.all([
@@ -56,13 +59,24 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
     supabase.from("calidad_items").select("id, categoria, descripcion, es_fatal").eq("activo", true),
   ]);
   const lista = evals ?? [];
-  const ids = lista.map((e) => e.id);
-  const [{ data: fallas }, { data: compromisos }] = await Promise.all([
-    ids.length
-      ? supabase.from("calidad_respuestas").select("item_id").eq("resultado", "no_cumple").in("evaluacion_id", ids)
-      : Promise.resolve({ data: [] as { item_id: string }[] }),
-    supabase.from("calidad_compromisos").select("estado, fecha_limite").limit(5000),
-  ]);
+  // Las fallas se filtran con un join embebido (mismos filtros del periodo):
+  // pasar cientos de ids por la URL rompía la petición con «mes: todo». El
+  // servidor corta cada respuesta en 1000 filas, así que se pagina.
+  const fallas: { item_id: string }[] = [];
+  for (let pagina = 0; pagina < 20; pagina++) {
+    let consultaFallas = supabase
+      .from("calidad_respuestas")
+      .select("item_id, calidad_evaluaciones!inner(id)")
+      .eq("resultado", "no_cumple")
+      .eq("calidad_evaluaciones.estado", "publicada")
+      .range(pagina * 1000, pagina * 1000 + 999);
+    if (!todos) consultaFallas = consultaFallas.gte("calidad_evaluaciones.fecha_auditoria", `${mes}-01`).lt("calidad_evaluaciones.fecha_auditoria", inicioSiguiente);
+    if (tl) consultaFallas = consultaFallas.eq("calidad_evaluaciones.team_leader", tl);
+    const { data: tramo } = await consultaFallas.returns<{ item_id: string }[]>();
+    fallas.push(...(tramo ?? []));
+    if (!tramo || tramo.length < 1000) break;
+  }
+  const { data: compromisos } = await supabase.from("calidad_compromisos").select("estado, fecha_limite").limit(5000);
 
   const teamLeaders = [...new Set((tls ?? []).map((t) => t.team_leader as string))].sort();
   const notas = lista.map((e) => (e.nota_final === null ? null : Number(e.nota_final)));

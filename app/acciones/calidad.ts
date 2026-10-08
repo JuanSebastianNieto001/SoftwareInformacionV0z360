@@ -352,3 +352,18 @@ export async function actualizarAsesor(id: string, datos: unknown): Promise<Resu
   revalidatePath("/calidad/asesores");
   return { ok: true, id };
 }
+
+/**
+ * Activar o desactivar en un clic, para depurar rápido a quien ya no está
+ * en la operación. Las auditorías históricas no se tocan; la persona solo
+ * deja de aparecer al crear auditorías o feedback nuevos.
+ */
+export async function alternarActivoAsesor(id: string, activo: boolean): Promise<Resultado> {
+  if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
+  const { supabase } = await exigirSesion();
+  const { data, error } = await supabase.from("calidad_asesores").update({ activo }).eq("id", id).select("id").maybeSingle();
+  if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
+  if (!data) return { ok: false, error: "No tienes permiso para modificar la estructura." };
+  revalidatePath("/calidad/asesores");
+  return { ok: true, id };
+}
