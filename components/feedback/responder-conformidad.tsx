@@ -23,13 +23,28 @@ const OPCIONES: { valor: FeedbackConformidad; icono: typeof CheckCircle2; ayuda:
   { valor: "rechazado", icono: XCircle, ayuda: "No estás de acuerdo: se abre la disputa para revisión." },
 ];
 
-export function ResponderConformidad({ id, enNombreDelColaborador = false }: { id: string; enNombreDelColaborador?: boolean }) {
+export function ResponderConformidad({
+  id,
+  enNombreDelColaborador = false,
+  esPositivo = false,
+}: {
+  id: string;
+  enNombreDelColaborador?: boolean;
+  /** Un reconocimiento no exige compromiso de mejora. */
+  esPositivo?: boolean;
+}) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [leido, setLeido] = useState(false);
   const [conformidad, setConformidad] = useState<FeedbackConformidad | "">("");
+  const [compromiso, setCompromiso] = useState("");
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Obligatorio al aceptar un feedback que no es reconocimiento; en una
+  // disputa no se exige (no se compromete con lo que no acepta).
+  const exigeCompromiso = !esPositivo && conformidad !== "" && conformidad !== "rechazado";
+  const faltaCompromiso = exigeCompromiso && compromiso.trim().length < 2;
 
   function firmar() {
     setError(null);
@@ -37,13 +52,17 @@ export function ResponderConformidad({ id, enNombreDelColaborador = false }: { i
       setError("Elige tu respuesta antes de firmar.");
       return;
     }
+    if (faltaCompromiso) {
+      setError("Escribe tu compromiso de mejora antes de firmar.");
+      return;
+    }
     iniciar(async () => {
-      const r = await responderConformidad({ id, conformidad, comentario: comentario || null });
+      const r = await responderConformidad({ id, conformidad, compromiso: compromiso || null, comentario: comentario || null });
       if (!r.ok) {
         setError(r.error);
         return;
       }
-      toast.success("Feedback firmado");
+      toast.success("Compromiso y firma registrados");
       router.refresh();
     });
   }
@@ -79,6 +98,25 @@ export function ResponderConformidad({ id, enNombreDelColaborador = false }: { i
         })}
       </div>
 
+      {!esPositivo && conformidad !== "rechazado" && (
+        <div className="space-y-1.5">
+          <Label htmlFor={`cp-${id}`}>
+            {enNombreDelColaborador ? "Compromiso del colaborador" : "Tu compromiso / plan de acción"}{" "}
+            <span className={faltaCompromiso ? "font-medium text-destructive" : "text-muted-foreground"}>(obligatorio)</span>
+          </Label>
+          <Textarea
+            id={`cp-${id}`}
+            value={compromiso}
+            onChange={(e) => setCompromiso(e.target.value)}
+            rows={3}
+            maxLength={4000}
+            disabled={pendiente}
+            placeholder={enNombreDelColaborador ? "Lo que el colaborador se comprometió a hacer" : "Qué te comprometes a hacer para mejorar (ej.: llegar 10 minutos antes del turno)"}
+          />
+          <p className="text-xs text-muted-foreground">El compromiso queda visible para Calidad junto con la firma.</p>
+        </div>
+      )}
+
       <div className="space-y-1.5">
         <Label htmlFor={`cc-${id}`}>
           Comentario o descargo <span className="text-muted-foreground">(opcional{conformidad === "rechazado" ? ", recomendado al disputar" : ""})</span>
@@ -96,7 +134,7 @@ export function ResponderConformidad({ id, enNombreDelColaborador = false }: { i
       </label>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button onClick={firmar} disabled={!leido || !conformidad || pendiente}>
+      <Button onClick={firmar} disabled={!leido || !conformidad || faltaCompromiso || pendiente}>
         {pendiente ? <Loader2 className="animate-spin" /> : <PenLine />} {enNombreDelColaborador ? "Registrar firma" : "Firmar feedback"}
       </Button>
     </div>

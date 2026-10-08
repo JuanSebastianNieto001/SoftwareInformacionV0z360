@@ -40,7 +40,6 @@ export function FormularioFeedback({
     gravedad: (feedback?.gravedad ?? "moderado") as FeedbackGravedad,
     severidad: (feedback?.severidad ?? "plan_accion") as FeedbackSeveridad,
     descripcion: feedback?.descripcion ?? "",
-    plan_accion: feedback?.plan_accion ?? "",
     fecha_seguimiento: feedback?.fecha_seguimiento ?? "",
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
@@ -156,12 +155,10 @@ export function FormularioFeedback({
         <Textarea id="f-desc" value={f.descripcion} onChange={(e) => set("descripcion", e.target.value)} rows={4} maxLength={4000} disabled={pendiente} placeholder="Qué pasó, con datos concretos (fecha, interacción, indicador)" />
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="f-plan">
-          Compromiso / plan de acción <span className="text-muted-foreground">(opcional)</span>
-        </Label>
-        <Textarea id="f-plan" value={f.plan_accion} onChange={(e) => set("plan_accion", e.target.value)} rows={3} maxLength={4000} disabled={pendiente} placeholder="Lo que el colaborador se compromete a hacer" />
-      </div>
+      <p className="rounded-xl bg-zona/60 px-3 py-2 text-xs text-muted-foreground">
+        El compromiso / plan de acción no se escribe aquí: lo redacta el colaborador al firmar el feedback desde «Mis
+        feedback», y te llegará la notificación cuando lo haga.
+      </p>
 
       <div className="space-y-1.5">
         <Label htmlFor="f-seg">

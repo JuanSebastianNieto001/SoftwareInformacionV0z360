@@ -55,7 +55,7 @@ export default async function PaginaMisFeedback() {
               </div>
               {f.plan_accion && (
                 <div className="rounded-[16px] bg-zona/60 p-3">
-                  <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Compromiso / plan de acción</p>
+                  <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Tu compromiso</p>
                   <p className="mt-1 text-sm whitespace-pre-line">{f.plan_accion}</p>
                 </div>
               )}
@@ -70,7 +70,7 @@ export default async function PaginaMisFeedback() {
                   </div>
                 ) : (
                   <div className="mt-2">
-                    <ResponderConformidad id={f.id} />
+                    <ResponderConformidad id={f.id} esPositivo={f.es_positivo} />
                   </div>
                 )}
               </div>

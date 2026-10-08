@@ -1446,7 +1446,7 @@ export type Database = {
         Returns: undefined;
       };
       responder_feedback: {
-        Args: { p_id: string; p_conformidad: string; p_comentario?: string | null };
+        Args: { p_id: string; p_conformidad: string; p_comentario?: string | null; p_compromiso?: string | null };
         Returns: undefined;
       };
       calidad_pesos_suman_cien: {

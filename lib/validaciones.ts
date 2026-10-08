@@ -959,23 +959,22 @@ export const esquemaFeedback = z.object({
   gravedad: z.enum(GRAVEDADES_FEEDBACK, { message: "Elige la gravedad" }),
   severidad: z.enum(SEVERIDADES_FEEDBACK, { message: "Elige la acción requerida" }),
   descripcion: z.string().trim().min(2, "Describe los hechos").max(4000, "No puede superar 4000 caracteres"),
-  plan_accion: textoOpcional(4000),
   fecha_seguimiento: fechaOpcional,
 });
 export type DatosFeedback = z.infer<typeof esquemaFeedback>;
 
-/** Cambios de gestión del cuadro: estado, plan de acción y fecha de seguimiento. */
+/** Cambios de gestión del cuadro: estado y fecha de seguimiento. El compromiso es del colaborador. */
 export const esquemaGestionFeedback = z.object({
   estado: z.enum(ESTADOS_FEEDBACK_VALIDOS, { message: "Estado inválido" }),
-  plan_accion: textoOpcional(4000),
   fecha_seguimiento: fechaOpcional,
 });
 export type DatosGestionFeedback = z.infer<typeof esquemaGestionFeedback>;
 
-/** La respuesta de conformidad del colaborador (o de quien hace la sesión). */
+/** La firma del colaborador (o registrada en sesión): conformidad, compromiso y comentario. */
 export const esquemaConformidadFeedback = z.object({
   id: uuid,
   conformidad: z.enum(CONFORMIDADES_FEEDBACK, { message: "Elige tu conformidad" }),
+  compromiso: textoOpcional(4000),
   comentario: textoOpcional(2000),
 });
 export type DatosConformidadFeedback = z.infer<typeof esquemaConformidadFeedback>;

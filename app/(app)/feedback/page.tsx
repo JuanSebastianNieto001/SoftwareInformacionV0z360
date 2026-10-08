@@ -67,7 +67,7 @@ export default async function PaginaFeedback({ searchParams }: PageProps<"/feedb
         <Indicador etiqueta="Registros" valor={String(lista.length)} detalle={`${positivos} reconocimientos`} />
         <Indicador etiqueta="Abiertos / en seguimiento" valor={String(abiertos)} tono={abiertos > 0 ? "alerta" : "neutro"} />
         <Indicador etiqueta="Seguimientos vencidos" valor={String(vencidos)} tono={vencidos > 0 ? "alerta" : "neutro"} />
-        <Indicador etiqueta="Sin conformidad" valor={String(sinConf)} detalle="Pendientes de respuesta del colaborador" />
+        <Indicador etiqueta="Sin compromiso y firma" valor={String(sinConf)} detalle="El colaborador aún no deja su compromiso ni firma" tono={sinConf > 0 ? "alerta" : "neutro"} />
       </section>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -108,7 +108,7 @@ export default async function PaginaFeedback({ searchParams }: PageProps<"/feedb
                 <TableHead>Motivo</TableHead>
                 <TableHead>Gravedad</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Conformidad</TableHead>
+                <TableHead>Compromiso y firma</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -144,9 +144,9 @@ export default async function PaginaFeedback({ searchParams }: PageProps<"/feedb
                   </TableCell>
                   <TableCell>
                     {f.conformidad ? (
-                      <Badge variant={varianteConformidad(f.conformidad)}>{ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
+                      <Badge variant={varianteConformidad(f.conformidad)}>✍️ {ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
                     ) : (
-                      <span className="text-xs text-muted-foreground">pendiente</span>
+                      <span className="text-xs text-muted-foreground">pendiente del colaborador</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">

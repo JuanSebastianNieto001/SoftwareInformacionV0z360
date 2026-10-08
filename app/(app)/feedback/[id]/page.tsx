@@ -94,12 +94,16 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
               <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Descripción de los hechos</p>
               <p className="mt-1 text-sm whitespace-pre-line">{f.descripcion}</p>
             </div>
-            {f.plan_accion && (
-              <div>
-                <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Compromiso / plan de acción</p>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Compromiso del colaborador</p>
+              {f.plan_accion ? (
                 <p className="mt-1 text-sm whitespace-pre-line">{f.plan_accion}</p>
-              </div>
-            )}
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {f.es_positivo ? "Es un reconocimiento: no exige compromiso." : "Aún sin compromiso: lo escribe el colaborador al firmar, y te llegará la notificación."}
+                </p>
+              )}
+            </div>
             {f.fecha_seguimiento && (
               <p className="text-sm text-muted-foreground">
                 Seguimiento programado para {formatearFecha(`${f.fecha_seguimiento}T12:00:00-05:00`)}
@@ -123,20 +127,20 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
                 </div>
               ) : f.colaborador_usuario_id ? (
                 <>
-                  <p className="text-sm text-muted-foreground">Pendiente: el colaborador tiene cuenta y puede firmar desde «Mis feedback» (ya tiene el aviso en su campana).</p>
+                  <p className="text-sm text-muted-foreground">Pendiente: el colaborador escribe su compromiso y firma desde «Mis feedback» (ya tiene el aviso en su campana).</p>
                   {puedeEditar && (
                     <details>
-                      <summary className="cursor-pointer text-xs font-medium text-muted-foreground select-none">¿Respondió en persona? Registra su firma aquí</summary>
+                      <summary className="cursor-pointer text-xs font-medium text-muted-foreground select-none">¿Respondió en persona? Registra su compromiso y firma aquí</summary>
                       <div className="mt-2">
-                        <ResponderConformidad id={f.id} enNombreDelColaborador />
+                        <ResponderConformidad id={f.id} enNombreDelColaborador esPositivo={f.es_positivo} />
                       </div>
                     </details>
                   )}
                 </>
               ) : puedeEditar ? (
-                <ResponderConformidad id={f.id} enNombreDelColaborador />
+                <ResponderConformidad id={f.id} enNombreDelColaborador esPositivo={f.es_positivo} />
               ) : (
-                <p className="text-sm text-muted-foreground">Pendiente de la firma del colaborador.</p>
+                <p className="text-sm text-muted-foreground">Pendiente del compromiso y la firma del colaborador.</p>
               )}
             </CardContent>
           </Card>

@@ -68,7 +68,6 @@ export async function crearFeedback(datos: unknown): Promise<Resultado> {
       gravedad: d.gravedad,
       severidad: d.severidad,
       descripcion: d.descripcion,
-      plan_accion: d.plan_accion,
       fecha_seguimiento: d.fecha_seguimiento,
       creado_por: user.id,
       creado_por_nombre: perfil.nombre,
@@ -100,7 +99,6 @@ export async function actualizarFeedback(id: string, datos: unknown): Promise<Re
       gravedad: d.gravedad,
       severidad: d.severidad,
       descripcion: d.descripcion,
-      plan_accion: d.plan_accion,
       fecha_seguimiento: d.fecha_seguimiento,
     })
     .eq("id", id)
@@ -113,7 +111,7 @@ export async function actualizarFeedback(id: string, datos: unknown): Promise<Re
   return { ok: true, id };
 }
 
-/** Estado, plan de acción y fecha de seguimiento: gestión del cuadro. */
+/** Estado y fecha de seguimiento: gestión del cuadro. El compromiso lo escribe el colaborador al firmar. */
 export async function gestionarFeedback(id: string, datos: unknown): Promise<Resultado> {
   if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
   const parsed = esquemaGestionFeedback.safeParse(datos);
@@ -122,7 +120,7 @@ export async function gestionarFeedback(id: string, datos: unknown): Promise<Res
 
   const { data, error } = await supabase
     .from("feedback")
-    .update({ estado: parsed.data.estado, plan_accion: parsed.data.plan_accion, fecha_seguimiento: parsed.data.fecha_seguimiento })
+    .update({ estado: parsed.data.estado, fecha_seguimiento: parsed.data.fecha_seguimiento })
     .eq("id", id)
     .select("id")
     .maybeSingle();
@@ -162,8 +160,12 @@ export async function responderConformidad(datos: unknown): Promise<Resultado> {
     p_id: parsed.data.id,
     p_conformidad: parsed.data.conformidad,
     p_comentario: parsed.data.comentario ?? null,
+    p_compromiso: parsed.data.compromiso ?? null,
   });
-  if (error) return { ok: false, error: traducir(error) };
+  if (error) {
+    if (error.message.includes("compromiso")) return { ok: false, error: "Escribe tu compromiso de mejora antes de firmar." };
+    return { ok: false, error: traducir(error) };
+  }
 
   refrescar(parsed.data.id);
   return { ok: true, id: parsed.data.id };

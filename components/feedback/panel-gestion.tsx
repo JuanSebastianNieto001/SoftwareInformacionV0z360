@@ -11,7 +11,6 @@ import { SELECT_FEEDBACK } from "@/components/feedback/nav-feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ESTADOS_FEEDBACK, ETIQUETA_ESTADO_FEEDBACK } from "@/lib/feedback";
 import type { FeedbackConCatalogo, FeedbackEstado } from "@/lib/supabase/tipos";
 
@@ -19,14 +18,13 @@ export function PanelGestion({ feedback }: { feedback: FeedbackConCatalogo }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [estado, setEstado] = useState<FeedbackEstado>(feedback.estado);
-  const [plan, setPlan] = useState(feedback.plan_accion ?? "");
   const [seguimiento, setSeguimiento] = useState(feedback.fecha_seguimiento ?? "");
   const [error, setError] = useState<string | null>(null);
 
   function guardar() {
     setError(null);
     iniciar(async () => {
-      const r = await gestionarFeedback(feedback.id, { estado, plan_accion: plan || null, fecha_seguimiento: seguimiento || null });
+      const r = await gestionarFeedback(feedback.id, { estado, fecha_seguimiento: seguimiento || null });
       if (!r.ok) {
         setError(r.error);
         return;
@@ -54,10 +52,6 @@ export function PanelGestion({ feedback }: { feedback: FeedbackConCatalogo }) {
           <Label htmlFor="g-seg">Fecha de seguimiento</Label>
           <Input id="g-seg" type="date" value={seguimiento} onChange={(e) => setSeguimiento(e.target.value)} disabled={pendiente} />
         </div>
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="g-plan">Compromiso / plan de acción</Label>
-        <Textarea id="g-plan" value={plan} onChange={(e) => setPlan(e.target.value)} rows={3} maxLength={4000} disabled={pendiente} />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button onClick={guardar} disabled={pendiente}>

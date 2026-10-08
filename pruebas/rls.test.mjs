@@ -1264,7 +1264,7 @@ await prueba("con Edición se registra feedback; sin permiso no", async () => {
     tx.query(`insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Luis', current_date, 'leve', 'notificacion', 'x', $2)`, [CAT_NORMAL, U.sinPermiso]),
   );
   const r = await como(U.editor, (tx) =>
-    filas(tx, `insert into feedback (catalogo_id, colaborador_nombre, colaborador_usuario_id, fecha, gravedad, severidad, descripcion, plan_accion, fecha_seguimiento, creado_por) values ($1, 'Luis Lector', $2, current_date, 'moderado', 'plan_accion', 'Llegó tarde 3 veces', 'Compromiso de puntualidad', current_date - 1, $3) returning id, area_id`, [CAT_NORMAL, U.lector, U.editor]),
+    filas(tx, `insert into feedback (catalogo_id, colaborador_nombre, colaborador_usuario_id, fecha, gravedad, severidad, descripcion, fecha_seguimiento, creado_por) values ($1, 'Luis Lector', $2, current_date, 'moderado', 'plan_accion', 'Llegó tarde 3 veces', current_date - 1, $3) returning id, area_id`, [CAT_NORMAL, U.lector, U.editor]),
   );
   FB_ID = r[0].id;
   igual(r[0].area_id, FB, "el área se impone a la del cuadro");
@@ -1295,11 +1295,14 @@ await prueba("la vista marca seguimiento vencido y sin conformidad", async () =>
   igual(v[0].sin_conformidad, true, "aún sin conformidad");
 });
 
-await prueba("la conformidad: la responde el colaborador (o el cuadro), no un tercero; sella la fecha", async () => {
+await prueba("la firma: la pone el colaborador (o el cuadro), no un tercero; exige el compromiso y sella la fecha", async () => {
   await comoDebeFallar(U.sinPermiso, (tx) => tx.query(`select public.responder_feedback($1, 'aceptado', null)`, [FB_ID]), /No puedes responder/);
-  await como(U.lector, (tx) => tx.query(`select public.responder_feedback($1, 'observaciones', 'De acuerdo, mejoraré')`, [FB_ID]));
-  const v = await como(U.editor, (tx) => filas(tx, `select conformidad, conformidad_comentario, conformidad_en, sin_conformidad from v_feedback where id = $1`, [FB_ID]));
+  // Sin compromiso no se firma (no es reconocimiento ni rechazo).
+  await comoDebeFallar(U.lector, (tx) => tx.query(`select public.responder_feedback($1, 'observaciones', 'De acuerdo', null)`, [FB_ID]), /compromiso/i);
+  await como(U.lector, (tx) => tx.query(`select public.responder_feedback($1, 'observaciones', 'De acuerdo, mejoraré', 'Me comprometo a llegar puntual')`, [FB_ID]));
+  const v = await como(U.editor, (tx) => filas(tx, `select conformidad, plan_accion, conformidad_en, sin_conformidad from v_feedback where id = $1`, [FB_ID]));
   igual(v[0].conformidad, "observaciones", "quedó registrada");
+  igual(v[0].plan_accion, "Me comprometo a llegar puntual", "el compromiso lo escribió el colaborador");
   igual(v[0].conformidad_en !== null, true, "con fecha y hora");
   igual(v[0].sin_conformidad, false, "ya no está pendiente");
 });
