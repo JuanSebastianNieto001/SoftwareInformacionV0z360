@@ -72,7 +72,11 @@ export async function actualizarSesion(request: NextRequest) {
       // signOut escribe las cookies de sesión ya vacías en `respuesta`
       // (vía setAll); se copian a la redirección para que lleguen al
       // navegador junto con el cambio de página.
-      await supabase.auth.signOut();
+      //
+      // scope "local": caduca SOLO este navegador. Con el global, un
+      // equipo con la cookie de actividad vieja revocaba también la
+      // sesión que la persona acababa de abrir en otro computador.
+      await supabase.auth.signOut({ scope: "local" });
       if (esApi) {
         const sinSesion = NextResponse.json({ error: "Sesión caducada por inactividad" }, { status: 401 });
         respuesta.cookies.getAll().forEach((c) => sinSesion.cookies.set(c));
@@ -98,6 +102,14 @@ export async function actualizarSesion(request: NextRequest) {
     });
   }
 
+  // Sin sesión no debe quedar rastro de actividad: si la cookie sobrevivió
+  // (un cierre de sesión antiguo, un navegador que guardó la del día
+  // anterior), el siguiente inicio de sesión en ese equipo sería expulsado
+  // al instante como "inactividad". Se limpia aquí, con lo que al llegar a
+  // /login el equipo ya está sano.
+  const limpiarActividad = !user && request.cookies.has(COOKIE_ACTIVIDAD);
+  if (limpiarActividad) respuesta.cookies.delete(COOKIE_ACTIVIDAD);
+
   if (!user && !esPublica && !esApiSinSesion) {
     if (esApi) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -106,7 +118,9 @@ export async function actualizarSesion(request: NextRequest) {
     url.pathname = "/login";
     url.search = "";
     if (pathname !== "/") url.searchParams.set("volver", pathname);
-    return NextResponse.redirect(url);
+    const redireccion = NextResponse.redirect(url);
+    if (limpiarActividad) redireccion.cookies.delete(COOKIE_ACTIVIDAD);
+    return redireccion;
   }
 
   if (user && pathname === "/login") {

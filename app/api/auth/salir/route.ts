@@ -16,5 +16,10 @@ export async function GET(req: NextRequest) {
   const motivo = req.nextUrl.searchParams.get("motivo");
   if (motivo) destino.searchParams.set("motivo", motivo);
 
-  return NextResponse.redirect(destino, { status: 303 });
+  const respuesta = NextResponse.redirect(destino, { status: 303 });
+  // La marca de actividad no debe sobrevivir al cierre de sesión: si queda,
+  // el siguiente inicio de sesión en este equipo sería expulsado al
+  // instante por "inactividad".
+  respuesta.cookies.delete("v360_actividad");
+  return respuesta;
 }
