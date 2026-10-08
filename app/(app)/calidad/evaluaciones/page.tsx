@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, Download, Filter } from "lucide-react";
+import { BotonPublicarLote, BotonPublicarUna } from "@/components/calidad/publicar-auditorias";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,8 @@ const SELECT =
 
 export default async function PaginaAuditorias({ searchParams }: PageProps<"/calidad/evaluaciones">) {
   const sp = await searchParams;
-  const { supabase, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, user, puedeEditar } = await exigirModulo("calidad");
+  const nueva = typeof sp.nueva === "string" ? sp.nueva : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const tl = typeof sp.tl === "string" ? sp.tl : "";
   const estado = sp.estado === "borrador" || sp.estado === "publicada" ? sp.estado : "";
@@ -37,9 +39,10 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
   if (desde) consulta = consulta.gte("fecha_auditoria", desde);
   if (hasta) consulta = consulta.lte("fecha_auditoria", hasta);
 
-  const [{ data: filas, error }, { data: tls }] = await Promise.all([
+  const [{ data: filas, error }, { data: tls }, { count: misBorradores }] = await Promise.all([
     consulta,
     supabase.from("calidad_asesores").select("team_leader").not("team_leader", "is", null),
+    supabase.from("calidad_evaluaciones").select("id", { count: "exact", head: true }).eq("estado", "borrador").eq("analista_id", user.id),
   ]);
   const teamLeaders = [...new Set((tls ?? []).map((t) => t.team_leader as string))].sort();
   const hayFiltro = !!(q || tl || estado || desde || hasta);
@@ -87,7 +90,8 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
             <Link href="/calidad/evaluaciones">Limpiar</Link>
           </Button>
         )}
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
+          {puedeEditar && <BotonPublicarLote cantidad={misBorradores ?? 0} />}
           <Button asChild variant="outline">
             <a href={csv}>
               <Download /> CSV
@@ -128,7 +132,7 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
               {filas.map((e) => {
                 const nota = e.nota_final === null ? null : Number(e.nota_final);
                 return (
-                  <TableRow key={e.id}>
+                  <TableRow key={e.id} className={cn(e.id === nueva && "bg-tinte ring-2 ring-primary/40 ring-inset")}>
                     <TableCell className="font-medium">
                       <Link href={`/calidad/evaluaciones/${e.id}`} className="hover:text-primary hover:underline">
                         {e.asesor_nombre}
@@ -156,7 +160,8 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
                       <Badge variant={e.estado === "publicada" ? "outline" : "secondary"}>{ETIQUETA_ESTADO_EVALUACION_CALIDAD[e.estado]}</Badge>
                     </TableCell>
                     <TableCell className="text-xs">{e.retro_estado ? ETIQUETA_ESTADO_RETRO[e.retro_estado] : "—"}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      {puedeEditar && e.estado === "borrador" && <BotonPublicarUna id={e.id} />}
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/calidad/evaluaciones/${e.id}`}>Abrir</Link>
                       </Button>

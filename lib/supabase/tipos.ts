@@ -972,6 +972,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      calidad_eliminaciones: {
+        Row: {
+          id: string;
+          evaluacion_id: string;
+          asesor_nombre: string;
+          team_leader: string | null;
+          analista_nombre: string | null;
+          tipo: string | null;
+          fecha_interaccion: string | null;
+          fecha_auditoria: string | null;
+          estado: string | null;
+          nota_final: number | null;
+          nota_importada: number | null;
+          n_respuestas: number;
+          tenia_retro: boolean;
+          motivo: string;
+          eliminada_por: string | null;
+          eliminada_por_nombre: string;
+          eliminada_en: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       feedback_alcance: {
         Row: {
           id: string;
@@ -1474,6 +1498,18 @@ export type Database = {
       calidad_pesos_suman_cien: {
         Args: { m: string };
         Returns: boolean;
+      };
+      publicar_borradores_calidad: {
+        Args: { p_ids?: string[] | null };
+        Returns: { evaluacion_id: string; asesor_nombre: string; publicada: boolean; motivo: string | null }[];
+      };
+      calidad_puede_eliminar: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      eliminar_auditoria_calidad: {
+        Args: { p_id: string; p_motivo: string };
+        Returns: undefined;
       };
       calidad_es_mi_evaluacion: {
         Args: { ev: string };

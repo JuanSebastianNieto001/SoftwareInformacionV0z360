@@ -16,7 +16,7 @@ export function NavFeedback({ puedeEditar }: { puedeEditar: boolean }) {
   const pathname = usePathname();
   const visibles = PESTANAS.filter((p) => puedeEditar || !("soloEditar" in p && p.soloEditar));
   return (
-    <nav aria-label="Retroalimentación" className="mb-6 flex flex-wrap gap-1 rounded-full border bg-card p-1">
+    <nav aria-label="Feedback" className="mb-6 flex flex-wrap gap-1 rounded-full border bg-card p-1">
       {visibles.map((p) => {
         const activo = "exacto" in p && p.exacto ? pathname === p.href : pathname.startsWith(p.href);
         const Icono = p.icono;

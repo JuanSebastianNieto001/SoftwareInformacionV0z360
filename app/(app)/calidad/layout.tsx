@@ -10,7 +10,9 @@ import { ETIQUETA_NIVEL } from "@/lib/permisos";
 
 /** El guardia va aquí: sin permiso sobre el cuadro, ninguna ruta de /calidad se renderiza. */
 export default async function LayoutCalidad({ children }: { children: ReactNode }) {
-  const { area, nivel, puedeEditar } = await exigirModulo("calidad");
+  const { area, nivel, puedeEditar, supabase, perfil } = await exigirModulo("calidad");
+  const { data: puedeEliminar } = await supabase.rpc("calidad_puede_eliminar");
+  const verEliminadas = perfil.rol === "admin" || puedeEliminar === true;
   return (
     <>
       <div className="mb-3">
@@ -30,7 +32,7 @@ export default async function LayoutCalidad({ children }: { children: ReactNode 
         }
         descripcion="Auditorías con la pauta de calidad, retroalimentación firmada por el asesor y seguimiento de compromisos."
       />
-      <NavCalidad puedeEditar={puedeEditar} />
+      <NavCalidad puedeEditar={puedeEditar} verEliminadas={verEliminadas} />
       {children}
     </>
   );

@@ -72,7 +72,10 @@ export function PautaAuditoria({ evaluacionId, items, respuestas, errorFatalAnul
       setSucio(false);
       if (despues) await despues();
       else {
-        toast.success("Pauta guardada");
+        // Guardada como borrador: a la lista de borradores con esta resaltada,
+        // donde se publica una por una o todas de un tirón.
+        toast.success("Auditoría guardada como borrador. Publícala desde aquí cuando esté lista.");
+        router.push(`/calidad/evaluaciones?estado=borrador&nueva=${evaluacionId}`);
         router.refresh();
       }
     });

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, LayoutDashboard, ListChecks, Users } from "lucide-react";
+import { ClipboardList, LayoutDashboard, ListChecks, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PESTANAS = [
@@ -10,12 +10,20 @@ const PESTANAS = [
   { href: "/calidad/evaluaciones", etiqueta: "Auditorías", icono: ClipboardList },
   { href: "/calidad/matriz", etiqueta: "Pauta", icono: ListChecks },
   { href: "/calidad/asesores", etiqueta: "Estructura", icono: Users },
+  { href: "/calidad/eliminadas", etiqueta: "Eliminadas", icono: Trash2 },
 ] as const;
 
-/** Las pestañas del módulo de calidad. La configuración (pauta y estructura) solo la ven quienes editan. */
-export function NavCalidad({ puedeEditar }: { puedeEditar: boolean }) {
+/**
+ * Las pestañas del módulo de calidad. La configuración (pauta y
+ * estructura) solo la ven quienes editan; la bitácora de eliminadas, los
+ * administradores y quien puede eliminar.
+ */
+export function NavCalidad({ puedeEditar, verEliminadas = false }: { puedeEditar: boolean; verEliminadas?: boolean }) {
   const pathname = usePathname();
-  const visibles = PESTANAS.filter((p) => puedeEditar || (p.href !== "/calidad/matriz" && p.href !== "/calidad/asesores"));
+  const visibles = PESTANAS.filter((p) => {
+    if (p.href === "/calidad/eliminadas") return verEliminadas;
+    return puedeEditar || (p.href !== "/calidad/matriz" && p.href !== "/calidad/asesores");
+  });
   return (
     <nav aria-label="Calidad" className="mb-6 flex flex-wrap gap-1 rounded-full border bg-card p-1">
       {visibles.map((p) => {

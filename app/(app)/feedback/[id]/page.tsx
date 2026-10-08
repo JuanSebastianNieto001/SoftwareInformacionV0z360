@@ -37,7 +37,7 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
 
   await registrarAcceso(supabase, user, {
     accion: "abrir",
-    documento: { id: null, titulo: `Feedback · ${f.colaborador_nombre} · ${f.subtipo}`, area_nombre: "Retroalimentación" },
+    documento: { id: null, titulo: `Feedback · ${f.colaborador_nombre} · ${f.subtipo}`, area_nombre: "Feedback" },
     perfilNombre: perfil.nombre,
     request: { headers: await headers() },
   });

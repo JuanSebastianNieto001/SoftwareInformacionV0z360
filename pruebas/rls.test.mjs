@@ -1077,6 +1077,51 @@ await prueba("las alertas de calidad llegan al asesor (su evaluación) y a quien
   igual(Number(nadie[0].n), 0, "quien no es nada, nada recibe");
 });
 
+let LOTE_OK = null;
+await prueba("publicar en lote: publica los borradores completos del analista y explica los que no", async () => {
+  const nuevos = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_id, analista_nombre, fecha_interaccion, creado_por)
+       values ($1, $2, $3, 'Luis Lector', $4, 'Eva', current_date, $4), ($1, $2, $3, 'Luis Lector', $4, 'Eva', current_date, $4)
+       returning id`,
+      [CAL, MATRIZ, ASESOR, U.editor],
+    ),
+  );
+  LOTE_OK = nuevos[0].id;
+  // El primero, con la pauta completa; el segundo queda a medias.
+  await como(U.editor, (tx) =>
+    tx.query(
+      `insert into calidad_respuestas (evaluacion_id, item_id, resultado) values ($1, $2, 'cumple'), ($1, $3, 'cumple'), ($1, $4, 'cumple'), ($5, $2, 'cumple')`,
+      [LOTE_OK, ITEMS[0].id, ITEMS[1].id, ITEMS[2].id, nuevos[1].id],
+    ),
+  );
+  const r = await como(U.editor, (tx) => filas(tx, `select evaluacion_id, publicada, motivo from public.publicar_borradores_calidad()`));
+  igual(r.length, 2, "toma los dos borradores del analista");
+  igual(r.filter((x) => x.publicada).length, 1, "publica solo el completo");
+  igual(/Faltan ítems/.test(r.find((x) => !x.publicada).motivo), true, "y explica por qué el otro no");
+  const est = await db.query(`select estado from calidad_evaluaciones where id = $1`, [LOTE_OK]);
+  igual(est.rows[0].estado, "publicada", "quedó publicada");
+});
+
+await prueba("eliminar: solo con Total explícito y con motivo; deja la foto en la bitácora y el admin la lee", async () => {
+  await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'total')`, [U.editorLector, CAL]);
+  await comoDebeFallar(U.editor, (tx) => tx.query(`select public.eliminar_auditoria_calidad($1, 'Motivo suficientemente largo')`, [LOTE_OK]), /nivel Total/);
+  await comoDebeFallar(U.admin, (tx) => tx.query(`select public.eliminar_auditoria_calidad($1, 'Motivo suficientemente largo')`, [LOTE_OK]), /nivel Total/);
+  await comoDebeFallar(U.editorLector, (tx) => tx.query(`select public.eliminar_auditoria_calidad($1, 'corto')`, [LOTE_OK]), /motivo/i);
+  const directo = await como(U.admin, (tx) => tx.query(`delete from calidad_evaluaciones where id = $1`, [LOTE_OK]));
+  igual(directo.affectedRows ?? 0, 0, "sin DELETE directo, ni para el admin");
+  await como(U.editorLector, (tx) => tx.query(`select public.eliminar_auditoria_calidad($1, 'Se auditó la grabación equivocada')`, [LOTE_OK]));
+  const sigue = await db.query(`select count(*)::int n from calidad_evaluaciones where id = $1`, [LOTE_OK]);
+  igual(sigue.rows[0].n, 0, "la auditoría se borró");
+  const log = await como(U.admin, (tx) => filas(tx, `select motivo, asesor_nombre, eliminada_por from calidad_eliminaciones where evaluacion_id = $1`, [LOTE_OK]));
+  igual(log.length, 1, "el admin ve la bitácora");
+  igual(log[0].motivo, "Se auditó la grabación equivocada", "con el motivo");
+  igual(log[0].eliminada_por, U.editorLector, "y quién la borró");
+  const ajeno = await como(U.editor, (tx) => filas(tx, `select count(*)::int n from calidad_eliminaciones`));
+  igual(ajeno[0].n, 0, "quien solo edita no ve la bitácora");
+});
+
 console.log("\nPDA (019)");
 grupo("PDA (019)");
 

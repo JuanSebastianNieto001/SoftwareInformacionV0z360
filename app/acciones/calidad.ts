@@ -155,20 +155,44 @@ export async function publicarAuditoria(id: string): Promise<Resultado> {
   return { ok: true, id };
 }
 
-export async function eliminarAuditoria(id: string): Promise<Resultado> {
+/**
+ * Eliminar exige motivo. Pasa por eliminar_auditoria_calidad(), que
+ * comprueba el nivel Total explícito, deja la foto en la bitácora
+ * (calidad_eliminaciones) y el rastro en accesos antes de borrar.
+ */
+export async function eliminarAuditoria(id: string, motivo: string): Promise<Resultado> {
   if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
-  const sesion = await exigirSesion();
-  const { data, error } = await sesion.supabase
-    .from("calidad_evaluaciones")
-    .delete()
-    .eq("id", id)
-    .select("asesor_nombre, fecha_interaccion")
-    .maybeSingle();
+  const m = motivo.trim();
+  if (m.length < 10) return { ok: false, error: "Escribe el motivo de la eliminación (mínimo 10 caracteres)." };
+  const { supabase } = await exigirSesion();
+  const { error } = await supabase.rpc("eliminar_auditoria_calidad", { p_id: id, p_motivo: m.slice(0, 1000) });
   if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
-  if (!data) return { ok: false, error: "No se pudo eliminar: no existe o no tienes nivel Total." };
-  await anotar("eliminar", `Auditoría · ${data.asesor_nombre} · ${data.fecha_interaccion}`, sesion);
   refrescar();
+  revalidatePath("/calidad/eliminadas");
   return { ok: true };
+}
+
+export type ResultadoLote = { ok: true; publicadas: number; fallidas: { asesor: string; motivo: string }[] } | { ok: false; error: string };
+
+/**
+ * Publica borradores de un tirón: sin ids, todos los borradores de quien
+ * llama; con ids, esos. La base valida cada una (pauta completa, pesos) y
+ * devuelve cuáles quedaron y por qué no las demás.
+ */
+export async function publicarBorradores(ids?: string[]): Promise<ResultadoLote> {
+  if (ids && !ids.every(esUuid)) return { ok: false, error: "Identificador inválido" };
+  const sesion = await exigirSesion();
+  const { data, error } = await sesion.supabase.rpc("publicar_borradores_calidad", { p_ids: ids && ids.length ? ids : null });
+  if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
+  const filas = data ?? [];
+  const publicadas = filas.filter((f) => f.publicada);
+  if (publicadas.length) await anotar("editar", `Publica ${publicadas.length} auditorías en lote`, sesion);
+  refrescar();
+  return {
+    ok: true,
+    publicadas: publicadas.length,
+    fallidas: filas.filter((f) => !f.publicada).map((f) => ({ asesor: f.asesor_nombre, motivo: f.motivo ?? "No se pudo publicar" })),
+  };
 }
 
 // ---------------------------------------------------------------------------

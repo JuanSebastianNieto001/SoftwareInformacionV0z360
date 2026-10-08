@@ -21,6 +21,8 @@ import {
   Layers,
   KeySquare,
   Files,
+  BadgeCheck,
+  MessageSquareHeart,
 } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/auth";
 import { CampanaNotificaciones, type NotificacionShell } from "@/components/comunes/campana-notificaciones";
@@ -60,6 +62,13 @@ const SUBIR: Item = { href: "/subir", etiqueta: "Subir documento", icono: Upload
 const BUZON: Item = { href: "/buzon", etiqueta: "Buzón", icono: MessageSquareText };
 const BUZON_GESTION: Item = { href: "/buzon/gestion", etiqueta: "Buzón", icono: Inbox };
 
+// Lo propio de cada persona, visible para todos: sus auditorías de calidad
+// (con su firma) y el feedback que le han hecho. RLS entrega solo lo suyo.
+const LO_MIO: Item[] = [
+  { href: "/mis-evaluaciones", etiqueta: "Mis evaluaciones", icono: BadgeCheck },
+  { href: "/mis-feedback", etiqueta: "Mis feedback", icono: MessageSquareHeart },
+];
+
 const ITEMS_ADMIN: Item[] = [
   { href: "/admin/documentos", etiqueta: "Documentos", icono: Files },
   { href: "/admin/usuarios", etiqueta: "Usuarios", icono: Users },
@@ -97,6 +106,7 @@ export function AppShell({
 
   const items: Item[] = [
     ...PRINCIPALES,
+    ...LO_MIO,
     gestorBuzon ? BUZON_GESTION : BUZON,
     ...(puedeSubir ? [SUBIR] : []),
   ];

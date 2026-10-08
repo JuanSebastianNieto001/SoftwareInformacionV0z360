@@ -3,7 +3,7 @@
 // Campana de notificaciones de la cabecera.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { marcarNotificacionLeida, marcarTodasLeidas } from "@/app/acciones/notificaciones";
@@ -33,10 +33,40 @@ export type NotificacionShell = {
  * si se cierra el navegador, vuelve a avisar, que es lo que se quiere de
  * una alarma.
  */
-export function CampanaNotificaciones({ notificaciones }: { notificaciones: NotificacionShell[] }) {
+export function CampanaNotificaciones({ notificaciones: iniciales }: { notificaciones: NotificacionShell[] }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
+  // Lo que trae el servidor al navegar manda; entre navegaciones, la campana
+  // se refresca sola: cada minuto y al volver a la pestaña. Así una alerta
+  // nueva suena sin tener que recargar la página. Lo refrescado se ata a la
+  // lista del servidor de la que partió: si se navega, vuelve a mandar esa.
+  const [vivas, setVivas] = useState<{ de: NotificacionShell[]; lista: NotificacionShell[] } | null>(null);
+  const notificaciones = vivas && vivas.de === iniciales ? vivas.lista : iniciales;
   const n = notificaciones.length;
+
+  useEffect(() => {
+    let activo = true;
+    async function refrescar() {
+      try {
+        const r = await fetch("/api/notificaciones", { cache: "no-store" });
+        if (!r.ok) return;
+        const j = (await r.json()) as { notificaciones?: NotificacionShell[] };
+        if (activo && Array.isArray(j.notificaciones)) setVivas({ de: iniciales, lista: j.notificaciones });
+      } catch {
+        // sin red no pasa nada: se reintenta en el siguiente ciclo
+      }
+    }
+    const intervalo = setInterval(refrescar, 60_000);
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void refrescar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      activo = false;
+      clearInterval(intervalo);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, [iniciales]);
 
   useEffect(() => {
     let vistas: string[] = [];

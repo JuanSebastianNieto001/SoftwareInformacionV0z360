@@ -5,20 +5,14 @@
  * (colaborador_usuario_id = quien entra).
  */
 import type { Metadata } from "next";
-import { MessageSquareHeart } from "lucide-react";
+import { CheckCircle2, FileText, MessageSquareHeart, PenLine, Target } from "lucide-react";
 import { ResponderConformidad } from "@/components/feedback/responder-conformidad";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
-import {
-  ETIQUETA_CONFORMIDAD,
-  ETIQUETA_ESTADO_FEEDBACK,
-  ETIQUETA_GRAVEDAD,
-  varianteConformidad,
-  varianteEstadoFeedback,
-  varianteGravedad,
-} from "@/lib/feedback";
+import { ETIQUETA_CONFORMIDAD, ETIQUETA_ESTADO_FEEDBACK, ETIQUETA_GRAVEDAD, varianteConformidad } from "@/lib/feedback";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Mis feedback" };
 
@@ -29,50 +23,71 @@ export default async function PaginaMisFeedback() {
 
   return (
     <>
-      <EncabezadoPagina kicker="Retroalimentación" titulo="Mis feedback" descripcion={`${perfil.nombre} · tu retroalimentación operativa y tu firma.`} />
+      <EncabezadoPagina kicker="Feedback" titulo="Mis feedback" descripcion={`${perfil.nombre} · tu retroalimentación operativa y tu firma.`} />
       {lista.length === 0 ? (
         <EstadoVacio icono={<MessageSquareHeart />} titulo="No tienes feedback registrado" descripcion="Cuando te registren una retroalimentación la verás aquí y recibirás un aviso." />
       ) : (
         <ul className="space-y-6">
           {lista.map((f) => (
-            <li key={f.id} className={`space-y-4 rounded-[24px] border p-5 sm:p-6 ${f.es_positivo ? "bg-emerald-50/60" : "bg-card"}`}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-                    {f.tipo} · {f.subtipo} · {formatearFecha(`${f.fecha}T12:00:00-05:00`)}
+            <li key={f.id} className="overflow-hidden rounded-[24px] border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              {/* Cabecera: motivo del catálogo */}
+              <div className={cn("px-6 py-5 text-white", f.es_positivo ? "bg-emerald-700" : "bg-marino")}>
+                <p className="text-xs font-semibold tracking-[0.12em] text-white/70 uppercase">
+                  {f.tipo} · {f.subtipo}
+                </p>
+                <p className="mt-1 text-[18px] leading-snug font-semibold">{f.detalle}</p>
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/85">
+                  <span>{formatearFecha(`${f.fecha}T12:00:00-05:00`)}</span>
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+                    {f.es_positivo ? "Reconocimiento" : `Gravedad ${ETIQUETA_GRAVEDAD[f.gravedad].toLowerCase()}`}
+                  </span>
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">{ETIQUETA_ESTADO_FEEDBACK[f.estado]}</span>
+                </p>
+              </div>
+
+              <div className="space-y-4 p-5 sm:p-6">
+                <div className="rounded-[18px] bg-zona/60 p-4">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">
+                    <FileText className="size-3.5" aria-hidden /> Qué pasó
                   </p>
-                  <p className="mt-0.5 font-semibold">{f.detalle}</p>
+                  <p className="mt-1.5 text-sm whitespace-pre-line">{f.descripcion}</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant={varianteGravedad(f.gravedad)}>{ETIQUETA_GRAVEDAD[f.gravedad]}</Badge>
-                  <Badge variant={varianteEstadoFeedback(f.estado)}>{ETIQUETA_ESTADO_FEEDBACK[f.estado]}</Badge>
-                </div>
-              </div>
 
-              <div>
-                <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Qué pasó</p>
-                <p className="mt-1 text-sm whitespace-pre-line">{f.descripcion}</p>
-              </div>
-              {f.plan_accion && (
-                <div className="rounded-[16px] bg-zona/60 p-3">
-                  <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Tu compromiso</p>
-                  <p className="mt-1 text-sm whitespace-pre-line">{f.plan_accion}</p>
-                </div>
-              )}
-
-              <div className="rounded-[18px] border p-4">
-                <p className="text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">Tu firma</p>
-                {f.conformidad ? (
-                  <div className="mt-2 space-y-1">
-                    <Badge variant={varianteConformidad(f.conformidad)}>{ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
-                    {f.conformidad_comentario && <p className="text-sm">{f.conformidad_comentario}</p>}
-                    {f.conformidad_en && <p className="text-xs text-muted-foreground">✍️ Firmado el {formatearFechaHora(f.conformidad_en)}. La firma queda en el registro de auditoría.</p>}
-                  </div>
-                ) : (
-                  <div className="mt-2">
-                    <ResponderConformidad id={f.id} esPositivo={f.es_positivo} />
+                {f.plan_accion && (
+                  <div className="rounded-[18px] border border-primary/30 bg-tinte p-4">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">
+                      <Target className="size-3.5" aria-hidden /> Tu compromiso
+                    </p>
+                    <p className="mt-1.5 text-sm whitespace-pre-line">{f.plan_accion}</p>
                   </div>
                 )}
+
+                <div className="overflow-hidden rounded-[18px] border">
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-zona/60 px-4 py-3">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold tracking-[0.1em] text-atenuado uppercase">
+                      <PenLine className="size-3.5" aria-hidden /> Tu firma
+                    </p>
+                    {f.conformidad ? (
+                      <Badge variant={varianteConformidad(f.conformidad)}>{ETIQUETA_CONFORMIDAD[f.conformidad]}</Badge>
+                    ) : (
+                      <Badge variant="outline">Pendiente</Badge>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    {f.conformidad ? (
+                      <div className="space-y-1">
+                        {f.conformidad_comentario && <p className="text-sm">{f.conformidad_comentario}</p>}
+                        {f.conformidad_en && (
+                          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <CheckCircle2 className="size-3.5 text-emerald-700" aria-hidden /> Firmado el {formatearFechaHora(f.conformidad_en)}. La firma queda en el registro de auditoría.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <ResponderConformidad id={f.id} esPositivo={f.es_positivo} />
+                    )}
+                  </div>
+                </div>
               </div>
             </li>
           ))}

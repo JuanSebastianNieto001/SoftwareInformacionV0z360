@@ -9,11 +9,10 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { eliminarAuditoria } from "@/app/acciones/calidad";
+import { EliminarAuditoria } from "@/components/calidad/eliminar-auditoria";
 import { DialogoEditarAuditoria } from "@/components/calidad/formulario-auditoria";
 import { PautaAuditoria } from "@/components/calidad/pauta-auditoria";
 import { PanelRetroalimentacion } from "@/components/calidad/retroalimentacion";
-import { BotonEliminar } from "@/components/comunes/boton-eliminar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { registrarAcceso } from "@/lib/auditoria";
@@ -26,9 +25,13 @@ export const metadata: Metadata = { title: "Auditoría de calidad" };
 
 export default async function PaginaAuditoria({ params }: PageProps<"/calidad/evaluaciones/[id]">) {
   const { id } = await params;
-  const { supabase, user, perfil, puedeEditar, puedeEliminar } = await exigirModulo("calidad");
+  const { supabase, user, perfil, puedeEditar } = await exigirModulo("calidad");
 
-  const { data: ev } = await supabase.from("v_calidad_evaluaciones").select("*").eq("id", id).maybeSingle();
+  const [{ data: ev }, { data: puedeEliminar }] = await Promise.all([
+    supabase.from("v_calidad_evaluaciones").select("*").eq("id", id).maybeSingle(),
+    // Eliminar es solo para quien tiene Total explícito (coordinación de Formación).
+    supabase.rpc("calidad_puede_eliminar"),
+  ]);
   if (!ev) notFound();
 
   const [{ data: items }, { data: respuestas }, { data: retro }, { data: matrices }, { data: asesores }] = await Promise.all([
@@ -64,14 +67,7 @@ export default async function PaginaAuditoria({ params }: PageProps<"/calidad/ev
           {puedeEditar && borrador && (
             <DialogoEditarAuditoria evaluacion={ev} matrices={matrices ?? []} asesores={asesores ?? []} />
           )}
-          {puedeEliminar && (
-            <BotonEliminar
-              accion={eliminarAuditoria.bind(null, ev.id)}
-              titulo="Eliminar esta auditoría"
-              descripcion={`Se borra la auditoría de ${ev.asesor_nombre} del ${formatearFecha(ev.fecha_interaccion)} con su pauta, retroalimentación y compromisos.`}
-              volverA="/calidad/evaluaciones"
-            />
-          )}
+          {puedeEliminar && <EliminarAuditoria id={ev.id} asesor={ev.asesor_nombre} fecha={formatearFecha(ev.fecha_interaccion)} />}
         </div>
       </div>
 

@@ -20,7 +20,7 @@ import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Retroalimentación" };
+export const metadata: Metadata = { title: "Feedback" };
 
 export default async function PaginaFeedback({ searchParams }: PageProps<"/feedback">) {
   const sp = await searchParams;

@@ -141,7 +141,7 @@ export async function eliminarFeedback(id: string): Promise<Resultado> {
 
   await registrarAcceso(supabase, user, {
     accion: "eliminar",
-    documento: { id: null, titulo: `Feedback · ${data.colaborador_nombre}`, area_nombre: "Retroalimentación" },
+    documento: { id: null, titulo: `Feedback · ${data.colaborador_nombre}`, area_nombre: "Feedback" },
     perfilNombre: perfil.nombre,
     request: { headers: await headers() },
   });
