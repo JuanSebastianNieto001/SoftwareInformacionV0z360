@@ -1122,6 +1122,28 @@ await prueba("eliminar: solo con Total explícito y con motivo; deja la foto en 
   igual(ajeno[0].n, 0, "quien solo edita no ve la bitácora");
 });
 
+await prueba("fechas: la interacción la pone la base y no cambia; la de auditoría solo la ajusta quien auditó (o admin)", async () => {
+  const ev = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_id, analista_nombre, fecha_interaccion, fecha_auditoria, creado_por)
+       values ($1, $2, $3, 'Luis Lector', $4, 'Eva', '2020-01-01', '2026-10-01', $4)
+       returning id, fecha_interaccion = (now() at time zone 'America/Bogota')::date as hoy`,
+      [CAL, MATRIZ, ASESOR, U.editor],
+    ),
+  );
+  igual(ev[0].hoy, true, "ignora la fecha enviada y pone la del día");
+  await como(U.editor, (tx) => tx.query(`update calidad_evaluaciones set fecha_interaccion = '2020-01-01' where id = $1`, [ev[0].id]));
+  const sigue = await db.query(`select fecha_interaccion = (now() at time zone 'America/Bogota')::date as hoy from calidad_evaluaciones where id = $1`, [ev[0].id]);
+  igual(sigue.rows[0].hoy, true, "la interacción no se puede cambiar");
+  await como(U.editor, (tx) => tx.query(`update calidad_evaluaciones set fecha_auditoria = '2026-10-05' where id = $1`, [ev[0].id]));
+  // editorLector tiene Total en el cuadro (prueba anterior) pero no auditó esta.
+  await comoDebeFallar(U.editorLector, (tx) => tx.query(`update calidad_evaluaciones set fecha_auditoria = '2026-10-06' where id = $1`, [ev[0].id]), /Solo quien hizo/);
+  await como(U.admin, (tx) => tx.query(`update calidad_evaluaciones set fecha_auditoria = '2026-10-07' where id = $1`, [ev[0].id]));
+  const fa = await db.query(`select fecha_auditoria::text f from calidad_evaluaciones where id = $1`, [ev[0].id]);
+  igual(fa.rows[0].f, "2026-10-07", "el auditor y el admin sí la ajustan");
+});
+
 console.log("\nPDA (019)");
 grupo("PDA (019)");
 

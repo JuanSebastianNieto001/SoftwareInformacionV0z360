@@ -131,7 +131,10 @@ export function FormularioAuditoria({ matrices, asesores, evaluacion }: Props) {
 
         <div className="space-y-1.5">
           <Label htmlFor="a-fi">Fecha de la interacción</Label>
-          <Input id="a-fi" type="date" value={f.fecha_interaccion} onChange={(e) => set("fecha_interaccion", e.target.value)} disabled={pendiente} required />
+          <Input id="a-fi" type="date" value={f.fecha_interaccion} readOnly disabled aria-describedby="a-fi-ayuda" />
+          <p id="a-fi-ayuda" className="text-xs text-muted-foreground">
+            Automática: la fecha en que se registra la auditoría.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="a-fa">Fecha de auditoría</Label>

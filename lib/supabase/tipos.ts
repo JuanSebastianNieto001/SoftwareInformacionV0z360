@@ -1197,7 +1197,8 @@ export type Database = {
           team_leader?: string | null;
           analista_id?: string | null;
           analista_nombre: string;
-          fecha_interaccion: string;
+          // La pone la base (disparador calidad_fechas).
+          fecha_interaccion?: string;
           fecha_auditoria?: string;
           tipo?: string;
           etapa?: string | null;

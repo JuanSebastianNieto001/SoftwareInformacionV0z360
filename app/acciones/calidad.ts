@@ -88,6 +88,21 @@ export async function crearAuditoria(datos: unknown): Promise<Resultado> {
   return { ok: true, id: data.id };
 }
 
+/**
+ * Ajusta la fecha de auditoría desde la lista. Solo quien hizo la
+ * auditoría (o un administrador): lo exige el disparador calidad_fechas.
+ */
+export async function cambiarFechaAuditoria(id: string, fecha: string): Promise<Resultado> {
+  if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(Date.parse(fecha))) return { ok: false, error: "Fecha inválida" };
+  const { supabase } = await exigirSesion();
+  const { data, error } = await supabase.from("calidad_evaluaciones").update({ fecha_auditoria: fecha }).eq("id", id).select("id").maybeSingle();
+  if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
+  if (!data) return { ok: false, error: "No tienes permiso para cambiar esta auditoría." };
+  refrescar(id);
+  return { ok: true, id };
+}
+
 export async function actualizarAuditoria(id: string, datos: unknown): Promise<Resultado> {
   if (!esUuid(id)) return { ok: false, error: "Identificador inválido" };
   const parsed = esquemaAuditoria.safeParse(datos);

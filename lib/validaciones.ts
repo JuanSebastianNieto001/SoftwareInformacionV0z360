@@ -759,7 +759,9 @@ export const ESTADOS_COMPROMISO = ["pendiente", "en_seguimiento", "cumplido", "n
 export const esquemaAuditoria = z.object({
   matriz_id: uuid,
   asesor_id: uuid,
-  fecha_interaccion: z.iso.date({ message: "Fecha de la interacción inválida" }),
+  // La interacción la pone la base al registrar (la fecha del día) y no se
+  // edita; se acepta por compatibilidad pero se descarta al guardar.
+  fecha_interaccion: z.iso.date().nullish().transform(() => undefined),
   fecha_auditoria: z.iso.date({ message: "Fecha de auditoría inválida" }),
   tipo: z.enum(TIPOS_AUDITORIA, { message: "Elige el tipo" }),
   etapa: z.enum(ETAPAS_AUDITORIA).nullish().transform((v) => v ?? null),

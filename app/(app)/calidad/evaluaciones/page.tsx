@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, Download, Filter } from "lucide-react";
+import { FechaAuditoriaEditable } from "@/components/calidad/fecha-auditoria-editable";
 import { BotonPublicarLote, BotonPublicarUna } from "@/components/calidad/publicar-auditorias";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,8 @@ const SELECT =
 
 export default async function PaginaAuditorias({ searchParams }: PageProps<"/calidad/evaluaciones">) {
   const sp = await searchParams;
-  const { supabase, user, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, user, perfil, puedeEditar } = await exigirModulo("calidad");
+  const esAdmin = perfil.rol === "admin";
   const nueva = typeof sp.nueva === "string" ? sp.nueva : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const tl = typeof sp.tl === "string" ? sp.tl : "";
@@ -29,7 +31,7 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
 
   let consulta = supabase
     .from("v_calidad_evaluaciones")
-    .select("id, asesor_nombre, team_leader, analista_nombre, fecha_interaccion, fecha_auditoria, tipo, etapa, estado, nota_final, nota_minima, n_fatales_fallados, retro_estado")
+    .select("id, asesor_nombre, team_leader, analista_id, analista_nombre, fecha_interaccion, fecha_auditoria, tipo, etapa, estado, nota_final, nota_minima, n_fatales_fallados, retro_estado")
     .order("fecha_auditoria", { ascending: false })
     .order("creado_en", { ascending: false })
     .limit(500);
@@ -140,7 +142,13 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
                     </TableCell>
                     <TableCell className="text-xs">{e.team_leader ?? "—"}</TableCell>
                     <TableCell className="whitespace-nowrap">{formatearFecha(e.fecha_interaccion)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatearFecha(e.fecha_auditoria)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {puedeEditar && (e.analista_id === user.id || esAdmin) ? (
+                        <FechaAuditoriaEditable id={e.id} fecha={e.fecha_auditoria} />
+                      ) : (
+                        formatearFecha(e.fecha_auditoria)
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">
                       {e.tipo}
                       {e.etapa ? ` · ${e.etapa}` : ""}
