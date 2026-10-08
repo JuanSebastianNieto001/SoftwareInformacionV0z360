@@ -110,7 +110,7 @@ export function varianteNotaCalidad(
   return "destructive";
 }
 
-/** Suma de pesos de los ítems activos no críticos, para validar la matriz (debe ser >0 y ≤100; la pauta oficial suma 95). */
+/** Suma de pesos de los ítems activos no críticos: debe ser 100 % para poder publicar (los bloques de la matriz suman 15 + 45 + 40). */
 export function sumaPesos(items: readonly ItemParaNota[]): number {
   return Math.round(items.filter((i) => i.activo && !i.es_fatal).reduce((a, i) => a + i.peso, 0) * 100) / 100;
 }

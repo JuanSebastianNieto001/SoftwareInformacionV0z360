@@ -31,7 +31,19 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
     activa: matriz.activa,
   });
   const suma = sumaPesos(items.map((i) => ({ ...i, peso: Number(i.peso) })));
+  const sumaCien = Math.abs(suma - 100) < 0.01;
   const categorias = [...new Set(items.map((i) => i.categoria))];
+  // Pesos agrupados por bloque de la matriz (solo ítems activos no críticos),
+  // para ver de un vistazo el 15 + 45 + 40 de la pauta oficial.
+  const porBloque = [
+    ...items
+      .filter((i) => i.activo && !i.es_fatal)
+      .reduce((mapa, i) => {
+        const bloque = i.bloque ?? "Sin bloque";
+        return mapa.set(bloque, (mapa.get(bloque) ?? 0) + Number(i.peso));
+      }, new Map<string, number>())
+      .entries(),
+  ].map(([bloque, peso]) => ({ bloque, peso: Math.round(peso * 100) / 100 }));
 
   function guardarMatriz() {
     const parsed = esquemaMatrizCalidad.safeParse({ ...m, descripcion: m.descripcion || null });
@@ -77,18 +89,26 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
         )}
       </section>
 
-      <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-5 py-3", suma > 0 && suma <= 100.01 ? "border-emerald-200 bg-emerald-50" : "border-amber-300 bg-amber-50")}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-5 py-3", sumaCien ? "border-emerald-200 bg-emerald-50" : "border-amber-300 bg-amber-50")}>
         <p className="text-sm">
           Suma de pesos de los ítems activos (sin críticos): <span className="font-semibold tabular-nums">{suma} %</span>
-          {suma <= 0 ? (
-            <span className="ml-2 text-amber-800">— debe ser mayor que 0 para poder publicar auditorías</span>
-          ) : suma > 100.01 ? (
-            <span className="ml-2 text-amber-800">— no puede superar 100 %</span>
+          {sumaCien ? (
+            <span className="ml-2 text-muted-foreground">— la nota de cada auditoría se reparte sobre los ítems que apliquen (los “No aplica” no cuentan)</span>
           ) : (
-            <span className="ml-2 text-muted-foreground">— la nota de cada auditoría se reparte sobre los ítems que apliquen (los «No aplica» no cuentan)</span>
+            <span className="ml-2 text-amber-800">— debe sumar 100 % para poder publicar auditorías</span>
           )}
         </p>
         {editable && <DialogoItem matrizId={matriz.id} ordenSugerido={(items.at(-1)?.orden ?? 0) + 1} categorias={categorias} />}
+        {porBloque.length > 0 && (
+          <p className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {porBloque.map(({ bloque, peso }, idx) => (
+              <span key={bloque} className="whitespace-nowrap">
+                {idx > 0 && <span className="mr-2">·</span>}
+                {bloque} <span className="font-medium tabular-nums">{peso} %</span>
+              </span>
+            ))}
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-[20px] border bg-card">
@@ -97,6 +117,7 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>Categoría</TableHead>
+              <TableHead>Bloque</TableHead>
               <TableHead className="min-w-[24rem]">Ítem</TableHead>
               <TableHead className="text-right">Peso</TableHead>
               <TableHead>Crítico</TableHead>
@@ -109,6 +130,7 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
               <TableRow key={i.id} className={cn(!i.activo && "text-muted-foreground line-through")}>
                 <TableCell className="tabular-nums text-muted-foreground">{i.orden}</TableCell>
                 <TableCell className="text-xs font-medium">{i.categoria}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{i.bloque}</TableCell>
                 <TableCell className="text-sm leading-snug whitespace-normal">{i.descripcion}</TableCell>
                 <TableCell className="text-right tabular-nums">{i.es_fatal ? "—" : `${Number(i.peso)} %`}</TableCell>
                 <TableCell>{i.es_fatal && <Badge variant="destructive">crítico</Badge>}</TableCell>
@@ -127,6 +149,9 @@ export function EditorMatriz({ matriz, items, editable }: { matriz: MatrizCalida
   );
 }
 
+// Los tres bloques de la matriz oficial MTZ-OPE-001 (15 + 45 + 40).
+const BLOQUES_MATRIZ = ["Presentación", "Comercial", "Legalización y gestión operativa"];
+
 function DialogoItem({ matrizId, item, categorias, ordenSugerido }: { matrizId: string; item?: ItemCalidad; categorias: string[]; ordenSugerido: number }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -135,6 +160,7 @@ function DialogoItem({ matrizId, item, categorias, ordenSugerido }: { matrizId: 
   const [f, setF] = useState({
     orden: String(item?.orden ?? ordenSugerido),
     categoria: item?.categoria ?? categorias[0] ?? "",
+    bloque: item?.bloque ?? "",
     descripcion: item?.descripcion ?? "",
     peso: String(item ? Number(item.peso) : 0),
     es_fatal: item?.es_fatal ?? false,
@@ -183,7 +209,7 @@ function DialogoItem({ matrizId, item, categorias, ordenSugerido }: { matrizId: 
         <form onSubmit={enviar} className="space-y-4" noValidate>
           <DialogHeader>
             <DialogTitle>{item ? "Editar ítem" : "Nuevo ítem de la pauta"}</DialogTitle>
-            <DialogDescription>Los errores críticos no pesan: anulan la nota si la pauta así lo marca.</DialogDescription>
+            <DialogDescription>Los errores críticos son los que más pesan: si el asesor incurre en uno, la nota de la auditoría queda en 0 %, sin importar lo demás.</DialogDescription>
           </DialogHeader>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3">
@@ -200,6 +226,15 @@ function DialogoItem({ matrizId, item, categorias, ordenSugerido }: { matrizId: 
                 ))}
               </datalist>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="i-bloque">Bloque</Label>
+            <Input id="i-bloque" list="bloques-pauta" value={f.bloque} onChange={(e) => setF((p) => ({ ...p, bloque: e.target.value }))} disabled={pendiente} maxLength={80} />
+            <datalist id="bloques-pauta">
+              {BLOQUES_MATRIZ.map((b) => (
+                <option key={b} value={b} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="i-desc">Descripción del ítem</Label>

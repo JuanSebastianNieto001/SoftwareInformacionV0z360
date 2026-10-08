@@ -1092,6 +1092,7 @@ export type Database = {
           peso: number;
           es_fatal: boolean;
           activo: boolean;
+          bloque: string | null;
         };
         Insert: {
           id?: string;
@@ -1102,6 +1103,7 @@ export type Database = {
           peso?: number;
           es_fatal?: boolean;
           activo?: boolean;
+          bloque?: string | null;
         };
         Update: {
           orden?: number;
@@ -1110,6 +1112,7 @@ export type Database = {
           peso?: number;
           es_fatal?: boolean;
           activo?: boolean;
+          bloque?: string | null;
         };
         Relationships: [];
       };

@@ -813,6 +813,7 @@ export const esquemaFirmaRetro = z.object({
 export const esquemaItemCalidad = z.object({
   orden: z.coerce.number().int().min(1).max(500),
   categoria: z.string().trim().min(2, "Indica la categoría").max(80),
+  bloque: textoOpcional(80),
   descripcion: z.string().trim().min(5, "Describe el ítem").max(400),
   peso: z.coerce.number().min(0, "El peso no puede ser negativo").max(100, "El peso no puede superar 100"),
   es_fatal: z.boolean().default(false),
