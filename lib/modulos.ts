@@ -1,4 +1,4 @@
-import { BadgeCheck, Cake, ClipboardCheck, Target, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Cake, ClipboardCheck, MessageSquareHeart, Target, type LucideIcon } from "lucide-react";
 
 /**
  * Los cuadros que no son carpetas de documentos. Un área con
@@ -26,6 +26,11 @@ export const MODULOS = {
     href: "/pda",
     icono: Target,
     pie: "Plan del mes, chequeo y evidencias",
+  },
+  feedback: {
+    href: "/feedback",
+    icono: MessageSquareHeart,
+    pie: "Feedback operativo, plan y conformidad",
   },
 } as const satisfies Record<string, { href: string; icono: LucideIcon; pie: string }>;
 

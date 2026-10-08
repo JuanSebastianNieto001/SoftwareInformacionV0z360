@@ -11,7 +11,7 @@ import type { ClienteServidor } from "./supabase/server";
  * es barato.
  */
 export async function cargarNotificaciones(supabase: ClienteServidor): Promise<NotificacionShell[]> {
-  await Promise.all([supabase.rpc("generar_alertas_cumpleanos"), supabase.rpc("generar_alertas_calidad")]);
+  await Promise.all([supabase.rpc("generar_alertas_cumpleanos"), supabase.rpc("generar_alertas_calidad"), supabase.rpc("generar_alertas_feedback")]);
   const { data } = await supabase
     .from("notificaciones")
     .select("id, titulo, cuerpo, enlace, creado_en")

@@ -20,6 +20,7 @@ export const FONDO_CUADRO: Record<TemaCuadro, string> = {
   evaluacion: "linear-gradient(135deg, #f4f3ff 0%, #eef6ff 60%, #ffffff 100%)",
   calidad: "linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 60%, #ffffff 100%)",
   pda: "linear-gradient(135deg, #ecfeff 0%, #eff6ff 60%, #ffffff 100%)",
+  feedback: "linear-gradient(135deg, #fef2f6 0%, #f3f0ff 55%, #eef7ff 100%)",
   documentos: "linear-gradient(160deg, #ffffff 55%, #eef5fd 100%)",
 };
 
@@ -28,7 +29,29 @@ export function DecoracionCuadro({ tema, semilla = "" }: { tema: TemaCuadro; sem
   if (tema === "evaluacion") return <Evaluacion />;
   if (tema === "calidad") return <Calidad />;
   if (tema === "pda") return <Pda />;
+  if (tema === "feedback") return <Feedback />;
   return <Documentos semilla={semilla} />;
+}
+
+// ---------------------------------------------------------------------------
+// Feedback: dos globos de diálogo con un corazón y una marca de visto
+// ---------------------------------------------------------------------------
+
+function Feedback() {
+  return (
+    <svg viewBox="0 0 200 120" className="absolute inset-0 size-full" preserveAspectRatio="xMaxYMin slice" aria-hidden>
+      <g className="motion-safe:animate-[flotar_6s_ease-in-out_infinite]">
+        <rect x="118" y="16" width="64" height="42" rx="12" fill="#ede9fe" stroke="#c4b5fd" strokeWidth="1.5" />
+        <path d="M132 58 l0 12 12 -12 z" fill="#ede9fe" stroke="#c4b5fd" strokeWidth="1.5" />
+        <path d="M150 28 c-4 -5 -12 -2 -12 4 c0 5 7 9 12 13 c5 -4 12 -8 12 -13 c0 -6 -8 -9 -12 -4 z" fill="#f472b6" />
+      </g>
+      <g className="motion-safe:animate-[flotar_7s_ease-in-out_infinite]">
+        <rect x="150" y="66" width="46" height="34" rx="10" fill="#dbeafe" stroke="#93c5fd" strokeWidth="1.5" />
+        <path d="M170 100 l0 10 10 -10 z" fill="#dbeafe" stroke="#93c5fd" strokeWidth="1.5" />
+        <path d="M160 83 l6 6 12 -13" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
 }
 
 // ---------------------------------------------------------------------------

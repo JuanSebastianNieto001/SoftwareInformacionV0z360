@@ -972,6 +972,84 @@ export type Database = {
         };
         Relationships: [];
       };
+      feedback_catalogo: {
+        Row: {
+          id: string;
+          area_id: string;
+          orden: number;
+          tipo: string;
+          subtipo: string;
+          detalle: string;
+          solo_direccion: boolean;
+          es_positivo: boolean;
+          activo: boolean;
+          creado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          orden?: number;
+          tipo: string;
+          subtipo: string;
+          detalle: string;
+          solo_direccion?: boolean;
+          es_positivo?: boolean;
+          activo?: boolean;
+          creado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["feedback_catalogo"]["Insert"]>;
+        Relationships: [];
+      };
+      feedback: {
+        Row: {
+          id: string;
+          area_id: string;
+          catalogo_id: string;
+          colaborador_nombre: string;
+          colaborador_cedula: string | null;
+          colaborador_usuario_id: string | null;
+          team_leader: string | null;
+          fecha: string;
+          gravedad: FeedbackGravedad;
+          severidad: FeedbackSeveridad;
+          descripcion: string;
+          plan_accion: string | null;
+          fecha_seguimiento: string | null;
+          estado: FeedbackEstado;
+          conformidad: FeedbackConformidad | null;
+          conformidad_comentario: string | null;
+          conformidad_en: string | null;
+          creado_por: string | null;
+          creado_por_nombre: string;
+          creado_en: string;
+          actualizado_en: string;
+        };
+        Insert: {
+          id?: string;
+          area_id?: string;
+          catalogo_id: string;
+          colaborador_nombre: string;
+          colaborador_cedula?: string | null;
+          colaborador_usuario_id?: string | null;
+          team_leader?: string | null;
+          fecha: string;
+          gravedad: FeedbackGravedad;
+          severidad: FeedbackSeveridad;
+          descripcion: string;
+          plan_accion?: string | null;
+          fecha_seguimiento?: string | null;
+          estado?: FeedbackEstado;
+          conformidad?: FeedbackConformidad | null;
+          conformidad_comentario?: string | null;
+          conformidad_en?: string | null;
+          creado_por?: string | null;
+          creado_por_nombre?: string;
+          creado_en?: string;
+          actualizado_en?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["feedback"]["Insert"]>;
+        Relationships: [];
+      };
       calidad_penalizaciones: {
         Row: {
           id: string;
@@ -1183,6 +1261,18 @@ export type Database = {
         };
         Relationships: [];
       };
+      v_feedback: {
+        Row: Database["public"]["Tables"]["feedback"]["Row"] & {
+          tipo: string;
+          subtipo: string;
+          detalle: string;
+          solo_direccion: boolean;
+          es_positivo: boolean;
+          seguimiento_vencido: boolean;
+          sin_conformidad: boolean;
+        };
+        Relationships: [];
+      };
       v_pda_objetivos: {
         Row: Database["public"]["Tables"]["pda_objetivos"]["Row"] & {
           n_tareas: number;
@@ -1344,8 +1434,16 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      generar_alertas_feedback: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       firmar_retroalimentacion: {
         Args: { p_retro: string; p_comentarios?: string | null };
+        Returns: undefined;
+      };
+      responder_feedback: {
+        Args: { p_id: string; p_conformidad: string; p_comentario?: string | null };
         Returns: undefined;
       };
       calidad_pesos_suman_cien: {
@@ -1381,6 +1479,10 @@ export type Database = {
       perspectiva_360: PerspectivaEvaluacion;
       pda_estado: EstadoPda;
       calidad_resultado: CalidadResultado;
+      feedback_gravedad: FeedbackGravedad;
+      feedback_severidad: FeedbackSeveridad;
+      feedback_estado: FeedbackEstado;
+      feedback_conformidad: FeedbackConformidad;
     };
     CompositeTypes: Record<PropertyKey, never>;
   };
@@ -1441,3 +1543,12 @@ export type PlanPda = Database["public"]["Views"]["v_pda_planes"]["Row"];
 export type ObjetivoPda = Database["public"]["Views"]["v_pda_objetivos"]["Row"];
 export type TareaPda = Tablas["pda_tareas"]["Row"];
 export type EvidenciaPda = Tablas["pda_evidencias"]["Row"];
+
+// ---------- Retroalimentación operativa (feedback) ----------
+export type FeedbackGravedad = "leve" | "moderado" | "grave" | "critico";
+export type FeedbackSeveridad = "notificacion" | "plan_accion" | "disciplinario";
+export type FeedbackEstado = "abierto" | "en_seguimiento" | "cerrado" | "reincidente";
+export type FeedbackConformidad = "aceptado" | "observaciones" | "rechazado";
+export type CatalogoFeedback = Tablas["feedback_catalogo"]["Row"];
+export type Feedback = Tablas["feedback"]["Row"];
+export type FeedbackConCatalogo = Database["public"]["Views"]["v_feedback"]["Row"];

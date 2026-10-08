@@ -1242,6 +1242,75 @@ await prueba("borrar un PDA u objetivo exige Total o admin; con Edición se quit
   igual(tareas.rows[0].n, 0, "ni actividades");
 });
 
+console.log("\nRetroalimentación (022)");
+grupo("Retroalimentación (022)");
+
+const FB = (await db.query(`select public.area_modulo('feedback') as id`)).rows[0].id;
+await db.query(`insert into permisos_area (usuario_id, area_id, nivel) values ($1, $2, 'edicion')`, [U.editor, FB]);
+// Un colaborador con cuenta (el lector) para probar "lo mío" y la conformidad.
+const CAT_NORMAL = (await db.query(`select id from feedback_catalogo where not solo_direccion order by orden limit 1`)).rows[0].id;
+const CAT_LIDER = (await db.query(`select id from feedback_catalogo where solo_direccion order by orden limit 1`)).rows[0].id;
+let FB_ID = null;
+
+await prueba("el catálogo se sembró y es legible por cualquiera; de liderazgo hay filas", async () => {
+  const n = await como(U.sinPermiso, (tx) => filas(tx, `select count(*) as n from feedback_catalogo`));
+  igual(Number(n[0].n) >= 30, true, "catálogo legible (" + n[0].n + " filas)");
+  const dir = (await db.query(`select count(*)::int as n from feedback_catalogo where solo_direccion`)).rows[0].n;
+  igual(dir >= 8, true, "liderazgo sembrado");
+});
+
+await prueba("con Edición se registra feedback; sin permiso no", async () => {
+  await comoDebeFallar(U.sinPermiso, (tx) =>
+    tx.query(`insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Luis', current_date, 'leve', 'notificacion', 'x', $2)`, [CAT_NORMAL, U.sinPermiso]),
+  );
+  const r = await como(U.editor, (tx) =>
+    filas(tx, `insert into feedback (catalogo_id, colaborador_nombre, colaborador_usuario_id, fecha, gravedad, severidad, descripcion, plan_accion, fecha_seguimiento, creado_por) values ($1, 'Luis Lector', $2, current_date, 'moderado', 'plan_accion', 'Llegó tarde 3 veces', 'Compromiso de puntualidad', current_date - 1, $3) returning id, area_id`, [CAT_NORMAL, U.lector, U.editor]),
+  );
+  FB_ID = r[0].id;
+  igual(r[0].area_id, FB, "el área se impone a la del cuadro");
+});
+
+await prueba("el feedback de liderazgo solo lo registra un administrador", async () => {
+  await comoDebeFallar(
+    U.editor,
+    (tx) => tx.query(`insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Un TL', current_date, 'grave', 'disciplinario', 'Desviación de KPIs del grupo', $2)`, [CAT_LIDER, U.editor]),
+    /liderazgo/i,
+  );
+  const ok = await como(U.admin, (tx) =>
+    filas(tx, `insert into feedback (catalogo_id, colaborador_nombre, fecha, gravedad, severidad, descripcion, creado_por) values ($1, 'Un TL', current_date, 'grave', 'disciplinario', 'Desviación de KPIs del grupo', $2) returning id`, [CAT_LIDER, U.admin]),
+  );
+  igual(ok.length, 1, "el admin sí");
+});
+
+await prueba("el colaborador ve lo suyo sin tener el cuadro, y nada ajeno", async () => {
+  const mios = await como(U.lector, (tx) => filas(tx, `select count(*) as n from v_feedback`));
+  igual(Number(mios[0].n), 1, "solo el feedback dirigido a él (incluido el de liderazgo ajeno: no)");
+  const detalle = await como(U.lector, (tx) => filas(tx, `select colaborador_nombre from feedback where id = $1`, [FB_ID]));
+  igual(detalle.length, 1, "puede abrir el suyo");
+});
+
+await prueba("la vista marca seguimiento vencido y sin conformidad", async () => {
+  const v = await como(U.editor, (tx) => filas(tx, `select seguimiento_vencido, sin_conformidad from v_feedback where id = $1`, [FB_ID]));
+  igual(v[0].seguimiento_vencido, true, "la fecha de seguimiento quedó en el pasado");
+  igual(v[0].sin_conformidad, true, "aún sin conformidad");
+});
+
+await prueba("la conformidad: la responde el colaborador (o el cuadro), no un tercero; sella la fecha", async () => {
+  await comoDebeFallar(U.sinPermiso, (tx) => tx.query(`select public.responder_feedback($1, 'aceptado', null)`, [FB_ID]), /No puedes responder/);
+  await como(U.lector, (tx) => tx.query(`select public.responder_feedback($1, 'observaciones', 'De acuerdo, mejoraré')`, [FB_ID]));
+  const v = await como(U.editor, (tx) => filas(tx, `select conformidad, conformidad_comentario, conformidad_en, sin_conformidad from v_feedback where id = $1`, [FB_ID]));
+  igual(v[0].conformidad, "observaciones", "quedó registrada");
+  igual(v[0].conformidad_en !== null, true, "con fecha y hora");
+  igual(v[0].sin_conformidad, false, "ya no está pendiente");
+});
+
+await prueba("borrar un feedback exige Total o admin", async () => {
+  const d = await como(U.editor, (tx) => tx.query(`delete from feedback where id = $1`, [FB_ID]));
+  igual(d.affectedRows ?? 0, 0, "Edición no borra");
+  const a = await como(U.admin, (tx) => tx.query(`delete from feedback where id = $1`, [FB_ID]));
+  igual(a.affectedRows, 1, "admin sí");
+});
+
 
 // ---------------------------------------------------------------------------
 // 5. Resumen

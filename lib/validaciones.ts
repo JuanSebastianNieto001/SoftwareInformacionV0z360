@@ -937,6 +937,46 @@ export const esquemaTareaPda = z.object({
 export type DatosTareaPda = z.infer<typeof esquemaTareaPda>;
 
 /** Metadatos de una evidencia ya subida al bucket `pda`. */
+// ---------------------------------------------------------------------------
+// Retroalimentación operativa (feedback)
+// ---------------------------------------------------------------------------
+
+export const GRAVEDADES_FEEDBACK = ["leve", "moderado", "grave", "critico"] as const;
+export const SEVERIDADES_FEEDBACK = ["notificacion", "plan_accion", "disciplinario"] as const;
+export const ESTADOS_FEEDBACK_VALIDOS = ["abierto", "en_seguimiento", "cerrado", "reincidente"] as const;
+export const CONFORMIDADES_FEEDBACK = ["aceptado", "observaciones", "rechazado"] as const;
+
+/** Un feedback nuevo o editado: motivo del catálogo, colaborador y campos del documento. */
+export const esquemaFeedback = z.object({
+  catalogo_id: uuid,
+  colaborador_nombre: z.string().trim().min(2, "Escribe el nombre del colaborador").max(160, "No puede superar 160 caracteres"),
+  colaborador_cedula: textoOpcional(30),
+  team_leader: textoOpcional(160),
+  fecha: z.iso.date({ message: "Fecha inválida" }),
+  gravedad: z.enum(GRAVEDADES_FEEDBACK, { message: "Elige la gravedad" }),
+  severidad: z.enum(SEVERIDADES_FEEDBACK, { message: "Elige la acción requerida" }),
+  descripcion: z.string().trim().min(2, "Describe los hechos").max(4000, "No puede superar 4000 caracteres"),
+  plan_accion: textoOpcional(4000),
+  fecha_seguimiento: fechaOpcional,
+});
+export type DatosFeedback = z.infer<typeof esquemaFeedback>;
+
+/** Cambios de gestión del cuadro: estado, plan de acción y fecha de seguimiento. */
+export const esquemaGestionFeedback = z.object({
+  estado: z.enum(ESTADOS_FEEDBACK_VALIDOS, { message: "Estado inválido" }),
+  plan_accion: textoOpcional(4000),
+  fecha_seguimiento: fechaOpcional,
+});
+export type DatosGestionFeedback = z.infer<typeof esquemaGestionFeedback>;
+
+/** La respuesta de conformidad del colaborador (o de quien hace la sesión). */
+export const esquemaConformidadFeedback = z.object({
+  id: uuid,
+  conformidad: z.enum(CONFORMIDADES_FEEDBACK, { message: "Elige tu conformidad" }),
+  comentario: textoOpcional(2000),
+});
+export type DatosConformidadFeedback = z.infer<typeof esquemaConformidadFeedback>;
+
 export const esquemaEvidenciaPda = z.object({
   objetivo_id: uuid,
   nombre_archivo: nombreArchivo,
