@@ -31,10 +31,11 @@ export function SelectorColaborador({
 }) {
   const [abierto, setAbierto] = useState(false);
 
+  // Sin tope: al abrir se ve la lista completa (con scroll) y se va
+  // acotando con cada letra.
   const filtradas = useMemo(() => {
     const q = normalizar(valor.trim());
-    const lista = q ? opciones.filter((o) => normalizar(o.nombre).includes(q)) : opciones;
-    return lista.slice(0, 8);
+    return q ? opciones.filter((o) => normalizar(o.nombre).includes(q)) : opciones;
   }, [opciones, valor]);
 
   const exacto = opciones.find((o) => normalizar(o.nombre) === normalizar(valor.trim()));
@@ -59,7 +60,7 @@ export function SelectorColaborador({
         aria-controls="f-colab-lista"
       />
       {abierto && filtradas.length > 0 && (
-        <ul id="f-colab-lista" role="listbox" className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border bg-card p-1 shadow-lg">
+        <ul id="f-colab-lista" role="listbox" className="absolute z-20 mt-1 max-h-96 w-full overflow-y-auto rounded-xl border bg-card p-1 shadow-lg">
           {filtradas.map((o) => (
             <li key={o.nombre} role="option" aria-selected={o.nombre === valor}>
               <button
