@@ -34,6 +34,9 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
   const mes = typeof sp.mes === "string" && /^\d{4}-\d{2}$/.test(sp.mes) ? sp.mes : mesActual;
   const todos = sp.mes === "todos";
   const tl = typeof sp.tl === "string" ? sp.tl : "";
+  const auditor = typeof sp.auditor === "string" ? sp.auditor : "";
+  // Los filtros de auditor y team leader viajan juntos en cada enlace.
+  const filtrosExtra = { ...(tl ? { tl } : {}), ...(auditor ? { auditor } : {}) };
 
   // Últimos seis meses como pastillas.
   const meses: string[] = [];
@@ -52,12 +55,18 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
   const inicioSiguiente = new Date(Date.UTC(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 1)).toISOString().slice(0, 10);
   if (!todos) consulta = consulta.gte("fecha_auditoria", `${mes}-01`).lt("fecha_auditoria", inicioSiguiente);
   if (tl) consulta = consulta.eq("team_leader", tl);
+  if (auditor) consulta = consulta.eq("analista_nombre", auditor);
 
-  const [{ data: evals }, { data: tls }, { data: items }] = await Promise.all([
+  const [{ data: evals }, { data: tls }, { data: items }, { data: auditores }, { data: conteos }] = await Promise.all([
     consulta,
     supabase.from("calidad_asesores").select("team_leader").not("team_leader", "is", null),
     supabase.from("calidad_items").select("id, categoria, descripcion, es_fatal").eq("activo", true),
+    supabase.rpc("calidad_auditores"),
+    supabase.rpc("calidad_conteo_meses", { p_auditor: auditor || null, p_team_leader: tl || null }),
   ]);
+  // Auditorías publicadas por mes (con los filtros de auditor y team leader).
+  const porMes = new Map((conteos ?? []).map((c) => [c.mes, c.auditorias]));
+  const totalAuditorias = (conteos ?? []).reduce((s, c) => s + c.auditorias, 0);
   const lista = evals ?? [];
   // Las fallas se filtran con un join embebido (mismos filtros del periodo):
   // pasar cientos de ids por la URL rompía la petición con «mes: todo». El
@@ -72,6 +81,7 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
       .range(pagina * 1000, pagina * 1000 + 999);
     if (!todos) consultaFallas = consultaFallas.gte("calidad_evaluaciones.fecha_auditoria", `${mes}-01`).lt("calidad_evaluaciones.fecha_auditoria", inicioSiguiente);
     if (tl) consultaFallas = consultaFallas.eq("calidad_evaluaciones.team_leader", tl);
+    if (auditor) consultaFallas = consultaFallas.eq("calidad_evaluaciones.analista_nombre", auditor);
     const { data: tramo } = await consultaFallas.returns<{ item_id: string }[]>();
     fallas.push(...(tramo ?? []));
     if (!tramo || tramo.length < 1000) break;
@@ -121,27 +131,55 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Mes:</span>
-        {meses.map((m) => (
-          <Link
-            key={m}
-            href={`/calidad?${new URLSearchParams({ ...(m !== mesActual ? { mes: m } : {}), ...(tl ? { tl } : {}) })}`}
-            className={cn(
-              "rounded-full border px-3 py-1 text-[13px] font-medium",
-              !todos && m === mes ? "border-primary bg-primary text-primary-foreground" : "bg-card text-nav-inactivo hover:border-borde-acento hover:text-primary",
-            )}
-          >
-            {etiquetaMes(m)}
-          </Link>
-        ))}
+        {meses.map((m) => {
+          const activo = !todos && m === mes;
+          const n = porMes.get(m) ?? 0;
+          return (
+            <Link
+              key={m}
+              href={`/calidad?${new URLSearchParams({ ...(m !== mesActual ? { mes: m } : {}), ...filtrosExtra })}`}
+              title={`${n} ${n === 1 ? "auditoría publicada" : "auditorías publicadas"} en ${etiquetaMes(m)}`}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border py-1 pr-1 pl-3 text-[13px] font-medium",
+                activo ? "border-primary bg-primary text-primary-foreground" : "bg-card text-nav-inactivo hover:border-borde-acento hover:text-primary",
+              )}
+            >
+              {etiquetaMes(m)}
+              <span
+                className={cn(
+                  "min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-semibold tabular-nums",
+                  activo ? "bg-white/25 text-white" : n > 0 ? "bg-tinte text-primary" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {n}
+              </span>
+            </Link>
+          );
+        })}
         <Link
-          href={`/calidad?${new URLSearchParams({ mes: "todos", ...(tl ? { tl } : {}) })}`}
-          className={cn("rounded-full border px-3 py-1 text-[13px] font-medium", todos ? "border-primary bg-primary text-primary-foreground" : "bg-card text-nav-inactivo hover:border-borde-acento hover:text-primary")}
+          href={`/calidad?${new URLSearchParams({ mes: "todos", ...filtrosExtra })}`}
+          title={`${totalAuditorias} auditorías publicadas en total`}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border py-1 pr-1 pl-3 text-[13px] font-medium",
+            todos ? "border-primary bg-primary text-primary-foreground" : "bg-card text-nav-inactivo hover:border-borde-acento hover:text-primary",
+          )}
         >
           Todo
+          <span className={cn("min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-semibold tabular-nums", todos ? "bg-white/25 text-white" : "bg-tinte text-primary")}>
+            {totalAuditorias}
+          </span>
         </Link>
-        <form method="get" action="/calidad" className="ml-auto flex items-center gap-2">
+        <form method="get" action="/calidad" className="ml-auto flex flex-wrap items-center gap-2">
           {!todos && mes !== mesActual && <input type="hidden" name="mes" value={mes} />}
           {todos && <input type="hidden" name="mes" value="todos" />}
+          <select name="auditor" defaultValue={auditor} className="h-[36px] rounded-lg border-[1.5px] border-input bg-campo px-2 text-sm" aria-label="Auditor">
+            <option value="">Todos los auditores</option>
+            {(auditores ?? []).map((a) => (
+              <option key={a.auditor} value={a.auditor}>
+                {a.auditor} ({a.auditorias})
+              </option>
+            ))}
+          </select>
           <select name="tl" defaultValue={tl} className="h-[36px] rounded-lg border-[1.5px] border-input bg-campo px-2 text-sm" aria-label="Team leader">
             <option value="">Todos los team leaders</option>
             {teamLeaders.map((t) => (

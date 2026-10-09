@@ -1533,6 +1533,14 @@ export type Database = {
         Args: { p_id: string; p_motivo: string };
         Returns: undefined;
       };
+      calidad_auditores: {
+        Args: Record<PropertyKey, never>;
+        Returns: { auditor: string; auditorias: number }[];
+      };
+      calidad_conteo_meses: {
+        Args: { p_auditor?: string | null; p_team_leader?: string | null };
+        Returns: { mes: string; auditorias: number }[];
+      };
       ranking_calidad_mes: {
         Args: Record<PropertyKey, never>;
         Returns: {
