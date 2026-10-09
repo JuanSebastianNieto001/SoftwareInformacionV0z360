@@ -10,7 +10,7 @@ import "server-only";
  * Todas las funciones reciben el cliente de Supabase de la sesión
  * (crearClienteServidor): cada consulta corre con la identidad de quien
  * navega y es RLS quien decide qué filas vuelven. Aquí no hay chequeos de
- * permisos en TypeScript: la guardia de cada pantalla (exigirModulo o
+ * permisos en TypeScript: la guardia de cada pantalla (exigirCalidad o
  * exigirSesion) decide si se entra y la base decide qué se ve.
  *
  * Convención: se devuelve `data` tal como lo entrega Supabase (null si la
@@ -267,6 +267,20 @@ export async function cargarEstructuraOperativa(supabase: ClienteServidor) {
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
   ]);
   return { asesores, perfiles };
+}
+
+/**
+ * Los enlaces entre el nombre de team leader de la estructura
+ * (calidad_asesores.team_leader, tal cual) y su cuenta en la app, por
+ * nombre. Un nombre enlazado da a esa cuenta acceso a auditar a su equipo.
+ * [] si la lectura falla.
+ *
+ * RLS: los ve quien tiene el cuadro de Calidad; el team leader, solo su
+ * propia fila. Escribirlos es solo de administradores.
+ */
+export async function listarTeamLeadersEnlazados(supabase: ClienteServidor): Promise<{ nombre: string; usuario_id: string }[]> {
+  const { data } = await supabase.from("calidad_team_leaders").select("nombre, usuario_id").order("nombre");
+  return data ?? [];
 }
 
 /**

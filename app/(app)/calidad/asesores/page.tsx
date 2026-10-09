@@ -1,18 +1,23 @@
-/** La estructura operativa: quién es asesor, de qué team leader y con qué cuenta en la app. */
+/**
+ * La estructura operativa: quién es asesor, de qué team leader y con qué
+ * cuenta en la app, y qué cuenta es cada team leader (el enlace le da
+ * acceso a auditar a su equipo; lo cambia solo un administrador).
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Filter, Users } from "lucide-react";
 import { BotonActivoAsesor } from "@/components/calidad/boton-activo-asesor";
 import { FormularioAsesor } from "@/components/calidad/formulario-asesor";
+import { TeamLeadersCuenta, type FilaTeamLeader } from "@/components/calidad/team-leaders-cuenta";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cargarEstructuraOperativa } from "@/lib/calidad/datos";
+import { exigirCalidad } from "@/lib/calidad/acceso";
+import { cargarEstructuraOperativa, listarTeamLeadersEnlazados } from "@/lib/calidad/datos";
 import { nombreComparable } from "@/lib/cumpleanos";
 import { formatearFecha } from "@/lib/formato";
-import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Estructura operativa" };
@@ -22,17 +27,27 @@ const SELECT =
 
 export default async function PaginaAsesores({ searchParams }: PageProps<"/calidad/asesores">) {
   const sp = await searchParams;
-  const { supabase, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, puedeEditar, perfil } = await exigirCalidad();
   if (!puedeEditar) notFound();
   const tl = typeof sp.tl === "string" ? sp.tl : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const verInactivos = sp.inactivos === "1";
 
-  const { asesores, perfiles } = await cargarEstructuraOperativa(supabase);
+  const [{ asesores, perfiles }, enlaces] = await Promise.all([cargarEstructuraOperativa(supabase), listarTeamLeadersEnlazados(supabase)]);
   const todos = asesores ?? [];
   const teamLeaders = [...new Set(todos.map((a) => a.team_leader).filter((t): t is string => !!t))].sort();
   const nombrePerfil = new Map((perfiles ?? []).map((p) => [p.id, p.nombre]));
   const visibles = todos.filter((a) => (verInactivos || a.activo) && (!tl || a.team_leader === tl) && (!q || nombreComparable(a.nombre).includes(nombreComparable(q))));
+
+  // Team leaders con su cuenta: los de la estructura y, para poder quitarlo,
+  // cualquier enlace que haya quedado de un nombre que ya no aparece.
+  const cuentaDe = new Map(enlaces.map((e) => [e.nombre, e.usuario_id]));
+  const filasTl: FilaTeamLeader[] = [...new Set([...teamLeaders, ...cuentaDe.keys()])].sort().map((nombre) => ({
+    nombre,
+    asesoresActivos: todos.filter((a) => a.activo && a.team_leader === nombre).length,
+    enEstructura: teamLeaders.includes(nombre),
+    usuarioId: cuentaDe.get(nombre) ?? null,
+  }));
 
   return (
     <div className="space-y-4">
@@ -112,6 +127,8 @@ export default async function PaginaAsesores({ searchParams }: PageProps<"/calid
       <p className="text-xs text-muted-foreground">
         {visibles.length} de {todos.length} personas · {todos.filter((a) => a.usuario_id).length} con cuenta vinculada.
       </p>
+
+      <TeamLeadersCuenta filas={filasTl} perfiles={perfiles ?? []} esAdmin={perfil.rol === "admin"} />
     </div>
   );
 }

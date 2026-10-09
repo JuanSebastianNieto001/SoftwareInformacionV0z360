@@ -412,3 +412,29 @@ export async function alternarActivoAsesor(id: string, activo: boolean): Promise
   revalidatePath("/calidad/asesores");
   return { ok: true, id };
 }
+
+/**
+ * Enlaza el nombre de un team leader de la estructura (tal cual aparece en
+ * calidad_asesores.team_leader) con su cuenta en la app, o quita el enlace
+ * con `usuarioId` null. Equivale a dar acceso a auditar a ese equipo, por
+ * eso RLS solo se lo acepta a un administrador y queda rastro.
+ */
+export async function enlazarTeamLeader(nombre: string, usuarioId: string | null): Promise<Resultado> {
+  const n = typeof nombre === "string" ? nombre.trim() : "";
+  if (n.length < 1 || n.length > 200) return { ok: false, error: "Nombre de team leader inválido" };
+  if (usuarioId !== null && (typeof usuarioId !== "string" || !esUuid(usuarioId))) return { ok: false, error: "Cuenta inválida" };
+  const sesion = await exigirSesion();
+
+  if (usuarioId === null) {
+    const { data, error } = await sesion.supabase.from("calidad_team_leaders").delete().eq("nombre", n).select("nombre");
+    if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
+    if (!data?.length) return { ok: false, error: "No se quitó el enlace: ya no existía o no tienes permiso." };
+  } else {
+    const { error } = await sesion.supabase.from("calidad_team_leaders").upsert({ nombre: n, usuario_id: usuarioId }, { onConflict: "nombre" });
+    if (error) return { ok: false, error: mensajePostgrest(error).mensaje };
+  }
+
+  await anotar("editar", usuarioId ? `Enlaza team leader · ${n}` : `Quita enlace de team leader · ${n}`, sesion);
+  revalidatePath("/calidad/asesores");
+  return { ok: true };
+}

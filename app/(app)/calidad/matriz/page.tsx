@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { EditorMatriz } from "@/components/calidad/editor-matriz";
 import { TablaPenalizacion } from "@/components/calidad/tabla-penalizacion";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { cargarPautaVigente } from "@/lib/calidad/datos";
-import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const metadata: Metadata = { title: "Pauta de calidad" };
 
 export default async function PaginaMatriz() {
-  const { supabase, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, puedeEditar } = await exigirCalidad();
   if (!puedeEditar) notFound();
   const pauta = await cargarPautaVigente(supabase);
   if (!pauta) return <EstadoVacio titulo="No hay ninguna pauta configurada" descripcion="La pauta inicial se carga con la migración del módulo." />;

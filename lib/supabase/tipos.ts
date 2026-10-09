@@ -997,6 +997,31 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      calidad_team_leaders: {
+        Row: {
+          nombre: string;
+          usuario_id: string;
+          creado_en: string;
+        };
+        Insert: {
+          nombre: string;
+          usuario_id: string;
+          creado_en?: string;
+        };
+        Update: {
+          nombre?: string;
+          usuario_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calidad_team_leaders_usuario_id_fkey";
+            columns: ["usuario_id"];
+            isOneToOne: false;
+            referencedRelation: "perfiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       calidad_eliminaciones: {
         Row: {
           id: string;
@@ -1562,6 +1587,22 @@ export type Database = {
       calidad_puede_eliminar: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      calidad_soy_team_leader: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      calidad_mis_nombres_tl: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
+      calidad_mis_asesores: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
+      calidad_auditorias_de_mi_equipo: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
       };
       eliminar_auditoria_calidad: {
         Args: { p_id: string; p_motivo: string };

@@ -6,8 +6,8 @@
 import { headers } from "next/headers";
 import { registrarAcceso } from "@/lib/auditoria";
 import { respuestaError } from "@/lib/api/errores";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { listarAuditoriasParaCsv } from "@/lib/calidad/datos";
-import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ const campo = (v: unknown) => {
 };
 
 export async function GET(req: Request) {
-  const { supabase, user, perfil } = await exigirModulo("calidad");
+  const { supabase, user, perfil } = await exigirCalidad();
   const sp = new URL(req.url).searchParams;
   const q = sp.get("q")?.trim() ?? "";
   const tl = sp.get("tl") ?? "";

@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ETIQUETA_ESTADO_EVALUACION_CALIDAD, ETIQUETA_ESTADO_RETRO, formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { contarMisBorradores, listarAuditorias, listarTeamLeadersCalidad } from "@/lib/calidad/datos";
 import { formatearFecha } from "@/lib/formato";
-import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Auditorías de calidad" };
@@ -21,7 +21,7 @@ const SELECT =
 
 export default async function PaginaAuditorias({ searchParams }: PageProps<"/calidad/evaluaciones">) {
   const sp = await searchParams;
-  const { supabase, user, perfil, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, user, perfil, puedeAuditar } = await exigirCalidad();
   const esAdmin = perfil.rol === "admin";
   const nueva = typeof sp.nueva === "string" ? sp.nueva : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -81,13 +81,13 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
           </Button>
         )}
         <div className="ml-auto flex flex-wrap gap-2">
-          {puedeEditar && <BotonPublicarLote cantidad={misBorradores ?? 0} />}
+          {puedeAuditar && <BotonPublicarLote cantidad={misBorradores ?? 0} />}
           <Button asChild variant="outline">
             <a href={csv}>
               <Download /> CSV
             </a>
           </Button>
-          {puedeEditar && (
+          {puedeAuditar && (
             <Button asChild>
               <Link href="/calidad/evaluaciones/nueva">
                 <ClipboardList /> Nueva auditoría
@@ -100,7 +100,7 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
       {error ? (
         <EstadoVacio titulo="No se pudieron cargar las auditorías" descripcion={error.message} />
       ) : !filas || filas.length === 0 ? (
-        <EstadoVacio icono={<ClipboardList />} titulo={hayFiltro ? "Sin resultados" : "Todavía no hay auditorías"} descripcion={hayFiltro ? "Prueba con otros filtros." : puedeEditar ? "Crea la primera con «Nueva auditoría»." : "Cuando se registren aparecerán aquí."} />
+        <EstadoVacio icono={<ClipboardList />} titulo={hayFiltro ? "Sin resultados" : "Todavía no hay auditorías"} descripcion={hayFiltro ? "Prueba con otros filtros." : puedeAuditar ? "Crea la primera con «Nueva auditoría»." : "Cuando se registren aparecerán aquí."} />
       ) : (
         <div className="overflow-x-auto rounded-[20px] border bg-card">
           <Table>
@@ -131,7 +131,7 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
                     <TableCell className="text-xs">{e.team_leader ?? "—"}</TableCell>
                     <TableCell className="whitespace-nowrap">{formatearFecha(e.fecha_interaccion)}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {puedeEditar && (e.analista_id === user.id || esAdmin) ? (
+                      {puedeAuditar && (e.analista_id === user.id || esAdmin) ? (
                         <FechaAuditoriaEditable id={e.id} fecha={e.fecha_auditoria} />
                       ) : (
                         formatearFecha(e.fecha_auditoria)
@@ -157,7 +157,7 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
                     </TableCell>
                     <TableCell className="text-xs">{e.retro_estado ? ETIQUETA_ESTADO_RETRO[e.retro_estado] : "—"}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      {puedeEditar && e.estado === "borrador" && <BotonPublicarUna id={e.id} />}
+                      {puedeAuditar && e.estado === "borrador" && <BotonPublicarUna id={e.id} />}
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/calidad/evaluaciones/${e.id}`}>Abrir</Link>
                       </Button>

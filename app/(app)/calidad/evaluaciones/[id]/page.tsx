@@ -17,16 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { registrarAcceso } from "@/lib/auditoria";
 import { ETIQUETA_CANAL, ETIQUETA_ESTADO_EVALUACION_CALIDAD, formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { cargarDetalleAuditoria, obtenerAuditoria, puedeEliminarAuditorias } from "@/lib/calidad/datos";
 import { formatearFecha } from "@/lib/formato";
-import { exigirModulo } from "@/lib/modulos-acceso";
 import type { CANALES } from "@/lib/calidad";
 
 export const metadata: Metadata = { title: "Auditoría de calidad" };
 
 export default async function PaginaAuditoria({ params }: PageProps<"/calidad/evaluaciones/[id]">) {
   const { id } = await params;
-  const { supabase, user, perfil, puedeEditar } = await exigirModulo("calidad");
+  // puedeAuditar: el borrador (datos y pauta). puedeEditar: la retroalimentación, que sigue siendo de Calidad.
+  const { supabase, user, perfil, puedeEditar, puedeAuditar } = await exigirCalidad();
 
   const [ev, puedeEliminar] = await Promise.all([
     obtenerAuditoria(supabase, id),
@@ -56,7 +57,7 @@ export default async function PaginaAuditoria({ params }: PageProps<"/calidad/ev
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          {puedeEditar && borrador && (
+          {puedeAuditar && borrador && (
             <DialogoEditarAuditoria evaluacion={ev} matrices={matrices ?? []} asesores={asesores ?? []} />
           )}
           {puedeEliminar && <EliminarAuditoria id={ev.id} asesor={ev.asesor_nombre} fecha={formatearFecha(ev.fecha_interaccion)} />}
@@ -103,7 +104,7 @@ export default async function PaginaAuditoria({ params }: PageProps<"/calidad/ev
         respuestas={respuestas ?? []}
         errorFatalAnula={ev.error_fatal_anula}
         notaMinima={Number(ev.nota_minima)}
-        editable={puedeEditar && borrador}
+        editable={puedeAuditar && borrador}
       />
 
       <section className="space-y-3">

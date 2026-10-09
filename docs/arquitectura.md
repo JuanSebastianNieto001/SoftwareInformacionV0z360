@@ -24,7 +24,7 @@ Navegador ──► proxy.ts ──► página (app/) ──► guardia ──�
 | Capa | Carpeta | Qué hace | Qué no hace |
 |---|---|---|---|
 | Rutas y pantallas | `app/(app)`, `app/(admin)`, `app/(auth)` | Leen parámetros, llaman al guardia y a la capa de datos, calculan lo que se pinta y devuelven JSX | Consultar Supabase directamente |
-| Guardias | `lib/sesion.ts`, `lib/modulos-acceso.ts` | `exigirSesion`, `exigirAdmin`, `exigirModulo(clave)`: sin sesión, a `/login`; sin permiso sobre el cuadro, 404 | Sustituir a RLS: solo evitan enseñar puertas que no se abren |
+| Guardias | `lib/sesion.ts`, `lib/modulos-acceso.ts`, `lib/calidad/acceso.ts` | `exigirSesion`, `exigirAdmin`, `exigirModulo(clave)`: sin sesión, a `/login`; sin permiso sobre el cuadro, 404. Calidad usa `exigirCalidad()`, que además deja entrar al team leader con alcance de equipo | Sustituir a RLS: solo evitan enseñar puertas que no se abren |
 | Capa de datos (lectura) | `lib/<módulo>/datos.ts` | Una función por consulta, con el cliente de la sesión | Comprobar permisos, escribir |
 | Reglas del dominio | `lib/<módulo>/index.ts` | Etiquetas, estados, fórmulas (nota de calidad, evaluación 360°), formatos | Hablar con la base |
 | Acciones (escritura) | `app/acciones/<módulo>.ts` | Server actions: validan con Zod, escriben con el cliente de la sesión, dejan rastro y revalidan | Decidir permisos: si RLS rechaza, devuelven el error |
@@ -42,7 +42,7 @@ ejemplo:
 
 ```
 app/(app)/calidad/
-  layout.tsx                 exigirModulo("calidad") una vez + pestañas
+  layout.tsx                 exigirCalidad() una vez + pestañas
   page.tsx                   Dashboard
   evaluaciones/              Lista, nueva, detalle [id]
   matriz/  asesores/  eliminadas/
@@ -52,7 +52,8 @@ components/calidad/          Formulario de auditoría, pauta, retroalimentación
 lib/calidad/
   index.ts                   Etiquetas y la fórmula de la nota (calcularNota)
   datos.ts                   cargarDashboardCalidad, listarAuditorias, …
-supabase/migrations/016, 017, 020, 021, 023, 027, 028, 030–032, 034
+  acceso.ts                  exigirCalidad(): el cuadro, o el equipo del team leader
+supabase/migrations/016, 017, 020, 021, 023, 027, 028, 030–032, 034, 035
                              Tablas calidad_*, vistas, políticas y funciones
 pruebas/
   rls.test.mjs               Quién ve y quién escribe

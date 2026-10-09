@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { cargarDashboardCalidad } from "@/lib/calidad/datos";
 import { media } from "@/lib/evaluacion";
 import { hoyIso } from "@/lib/formato";
-import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Calidad" };
@@ -29,7 +29,7 @@ const etiquetaMes = (ym: string) => {
 
 export default async function PaginaDashboardCalidad({ searchParams }: PageProps<"/calidad">) {
   const sp = await searchParams;
-  const { supabase, puedeEditar } = await exigirModulo("calidad");
+  const { supabase, puedeAuditar } = await exigirCalidad();
   const hoy = hoyIso();
   const mesActual = hoy.slice(0, 7);
   const mes = typeof sp.mes === "string" && /^\d{4}-\d{2}$/.test(sp.mes) ? sp.mes : mesActual;
@@ -154,7 +154,7 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
           <Button type="submit" variant="outline" size="sm">
             Filtrar
           </Button>
-          {puedeEditar && (
+          {puedeAuditar && (
             <Button asChild size="sm">
               <Link href="/calidad/evaluaciones/nueva">
                 <ClipboardList /> Nueva auditoría

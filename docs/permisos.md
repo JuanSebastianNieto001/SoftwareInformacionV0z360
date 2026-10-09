@@ -119,6 +119,19 @@ Lo resuelve RLS comparando la cuenta con la fila de la estructura
 menos un compromiso. La pauta (matriz e ítems) la lee cualquier
 autenticado: son criterios de calidad, no datos de personas.
 
+La segunda excepción son **los team leaders** (migración `035`): sin nivel
+sobre el cuadro, entran con **alcance de equipo**. Crean auditorías
+(siempre como borrador) solo de los asesores que tienen a cargo, marcan la
+pauta de sus borradores y los publican; ven las auditorías publicadas de
+su equipo y las que ellos registraron, nada más. No hacen la
+retroalimentación, no tocan la pauta ni la estructura y no eliminan. Quién
+es team leader de quién sale de `calidad_team_leaders`, que enlaza el
+nombre que trae la estructura (`calidad_asesores.team_leader`) con la
+cuenta; ese enlace solo lo hace un **administrador**, desde *Calidad →
+Estructura*, porque equivale a dar acceso a datos de desempeño. Todo son
+políticas que se suman a las de Calidad: lo que ve y hace el cuadro no
+cambia. En la app, el guardia es `exigirCalidad()` (`lib/calidad/acceso.ts`).
+
 **PDA** también sigue la escalera: Vista (soporte técnico) consulta los
 PDA, sus objetivos, la lista de chequeo y abre las evidencias; Edición
 (líder de TI) crea el PDA del mes y sus objetivos, marca actividades, sube

@@ -9,14 +9,14 @@ import { ShieldAlert, Trash2 } from "lucide-react";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { formatearPorcentaje } from "@/lib/calidad";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { listarAuditoriasEliminadas, puedeEliminarAuditorias } from "@/lib/calidad/datos";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
-import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const metadata: Metadata = { title: "Auditorías eliminadas" };
 
 export default async function PaginaEliminadas() {
-  const { supabase, perfil } = await exigirModulo("calidad");
+  const { supabase, perfil } = await exigirCalidad();
   const puedeEliminar = await puedeEliminarAuditorias(supabase);
   if (perfil.rol !== "admin" && !puedeEliminar) notFound();
 

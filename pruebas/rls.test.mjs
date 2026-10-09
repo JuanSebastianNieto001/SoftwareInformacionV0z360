@@ -1160,6 +1160,163 @@ await prueba("ranking del mes: lo ve todo el personal, solo con agregados, y cad
   igual(viejo.length, 0, "solo el mes en curso");
 });
 
+// ---------------------------------------------------------------------------
+// Team leaders (035): auditan solo a su equipo y ven solo lo de su equipo.
+// Tomás es el team leader «Kelmer» (el de Luis); Teresa, el de «Otra TL»
+// (Pía). Ninguno tiene nivel sobre el cuadro.
+// ---------------------------------------------------------------------------
+console.log("\nCalidad: team leaders (035)");
+grupo("Calidad: team leaders (035)");
+
+const TL = { tomas: "00000000-0000-4000-8000-000000000007", teresa: "00000000-0000-4000-8000-000000000008" };
+await db.exec(`
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('${TL.tomas}',  'tomas@empresa.com',  '{"nombre":"Tomás TL"}'),
+    ('${TL.teresa}', 'teresa@empresa.com', '{"nombre":"Teresa TL"}');
+  update perfiles set rol = 'editor', activo = true where id in ('${TL.tomas}', '${TL.teresa}');
+  insert into calidad_team_leaders (nombre, usuario_id) values ('Kelmer', '${TL.tomas}'), ('Otra TL', '${TL.teresa}');
+`);
+const PIA = (await db.query(`insert into calidad_asesores (area_id, nombre, team_leader) values ($1, 'Pía de otro equipo', 'Otra TL') returning id`, [CAL])).rows[0].id;
+const EVAL_PIA = (
+  await db.query(
+    `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, team_leader, analista_nombre, fecha_interaccion, estado)
+     values ($1, $2, $3, 'Pía de otro equipo', 'Otra TL', 'Eva', current_date, 'publicada') returning id`,
+    [CAL, MATRIZ, PIA],
+  )
+).rows[0].id;
+// Un borrador de Calidad sobre Luis (del equipo de Tomás): no es de Tomás.
+const BORRADOR_EVA = (
+  await db.query(
+    `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_id, analista_nombre, fecha_interaccion, creado_por)
+     values ($1, $2, $3, 'Luis Lector', $4, 'Eva', current_date, $4) returning id`,
+    [CAL, MATRIZ, ASESOR, U.editor],
+  )
+).rows[0].id;
+
+await prueba("el team leader ve el cuadro y la estructura de SU equipo, sin nivel sobre el cuadro", async () => {
+  const r = await como(TL.tomas, (tx) =>
+    filas(
+      tx,
+      `select (select count(*)::int from areas where modulo = 'calidad') as cuadro,
+              public.nivel_en_area($1) as nivel,
+              public.calidad_soy_team_leader() as tl,
+              (select array_agg(id) from calidad_asesores) as asesores,
+              (select count(*)::int from calidad_team_leaders) as enlaces`,
+      [CAL],
+    ),
+  );
+  igual(r[0].cuadro, 1, "el cuadro de Calidad aparece en sus áreas");
+  igual(r[0].nivel, null, "sin nivel: entra por su equipo");
+  igual(r[0].tl, true, "es team leader");
+  igual(JSON.stringify(r[0].asesores), JSON.stringify([ASESOR]), "de la estructura, solo su asesor");
+  igual(r[0].enlaces, 1, "del enlace, solo su fila");
+  const nadie = await como(U.sinPermiso, (tx) => filas(tx, `select (select count(*)::int from areas where modulo = 'calidad') as cuadro, public.calidad_soy_team_leader() as tl`));
+  igual(nadie[0].cuadro, 0, "quien no es team leader no ve el cuadro");
+  igual(nadie[0].tl, false);
+});
+
+await prueba("ve lo publicado de su equipo y lo suyo; ni borradores de Calidad ni otros equipos", async () => {
+  const esperadas = (
+    await db.query(`select id from calidad_evaluaciones where estado = 'publicada' and (team_leader = 'Kelmer' or asesor_id = $1) order by id`, [ASESOR])
+  ).rows.map((x) => x.id);
+  igual(esperadas.length >= 1, true, "hay auditorías publicadas del equipo en el montaje");
+  const vistas = await como(TL.tomas, (tx) => filas(tx, `select id from calidad_evaluaciones order by id`));
+  igual(JSON.stringify(vistas.map((x) => x.id)), JSON.stringify(esperadas), "exactamente las publicadas de su equipo");
+  const borrador = await como(TL.tomas, (tx) => filas(tx, `select id from calidad_evaluaciones where id = $1`, [BORRADOR_EVA]));
+  igual(borrador.length, 0, "el borrador de Calidad sobre su asesor no");
+  const respuestas = await como(TL.tomas, (tx) => filas(tx, `select distinct evaluacion_id from calidad_respuestas`));
+  igual(respuestas.every((x) => esperadas.includes(x.evaluacion_id)), true, "las respuestas, solo de esas auditorías");
+  const nota = await como(TL.tomas, (tx) => filas(tx, `select nota_final from v_calidad_evaluaciones where id = $1`, [EVAL]));
+  igual(nota.length, 1, "la vista con la nota funciona para él");
+  const teresa = await como(TL.teresa, (tx) => filas(tx, `select id from calidad_evaluaciones`));
+  igual(JSON.stringify(teresa.map((x) => x.id)), JSON.stringify([EVAL_PIA]), "Teresa ve solo la de Pía");
+});
+
+let EVAL_TL = null;
+await prueba("audita solo a su equipo: crea el borrador, marca la pauta y publica; fuera de su equipo la base rechaza", async () => {
+  const insertar = (asesor, extra = "", valores = []) => (tx) =>
+    filas(
+      tx,
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, team_leader, analista_id, analista_nombre, fecha_interaccion, creado_por${extra ? ", " + extra : ""})
+       values ($1, $2, $3, 'X', 'Kelmer', $4, 'Tomás TL', current_date, $4${valores.map((_, i) => ", $" + (5 + i)).join("")}) returning id`,
+      [CAL, MATRIZ, asesor, TL.tomas, ...valores],
+    );
+  await comoDebeFallar(TL.tomas, insertar(PIA));
+  await comoDebeFallar(TL.tomas, insertar(ASESOR, "estado", ["publicada"]));
+  await comoDebeFallar(TL.tomas, (tx) =>
+    tx.query(
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_id, analista_nombre, fecha_interaccion, creado_por)
+       values ($1, $2, $3, 'Luis Lector', $4, 'Eva', current_date, $5)`,
+      [CAL, MATRIZ, ASESOR, U.editor, TL.tomas],
+    ),
+  );
+  EVAL_TL = (await como(TL.tomas, insertar(ASESOR)))[0].id;
+  await como(TL.tomas, (tx) =>
+    tx.query(
+      `insert into calidad_respuestas (evaluacion_id, item_id, resultado) values ($1, $2, 'cumple'), ($1, $3, 'cumple'), ($1, $4, 'cumple')`,
+      [EVAL_TL, ITEMS[0].id, ITEMS[1].id, ITEMS[2].id],
+    ),
+  );
+  const pub = await como(TL.tomas, (tx) => filas(tx, `select publicada from public.publicar_borradores_calidad(array[$1]::uuid[])`, [EVAL_TL]));
+  igual(pub[0].publicada, true, "publica su borrador completo");
+  const cel = await como(TL.tomas, (tx) => tx.query(`update calidad_respuestas set resultado = 'no_cumple' where evaluacion_id = $1`, [EVAL_TL]));
+  igual(cel.affectedRows ?? 0, 0, "publicada, la pauta ya no se toca");
+  const delAsesor = await como(U.lector, (tx) => filas(tx, `select id from calidad_evaluaciones where id = $1`, [EVAL_TL]));
+  igual(delAsesor.length, 1, "el asesor la recibe como cualquier otra");
+  const deCalidad = await como(U.editor, (tx) => filas(tx, `select analista_nombre from calidad_evaluaciones where id = $1`, [EVAL_TL]));
+  igual(deCalidad[0].analista_nombre, "Tomás TL", "y Calidad la ve con quién la hizo");
+});
+
+await prueba("no toca lo ajeno: borradores de Calidad, pauta, estructura, retroalimentación ni el enlace", async () => {
+  const ajeno = await como(TL.tomas, (tx) => tx.query(`update calidad_evaluaciones set detalle = 'x' where id = $1`, [BORRADOR_EVA]));
+  igual(ajeno.affectedRows ?? 0, 0, "el borrador de Calidad no se edita");
+  // Lo frena antes el disparador de coherencia: para Tomás esa auditoría no existe.
+  await comoDebeFallar(
+    TL.tomas,
+    (tx) => tx.query(`insert into calidad_respuestas (evaluacion_id, item_id, resultado) values ($1, $2, 'cumple')`, [BORRADOR_EVA, ITEMS[0].id]),
+    /row-level security|no pertenece a la matriz/,
+  );
+  const otra = await como(TL.teresa, (tx) => filas(tx, `select publicada from public.publicar_borradores_calidad(array[$1]::uuid[])`, [BORRADOR_EVA]));
+  igual(otra[0]?.publicada ?? false, false, "ni se publica un borrador ajeno");
+  const pauta = await como(TL.tomas, (tx) => tx.query(`update calidad_items set peso = 1 where matriz_id = $1`, [MATRIZ]));
+  igual(pauta.affectedRows ?? 0, 0, "la pauta no");
+  const estructura = await como(TL.tomas, (tx) => tx.query(`update calidad_asesores set team_leader = 'Kelmer' where id = $1`, [ASESOR]));
+  igual(estructura.affectedRows ?? 0, 0, "la estructura no (ni la de su equipo)");
+  await comoDebeFallar(TL.tomas, (tx) =>
+    tx.query(`insert into calidad_retroalimentaciones (evaluacion_id, area_id, realizada_por, realizada_por_nombre) values ($1, $2, $3, 'Tomás')`, [EVAL_TL, CAL, TL.tomas]),
+  );
+  await comoDebeFallar(TL.tomas, (tx) => tx.query(`insert into calidad_team_leaders (nombre, usuario_id) values ('Otra TL 2', $1)`, [TL.tomas]));
+  await comoDebeFallar(U.editor, (tx) => tx.query(`insert into calidad_team_leaders (nombre, usuario_id) values ('Nuevo TL', $1)`, [U.editor]));
+  await como(U.admin, (tx) => tx.query(`insert into calidad_team_leaders (nombre, usuario_id) values ('Nuevo TL', $1)`, [U.editorLector]));
+  await como(U.admin, (tx) => tx.query(`delete from calidad_team_leaders where nombre = 'Nuevo TL'`));
+});
+
+await prueba("Calidad no pierde nada: con Edición sigue viendo y auditando todo", async () => {
+  const total = (await db.query(`select count(*)::int n from calidad_evaluaciones`)).rows[0].n;
+  const eva = await como(U.editor, (tx) => filas(tx, `select count(*)::int n from calidad_evaluaciones`));
+  igual(eva[0].n, total, "ve todas, también las de los team leaders");
+  const nueva = await como(U.editor, (tx) =>
+    filas(
+      tx,
+      `insert into calidad_evaluaciones (area_id, matriz_id, asesor_id, asesor_nombre, analista_id, analista_nombre, fecha_interaccion, creado_por)
+       values ($1, $2, $3, 'Pía de otro equipo', $4, 'Eva', current_date, $4) returning id`,
+      [CAL, MATRIZ, PIA, U.editor],
+    ),
+  );
+  igual(nueva.length, 1, "y audita a cualquier equipo");
+});
+
+await prueba("un team leader desactivado pierde su equipo y el cuadro", async () => {
+  await db.query(`update perfiles set activo = false where id = $1`, [TL.tomas]);
+  const r = await como(TL.tomas, (tx) =>
+    filas(tx, `select public.calidad_soy_team_leader() as tl, (select count(*)::int from areas where modulo = 'calidad') as cuadro, (select count(*)::int from calidad_evaluaciones) as ev`),
+  );
+  igual(r[0].tl, false, "ya no es team leader");
+  igual(r[0].cuadro, 0, "ni ve el cuadro");
+  igual(r[0].ev, 0, "ni auditorías (tampoco las suyas)");
+  await db.query(`update perfiles set activo = true where id = $1`, [TL.tomas]);
+});
+
 console.log("\nPDA (019)");
 grupo("PDA (019)");
 

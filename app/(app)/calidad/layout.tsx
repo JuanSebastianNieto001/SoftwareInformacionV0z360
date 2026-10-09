@@ -1,7 +1,8 @@
 /**
  * Marco común de /calidad: encabezado del cuadro con el nivel de quien
- * entra y la navegación del módulo (la bitácora de eliminadas solo aparece
- * para administradores y quien puede eliminar).
+ * entra (o «Team leader · mi equipo» si entra solo por su equipo) y la
+ * navegación del módulo (la bitácora de eliminadas solo aparece para
+ * administradores y quien puede eliminar).
  */
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -10,15 +11,16 @@ import { NavCalidad } from "@/components/calidad/nav-calidad";
 import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { exigirCalidad } from "@/lib/calidad/acceso";
 import { puedeEliminarAuditorias } from "@/lib/calidad/datos";
-import { exigirModulo } from "@/lib/modulos-acceso";
 import { ETIQUETA_NIVEL } from "@/lib/permisos";
 
-/** El guardia va aquí: sin permiso sobre el cuadro, ninguna ruta de /calidad se renderiza. */
+/** El guardia va aquí: sin permiso sobre el cuadro ni equipo a cargo, ninguna ruta de /calidad se renderiza. */
 export default async function LayoutCalidad({ children }: { children: ReactNode }) {
-  const { area, nivel, puedeEditar, supabase, perfil } = await exigirModulo("calidad");
+  const { area, nivel, alcance, puedeEditar, supabase, perfil } = await exigirCalidad();
   const puedeEliminar = await puedeEliminarAuditorias(supabase);
   const verEliminadas = perfil.rol === "admin" || puedeEliminar === true;
+  const deEquipo = alcance === "equipo" || !nivel;
   return (
     <>
       <div className="mb-3">
@@ -33,10 +35,18 @@ export default async function LayoutCalidad({ children }: { children: ReactNode 
         titulo={
           <span className="flex flex-wrap items-center gap-2">
             {area.nombre}
-            <Badge variant={puedeEditar ? "default" : "secondary"}>{ETIQUETA_NIVEL[nivel]}</Badge>
+            {deEquipo ? (
+              <Badge variant="secondary">Team leader · mi equipo</Badge>
+            ) : (
+              <Badge variant={puedeEditar ? "default" : "secondary"}>{ETIQUETA_NIVEL[nivel]}</Badge>
+            )}
           </span>
         }
-        descripcion="Auditorías con la pauta de calidad, retroalimentación firmada por el asesor y seguimiento de compromisos."
+        descripcion={
+          deEquipo
+            ? "Auditorías de los asesores de tu equipo: créalas, complétalas y publícalas."
+            : "Auditorías con la pauta de calidad, retroalimentación firmada por el asesor y seguimiento de compromisos."
+        }
       />
       <NavCalidad puedeEditar={puedeEditar} verEliminadas={verEliminadas} />
       {children}
