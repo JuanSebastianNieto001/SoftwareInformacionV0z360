@@ -8,6 +8,7 @@
  */
 import { registrarAcceso } from "@/lib/auditoria";
 import { exigirModulo } from "@/lib/modulos-acceso";
+import { obtenerEvidencia } from "@/lib/pda/datos";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return new Response("Identificador inválido.", { status: 400, headers: SIN_CACHE });
   }
 
-  const { data: ev } = await supabase
-    .from("pda_evidencias")
-    .select("storage_path, nombre_archivo, objetivo_id")
-    .eq("id", id)
-    .maybeSingle();
+  const ev = await obtenerEvidencia(supabase, id);
   if (!ev) return new Response("Evidencia no encontrada.", { status: 404, headers: SIN_CACHE });
 
   const { data: firmada, error } = await supabase.storage

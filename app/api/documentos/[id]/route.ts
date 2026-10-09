@@ -1,4 +1,8 @@
-import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
+// /api/documentos/[id]: edición de metadatos (PATCH, desde el formulario de
+// edición) y eliminación (DELETE, desde las acciones del documento). Ambas
+// corren con la sesión de quien llama, de modo que RLS tiene la última
+// palabra, y las dos dejan rastro en la auditoría de accesos.
+import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api/errores";
 import { puedeEliminarArea } from "@/lib/permisos";
 import { registrarAcceso } from "@/lib/auditoria";
 import { crearClienteServidor } from "@/lib/supabase/server";

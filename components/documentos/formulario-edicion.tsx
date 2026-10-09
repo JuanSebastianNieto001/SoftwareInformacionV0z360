@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { construirRutaStorage, sanitizarNombreArchivo } from "@/lib/archivos";
 import { finDeDiaIso, formatearBytes, inicioDeDiaIso } from "@/lib/formato";
 import { crearClienteNavegador } from "@/lib/supabase/client";
-import { llamarApi, normalizarArchivo, subirArchivoConProgreso } from "@/lib/subida-cliente";
+import { llamarApi, normalizarArchivo, subirArchivoConProgreso } from "@/lib/archivos/subida-cliente";
 import { esquemaEdicionDocumento, primerError } from "@/lib/validaciones";
 
 export type DocumentoEditable = {

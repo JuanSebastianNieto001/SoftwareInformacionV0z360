@@ -1,5 +1,8 @@
 "use client";
 
+// Barra de pestañas de /calidad, la pinta app/(app)/calidad/layout.tsx. Es de
+// cliente solo para marcar la pestaña activa con usePathname. Ocultar una
+// pestaña no protege la ruta: cada página vuelve a comprobar y responde 404.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ClipboardList, LayoutDashboard, ListChecks, Trash2, Users } from "lucide-react";

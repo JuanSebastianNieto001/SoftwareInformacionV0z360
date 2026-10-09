@@ -1,3 +1,6 @@
+// GET /api/auth/salir?motivo=…: cierre de sesión forzado. Hoy solo la usa
+// exigirSesion (lib/sesion.ts) para expulsar a un perfil inexistente o
+// desactivado; el «Cerrar sesión» del menú usa la acción cerrarSesion.
 import { NextResponse, type NextRequest } from "next/server";
 import { crearClienteServidor } from "@/lib/supabase/server";
 

@@ -2,10 +2,12 @@
 
 Un cuadro de «Mis áreas» es, de serie, una carpeta de documentos. Desde la
 migración `012` un cuadro puede ser además un **módulo**: una pantalla
-propia (evaluación de desempeño, cumpleaños, calidad, PDA, retroalimentación) que se abre desde el mismo
-sitio y **hereda el sistema de permisos sin añadir nada**.
+propia (evaluación de desempeño, cumpleaños, calidad, PDA, feedback) que se
+abre desde el mismo sitio y **hereda el sistema de permisos sin añadir nada**.
 
 Este documento explica el mecanismo y la lista de pasos para añadir otro.
+Cómo se reparten las capas (pantalla, datos, acciones, base) está en
+[`arquitectura.md`](arquitectura.md).
 
 ---
 
@@ -85,25 +87,43 @@ lo reutilizan (React `cache` comparte el resultado en la misma petición):
 const { supabase, area, nivel, puedeEditar, puedeEliminar } = await exigirModulo("<clave>");
 ```
 
-### 5. Acciones
+Las páginas no consultan Supabase directamente: llaman a la capa de datos
+del paso siguiente con ese `supabase`.
+
+### 5. Carpeta del módulo en `lib/`
+
+```
+lib/<modulo>/
+  index.ts   etiquetas, estados y cálculos (sin acceso a la base)
+  datos.ts   import "server-only"; una función por lectura
+```
+
+Cada función de `datos.ts` recibe como primer parámetro el cliente de la
+sesión, no comprueba permisos (RLS decide qué vuelve) y lleva JSDoc con lo
+que devuelve y la regla de acceso que aplica. Las reglas completas están en
+[`arquitectura.md`](arquitectura.md#reglas-de-la-capa-de-datos).
+
+### 6. Acciones
 
 `app/acciones/<modulo>.ts`, con `"use server"`. Validan con un esquema de
 `lib/validaciones.ts`, usan el cliente de sesión y dejan que RLS decida. Si
 el módulo maneja información de personas, registran en la auditoría con
 `registrarAcceso` (ver `app/acciones/evaluacion.ts`).
 
-### 6. Tipos y pruebas
+### 7. Tipos y pruebas
 
 - `lib/supabase/tipos.ts` está escrito a mano: añadir tablas, vistas y
   funciones.
 - `pruebas/rls.test.mjs`: como mínimo, que sin permiso no se ve nada, que
   con Vista no se escribe, que con Edición se escribe solo en su cuadro y
   que borrar exige Total.
+- `pruebas/logica/<modulo>.test.ts`: cada cálculo de `lib/<modulo>/index.ts`
+  que decida algo visible (una nota, un estado, un corte).
 
-### 7. Documentación
+### 8. Documentación
 
-Una línea en la tabla de módulos de `docs/permisos.md` y el árbol del
-`README.md`.
+Una línea en la tabla de módulos de `docs/permisos.md`, en la de
+`docs/arquitectura.md` y el árbol del `README.md`.
 
 ---
 

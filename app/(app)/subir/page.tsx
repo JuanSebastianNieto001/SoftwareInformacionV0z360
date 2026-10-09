@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { FormularioSubida } from "@/components/documentos/formulario-subida";
 import { Button } from "@/components/ui/button";
+import { listarAreasParaSubir, listarNivelesPropios } from "@/lib/documentos/datos";
 import { nivelEfectivo, puedeEditarArea, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
 
@@ -20,14 +21,14 @@ export default async function PaginaSubir({ searchParams }: PageProps<"/subir">)
   // Guardia de UI: los lectores no tienen nada que hacer aquí.
   if (!puedeSubir(perfil)) redirect("/");
 
-  const [{ data: areas }, { data: permisos }] = await Promise.all([
+  const [areas, permisos] = await Promise.all([
     // Un cuadro-módulo (evaluación) no recibe documentos: fuera del selector.
-    supabase.from("areas").select("id, nombre").eq("activa", true).is("modulo", null).order("nombre"),
-    supabase.from("permisos_area").select("area_id, nivel").eq("usuario_id", perfil.id),
+    listarAreasParaSubir(supabase),
+    listarNivelesPropios(supabase, perfil.id),
   ]);
 
-  const nivelPorArea = new Map((permisos ?? []).map((p) => [p.area_id, p.nivel]));
-  const areasEdicion = (areas ?? []).filter(
+  const nivelPorArea = new Map(permisos.map((p) => [p.area_id, p.nivel]));
+  const areasEdicion = areas.filter(
     (a) => puedeEditarArea(nivelEfectivo(perfil.rol, perfil.activo, nivelPorArea.get(a.id))),
   );
 

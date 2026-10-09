@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GRUPO_ESTRUCTURA, diaMes, enCuanto, nombreComparable } from "@/lib/cumpleanos";
+import { listarCumpleanos, listarPerfilesVinculables } from "@/lib/cumpleanos/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import type { CumpleProximo } from "@/lib/supabase/tipos";
 import { cn } from "@/lib/utils";
@@ -33,14 +34,11 @@ export default async function PaginaCumpleanos({ searchParams }: PageProps<"/cum
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const verInactivos = sp.inactivos === "1";
 
-  const [{ data: filas, error }, { data: perfiles }] = await Promise.all([
-    supabase.from("v_cumpleanos").select("*").order("dias_faltan").limit(1000),
-    puedeEditar
-      ? supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre")
-      : Promise.resolve({ data: [] as { id: string; nombre: string }[] }),
+  const [{ cumpleanos: todas, error }, perfiles] = await Promise.all([
+    listarCumpleanos(supabase),
+    puedeEditar ? listarPerfilesVinculables(supabase) : Promise.resolve([]),
   ]);
 
-  const todas = filas ?? [];
   const teamLeaders = [...new Set(todas.map((c) => c.team_leader).filter((t): t is string => !!t))].sort();
 
   const visibles = todas.filter((c) => {

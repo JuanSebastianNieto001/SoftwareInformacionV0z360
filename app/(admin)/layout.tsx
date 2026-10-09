@@ -1,3 +1,4 @@
+// Layout del grupo (admin): guardia de administrador, campana y navegación del panel.
 import type { ReactNode } from "react";
 import { AppShell, NavAdmin } from "@/components/comunes/app-shell";
 import { cargarNotificaciones } from "@/lib/notificaciones";

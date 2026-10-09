@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ETIQUETA_ESTADO_EVALUACION_CALIDAD, ETIQUETA_ESTADO_RETRO, formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { contarMisBorradores, listarAuditorias, listarTeamLeadersCalidad } from "@/lib/calidad/datos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
@@ -29,24 +30,11 @@ export default async function PaginaAuditorias({ searchParams }: PageProps<"/cal
   const desde = typeof sp.desde === "string" ? sp.desde : "";
   const hasta = typeof sp.hasta === "string" ? sp.hasta : "";
 
-  let consulta = supabase
-    .from("v_calidad_evaluaciones")
-    .select("id, asesor_nombre, team_leader, analista_id, analista_nombre, fecha_interaccion, fecha_auditoria, tipo, etapa, estado, nota_final, nota_minima, n_fatales_fallados, retro_estado")
-    .order("fecha_auditoria", { ascending: false })
-    .order("creado_en", { ascending: false })
-    .limit(500);
-  if (q) consulta = consulta.ilike("asesor_nombre", `%${q}%`);
-  if (tl) consulta = consulta.eq("team_leader", tl);
-  if (estado) consulta = consulta.eq("estado", estado);
-  if (desde) consulta = consulta.gte("fecha_auditoria", desde);
-  if (hasta) consulta = consulta.lte("fecha_auditoria", hasta);
-
-  const [{ data: filas, error }, { data: tls }, { count: misBorradores }] = await Promise.all([
-    consulta,
-    supabase.from("calidad_asesores").select("team_leader").not("team_leader", "is", null),
-    supabase.from("calidad_evaluaciones").select("id", { count: "exact", head: true }).eq("estado", "borrador").eq("analista_id", user.id),
+  const [{ data: filas, error }, teamLeaders, misBorradores] = await Promise.all([
+    listarAuditorias(supabase, { q, tl, estado, desde, hasta }),
+    listarTeamLeadersCalidad(supabase),
+    contarMisBorradores(supabase, user.id),
   ]);
-  const teamLeaders = [...new Set((tls ?? []).map((t) => t.team_leader as string))].sort();
   const hayFiltro = !!(q || tl || estado || desde || hasta);
   const csv = `/api/calidad/csv?${new URLSearchParams({ q, tl, estado, desde, hasta }).toString()}`;
 

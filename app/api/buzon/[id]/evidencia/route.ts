@@ -1,4 +1,8 @@
-import { exigirGestorBuzonApi } from "@/lib/api-admin";
+// GET /api/buzon/[id]/evidencia: redirige a una URL firmada, de vida corta y
+// sin caché, con el pantallazo adjunto a un caso del buzón. La firma se pide
+// con la sesión del gestor (no con la clave de servicio), así que las
+// políticas del bucket vuelven a decidir aunque la guardia fallara.
+import { exigirGestorBuzonApi } from "@/lib/api/admin";
 
 export const dynamic = "force-dynamic";
 

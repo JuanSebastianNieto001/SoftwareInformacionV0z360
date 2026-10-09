@@ -1,6 +1,17 @@
+/**
+ * Panel · Grupos: los segmentos de personas, sus miembros y los permisos por
+ * área que concede cada uno.
+ */
 import type { Metadata } from "next";
 import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { GestionGrupos } from "@/components/admin/gestion-grupos";
+import {
+  listarAreasConEstado,
+  listarGruposConDescripcion,
+  listarMiembrosDeGrupos,
+  listarPerfilesConRol,
+  listarPermisosDeGrupos,
+} from "@/lib/admin/datos";
 import { exigirAdmin } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Grupos" };
@@ -8,15 +19,14 @@ export const metadata: Metadata = { title: "Grupos" };
 export default async function PaginaGrupos() {
   const { supabase } = await exigirAdmin();
 
-  // Las cuatro consultas son independientes: van en paralelo.
-  const [{ data: grupos }, { data: areas }, { data: personas }, { data: miembros }, { data: permisos }] =
-    await Promise.all([
-      supabase.from("grupos").select("id, nombre, descripcion, activo").order("nombre"),
-      supabase.from("areas").select("id, nombre, activa").order("nombre"),
-      supabase.from("perfiles").select("id, nombre, cargo, rol, activo").order("nombre"),
-      supabase.from("grupos_usuarios").select("grupo_id, usuario_id"),
-      supabase.from("permisos_grupo").select("grupo_id, area_id, nivel"),
-    ]);
+  // Las consultas son independientes: van en paralelo.
+  const [grupos, areas, personas, miembros, permisos] = await Promise.all([
+    listarGruposConDescripcion(supabase),
+    listarAreasConEstado(supabase),
+    listarPerfilesConRol(supabase),
+    listarMiembrosDeGrupos(supabase),
+    listarPermisosDeGrupos(supabase),
+  ]);
 
   return (
     <>

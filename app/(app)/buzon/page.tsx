@@ -15,6 +15,7 @@ import {
   etiquetaArea,
   radicado,
 } from "@/lib/buzon";
+import { listarMisSugerencias } from "@/lib/buzon/datos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
 
@@ -25,12 +26,7 @@ export default async function PaginaBuzon() {
 
   // El filtro por emisor es explicito y no delegado a RLS: el admin puede
   // ver todo, y sin el "Mis registros" le mostraria el buzon entero.
-  const { data: mias } = await supabase
-    .from("sugerencias")
-    .select("id, consecutivo, tipo, proceso, estado, creado_en, respuesta_emisor")
-    .eq("emisor_id", user.id)
-    .order("creado_en", { ascending: false })
-    .limit(50);
+  const mias = await listarMisSugerencias(supabase, user.id);
 
   return (
     <>

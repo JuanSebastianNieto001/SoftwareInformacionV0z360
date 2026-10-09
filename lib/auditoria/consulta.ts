@@ -1,6 +1,6 @@
-import type { ClienteServidor } from "./supabase/server";
-import { finDeDiaIso, inicioDeDiaIso } from "./formato";
-import { esquemaFiltrosAuditoria, type FiltrosAuditoria } from "./validaciones";
+import type { ClienteServidor } from "@/lib/supabase/server";
+import { finDeDiaIso, inicioDeDiaIso } from "@/lib/formato";
+import { esquemaFiltrosAuditoria, type FiltrosAuditoria } from "@/lib/validaciones";
 
 /** UUID imposible: filtra a cero filas sin inventar sintaxis. */
 const VACIO = "00000000-0000-0000-0000-000000000000";

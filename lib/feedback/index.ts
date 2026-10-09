@@ -3,7 +3,7 @@
  * campos del catálogo (gravedad, severidad, estado, conformidad). Las reglas
  * de acceso y la conformidad viven en la base (RLS y responder_feedback).
  */
-import type { FeedbackConformidad, FeedbackEstado, FeedbackGravedad, FeedbackSeveridad } from "./supabase/tipos";
+import type { FeedbackConformidad, FeedbackEstado, FeedbackGravedad, FeedbackSeveridad } from "@/lib/supabase/tipos";
 
 export const GRAVEDADES: readonly FeedbackGravedad[] = ["leve", "moderado", "grave", "critico"];
 export const SEVERIDADES: readonly FeedbackSeveridad[] = ["notificacion", "plan_accion", "disciplinario"];

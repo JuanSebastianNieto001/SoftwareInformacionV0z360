@@ -1,8 +1,11 @@
 "use server";
 
+// Acciones de servidor de la campana de notificaciones. Tras marcar se
+// revalida desde el layout raíz hacia abajo: las notificaciones se cargan en
+// los layouts de (app) y (admin), y el contador debe bajar en cualquier pantalla.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { exigirSesion } from "@/lib/sesion";
 
 export type Resultado = { ok: true } | { ok: false; error: string };

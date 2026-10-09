@@ -10,6 +10,7 @@ import { ResponderConformidad } from "@/components/feedback/responder-conformida
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { ETIQUETA_CONFORMIDAD, ETIQUETA_ESTADO_FEEDBACK, ETIQUETA_GRAVEDAD, varianteConformidad } from "@/lib/feedback";
+import { listarMisFeedback } from "@/lib/feedback/datos";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
@@ -18,8 +19,7 @@ export const metadata: Metadata = { title: "Mis feedback" };
 
 export default async function PaginaMisFeedback() {
   const { supabase, user, perfil } = await exigirSesion();
-  const { data } = await supabase.from("v_feedback").select("*").eq("colaborador_usuario_id", user.id).order("fecha", { ascending: false }).limit(100);
-  const lista = data ?? [];
+  const lista = await listarMisFeedback(supabase, user.id);
 
   return (
     <>

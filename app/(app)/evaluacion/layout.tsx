@@ -1,3 +1,4 @@
+// Marco del módulo de Evaluación de desempeño: guardia, encabezado y pestañas.
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";

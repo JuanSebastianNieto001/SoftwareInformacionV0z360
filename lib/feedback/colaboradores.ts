@@ -7,7 +7,7 @@ import "server-only";
 // comprobar el alcance al registrar, así que esto es solo comodidad de
 // pantalla. Los perfiles cuyo nombre ya está en la estructura no se repiten.
 import type { ColaboradorOpcion } from "@/components/feedback/selector-colaborador";
-import type { ClienteServidor } from "./supabase/server";
+import type { ClienteServidor } from "../supabase/server";
 
 const normalizar = (s: string) =>
   s

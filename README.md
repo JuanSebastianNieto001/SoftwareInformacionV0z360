@@ -33,6 +33,12 @@ sin añadir nada. Cómo se añade uno está en `docs/modulos.md`.
 
 ## Estructura
 
+Las capas, las reglas de cada una y dónde va cada pieza nueva están en
+[`docs/arquitectura.md`](docs/arquitectura.md). En resumen: la página
+(`app/`) llama al guardia y a la capa de datos del módulo
+(`lib/<módulo>/datos.ts`); las escrituras van por las acciones
+(`app/acciones/`); las reglas de acceso, en la base.
+
 ```
 app/
   (app)/        Pantallas del día a día: Mis áreas, documentos, buzón,
@@ -62,30 +68,43 @@ components/
   admin/        Usuarios, áreas, grupos, matriz de permisos
   ui/           shadcn/ui, con los tokens de marca aplicados
 lib/
-  supabase/     Clientes (navegador, servidor, admin, middleware) y tipos
+  <módulo>/         Una carpeta por módulo, siempre con la misma forma:
+    index.ts          reglas del dominio: etiquetas, estados, fórmulas
+    datos.ts          capa de lectura: una función por consulta (server-only)
+  calidad/          La nota de calidad (espejo de v_calidad_evaluaciones)
+  evaluacion/       Las fórmulas del Excel de evaluación 360°
+  pda/              Las 14 columnas del formato FTM-SINF-005 y sus estados
+  feedback/         Etiquetas, y en colaboradores.ts a quién puede dar
+                    feedback cada emisor
+  cumpleanos/  buzon/  documentos/  admin/
+  auditoria/        registrarAcceso (index.ts) y la consulta del panel
+  archivos/         Nombres seguros y MIME, subida desde el navegador y
+                    limpieza de huérfanos en Storage
+  api/              Respuestas de error de las rutas y acceso con clave de
+                    servicio solo tras comprobar que quien llama es admin
+  supabase/         Clientes (navegador, servidor, admin, middleware) y tipos
   validaciones.ts   Esquemas Zod compartidos entre cliente y servidor
-  permisos.ts       Espejo en TypeScript de las reglas de RLS (solo para pintar)
-  modulos.ts        Qué cuadros son módulos: ruta, icono, pie
-  modulos-acceso.ts Guardia de los módulos: sin permiso sobre el cuadro, 404
   sesion.ts         exigirSesion / exigirAdmin / exigirGestorBuzon
-  auditoria*.ts     Registro y consulta de accesos
-  evaluacion.ts     Las fórmulas del Excel de evaluación 360°, en TypeScript
-  cumpleanos.ts     Etiquetas y utilidades del módulo de cumpleaños
-  feedback.ts       Etiquetas de gravedad, severidad, estado y conformidad
-  calidad.ts        Estados, etiquetas y la fórmula de la nota de calidad
-  pda.ts            Las 14 columnas del formato FTM-SINF-005, estados y formato
+  modulos-acceso.ts Guardia de los módulos: sin permiso sobre el cuadro, 404
+  modulos.ts        Qué cuadros son módulos: ruta, icono, pie
+  permisos.ts       Espejo en TypeScript de las reglas de RLS (solo para pintar)
   notificaciones.ts Carga de avisos para la campana (genera los pendientes)
+  formato.ts        Fechas, tamaños, plurales y el usuario de Poliedro
 supabase/
   migrations/   El esquema, en orden. Es la fuente de verdad
   functions/    Edge Function `purgar` (borra archivos vencidos)
-  scripts/      Pasos manuales de puesta en marcha y verificación
+  scripts/      SQL de puesta en marcha y verificación (editor de Supabase)
+scripts/        Comandos de consola: aplicar una migración, alta de personas
 pruebas/
   rls.test.mjs              Las comprobaciones de las políticas de acceso
+  logica/                   Las fórmulas y reglas de lib/ (node:test)
+  cargador-ts.mjs           Deja a Node resolver @/ e imports sin extensión
   bundle-sin-secretos.mjs   Que ninguna clave secreta llegue al navegador
 docs/
-  seguridad.md  Modelo de amenazas, qué se arregló y qué sigue abierto
-  permisos.md   Cómo se calcula lo que cada persona puede hacer
-  modulos.md    Cómo se añade un cuadro-módulo
+  arquitectura.md  Las capas, dónde va cada cosa, equivalencias con Laravel
+  seguridad.md     Modelo de amenazas, qué se arregló y qué sigue abierto
+  permisos.md      Cómo se calcula lo que cada persona puede hacer
+  modulos.md       Cómo se añade un cuadro-módulo
 ```
 
 `proxy.ts` en la raíz es el middleware (Next.js 16 lo renombró). Refresca la
@@ -128,14 +147,17 @@ Variables necesarias, todas en el panel de Vercel del proyecto:
 | `npm run typecheck` | `next typegen` y `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run prueba:rls` | Las comprobaciones de las políticas de acceso (Postgres embebido) |
+| `npm run prueba:logica` | Las fórmulas y reglas de `lib/` (nota de calidad, evaluación 360°, PDA…) |
 | `npm run prueba:bundle` | Que la clave de servicio no llegue al navegador |
+| `npm run db:aplicar -- <archivo.sql>` | Aplica una migración en una transacción (ver [`scripts/`](scripts/README.md)) |
+| `npm run usuarios:alta -- <personas.csv>` | Alta de cuentas en bloque, repetible (`--ensayo` para ver antes) |
 | `npm run codigo-muerto` | Exportaciones y archivos que nadie usa |
 | `npm audit --omit=dev` | Vulnerabilidades conocidas en dependencias de producción |
 | `npx next build` | Compilación de producción |
 | `npx vercel deploy --prod` | Despliega desde el código local |
 
-Antes de dar por terminado un cambio: **typecheck, lint, build, las dos
-pruebas y el audit**. Tras desplegar, retirar los despliegues anteriores
+Antes de dar por terminado un cambio: **typecheck, lint, build, las tres
+pruebas (rls, lógica y bundle) y el audit**. Tras desplegar, retirar los despliegues anteriores
 (`npx vercel ls` / `npx vercel remove`): sus direcciones siguen vivas y
 apuntan a la misma base con código viejo.
 
@@ -150,7 +172,9 @@ Dos de ellas van en pareja porque Postgres no deja usar un valor de enum en
 la misma transacción en la que se crea: `006`/`007` y `008`/`009`. La primera
 de cada par se aplica sola, sin transacción.
 
-Para aplicar una migración hace falta conectarse al pooler IPv4
+Se aplican con `npm run db:aplicar -- supabase/migrations/<archivo>.sql`, que
+lee `DATABASE_URL` y mete todo el archivo en una transacción (ver
+[`scripts/README.md`](scripts/README.md)). La conexión va al pooler IPv4
 (`aws-0-us-east-2.pooler.supabase.com:5432`); el host directo es solo IPv6 y
 no responde desde cualquier red.
 
@@ -181,6 +205,7 @@ si el proyecto está enlazado.
 
 ## Documentación relacionada
 
+- [`docs/arquitectura.md`](docs/arquitectura.md) — las capas y dónde va cada cosa
 - [`docs/permisos.md`](docs/permisos.md) — quién puede hacer qué y cómo se calcula
 - [`docs/seguridad.md`](docs/seguridad.md) — modelo de amenazas y estado actual
 - [`docs/modulos.md`](docs/modulos.md) — cómo se añade un cuadro-módulo

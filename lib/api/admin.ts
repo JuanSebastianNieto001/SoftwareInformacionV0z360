@@ -1,8 +1,11 @@
 import "server-only";
 
+// Guardias de autorización para Route Handlers. Son el equivalente de
+// exigirAdmin y exigirGestorBuzon (lib/sesion.ts), pero en vez de redirigir
+// devuelven un Response 401/403, que es lo que espera quien llama con fetch.
 import type { User } from "@supabase/supabase-js";
-import { respuestaError } from "./api-errores";
-import { crearClienteServidor, type ClienteServidor } from "./supabase/server";
+import { respuestaError } from "@/lib/api/errores";
+import { crearClienteServidor, type ClienteServidor } from "@/lib/supabase/server";
 
 type Resultado =
   | { error: Response; supabase?: undefined; user?: undefined }

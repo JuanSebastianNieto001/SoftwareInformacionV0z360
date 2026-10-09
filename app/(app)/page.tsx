@@ -9,8 +9,13 @@ import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-p
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { isoDentroDe, plural } from "@/lib/formato";
+import { plural } from "@/lib/formato";
 import { DecoracionCuadro, FONDO_CUADRO, type TemaCuadro } from "@/components/comunes/decoracion-cuadro";
+import {
+  listarAreasVisibles,
+  listarDocumentosPorVencer,
+  listarNivelesPropios,
+} from "@/lib/documentos/datos";
 import { MODULOS, esModulo } from "@/lib/modulos";
 import { ETIQUETA_NIVEL, nivelEfectivo, puedeSubir } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
@@ -19,29 +24,16 @@ export default async function PaginaInicio() {
   const { supabase, perfil } = await exigirSesion();
   const editor = puedeSubir(perfil);
 
-  const [{ data: areas }, { data: permisos }, porVencer] = await Promise.all([
+  const [areas, permisos, documentosPorVencer] = await Promise.all([
     // RLS: solo devuelve las áreas donde nivel_en_area() no es null.
-    supabase
-      .from("areas")
-      .select("id, nombre, slug, descripcion, modulo, documentos(count)")
-      .eq("activa", true)
-      .order("nombre"),
-    supabase.from("permisos_area").select("area_id, nivel").eq("usuario_id", perfil.id),
-    editor
-      ? supabase
-          .from("v_documentos_estado")
-          .select(
-            "id, titulo, nombre_archivo, tamano_bytes, vigente_desde, vigente_hasta, estado, area_nombre, version, veces_consultado, usuarios_distintos, actualizado_en",
-          )
-          .eq("estado", "vigente")
-          .not("vigente_hasta", "is", null)
-          .lte("vigente_hasta", isoDentroDe(7))
-          .order("vigente_hasta", { ascending: true })
-          .limit(20)
-      : Promise.resolve({ data: null }),
+    listarAreasVisibles(supabase),
+    listarNivelesPropios(supabase, perfil.id),
+    editor ? listarDocumentosPorVencer(supabase) : null,
   ]);
+  // Sin permiso de publicar no se consulta: `data` queda en null.
+  const porVencer = { data: documentosPorVencer };
 
-  const nivelPorArea = new Map((permisos ?? []).map((p) => [p.area_id, p.nivel]));
+  const nivelPorArea = new Map(permisos.map((p) => [p.area_id, p.nivel]));
 
   return (
     <>

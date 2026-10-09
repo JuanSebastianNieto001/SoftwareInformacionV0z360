@@ -3,7 +3,7 @@
 // Acciones del módulo de cumpleaños (alta, edición, borrado).
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { GRUPO_ESTRUCTURA } from "@/lib/cumpleanos";
 import { exigirSesion } from "@/lib/sesion";
 import { esquemaCumple, primerError } from "@/lib/validaciones";

@@ -17,6 +17,7 @@ import {
   radicado360,
   varianteNota,
 } from "@/lib/evaluacion";
+import { listarCargosActivos, listarPreguntas360, listarRespuestas360 } from "@/lib/evaluacion/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFecha } from "@/lib/formato";
 
@@ -25,14 +26,10 @@ export const metadata: Metadata = { title: "Matriz 360" };
 export default async function PaginaMatriz360() {
   const { supabase, perfil, puedeEditar, puedeEliminar } = await exigirModulo("evaluacion");
 
-  const [{ data: cargos }, { data: preguntas }, { data: respuestas, error }] = await Promise.all([
-    supabase.from("evaluacion_cargos").select("id, nombre").eq("activo", true).order("orden"),
-    supabase.from("evaluacion_360_preguntas").select("*").order("orden"),
-    supabase
-      .from("v_evaluacion_360")
-      .select("*")
-      .order("consecutivo", { ascending: false })
-      .limit(300),
+  const [cargos, preguntas, { respuestas, error }] = await Promise.all([
+    listarCargosActivos(supabase),
+    listarPreguntas360(supabase),
+    listarRespuestas360(supabase),
   ]);
 
   return (

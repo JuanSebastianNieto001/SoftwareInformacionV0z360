@@ -5,7 +5,8 @@
  */
 import { headers } from "next/headers";
 import { registrarAcceso } from "@/lib/auditoria";
-import { respuestaError } from "@/lib/api-errores";
+import { respuestaError } from "@/lib/api/errores";
+import { listarAuditoriasParaCsv } from "@/lib/calidad/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const dynamic = "force-dynamic";
@@ -24,17 +25,7 @@ export async function GET(req: Request) {
   const desde = sp.get("desde") ?? "";
   const hasta = sp.get("hasta") ?? "";
 
-  let consulta = supabase
-    .from("v_calidad_evaluaciones")
-    .select("fecha_auditoria, fecha_interaccion, asesor_nombre, team_leader, analista_nombre, tipo, etapa, canal, duracion, referencia, estado, nota_sin_ic, nota_final, aprobada, n_no_cumple, n_fatales_fallados, retro_estado, puntos_mejora")
-    .order("fecha_auditoria", { ascending: false })
-    .limit(5000);
-  if (q) consulta = consulta.ilike("asesor_nombre", `%${q}%`);
-  if (tl) consulta = consulta.eq("team_leader", tl);
-  if (estado === "borrador" || estado === "publicada") consulta = consulta.eq("estado", estado);
-  if (desde) consulta = consulta.gte("fecha_auditoria", desde);
-  if (hasta) consulta = consulta.lte("fecha_auditoria", hasta);
-  const { data, error } = await consulta;
+  const { data, error } = await listarAuditoriasParaCsv(supabase, { q, tl, estado, desde, hasta });
   if (error) return respuestaError(error.message, 500);
 
   await registrarAcceso(supabase, user, {

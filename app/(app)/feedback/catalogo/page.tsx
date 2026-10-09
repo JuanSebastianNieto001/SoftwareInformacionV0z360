@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
+import { listarCatalogoFeedback } from "@/lib/feedback/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import type { CatalogoFeedback } from "@/lib/supabase/tipos";
 
@@ -10,8 +11,7 @@ export const metadata: Metadata = { title: "Catálogo de feedback" };
 
 export default async function PaginaCatalogoFeedback() {
   const { supabase } = await exigirModulo("feedback");
-  const { data } = await supabase.from("feedback_catalogo").select("*").eq("activo", true).order("orden");
-  const catalogo = data ?? [];
+  const catalogo = await listarCatalogoFeedback(supabase);
   if (catalogo.length === 0) return <EstadoVacio titulo="El catálogo está vacío" descripcion="Se carga con la migración del módulo." />;
 
   // Agrupar por tipo → subtipo.

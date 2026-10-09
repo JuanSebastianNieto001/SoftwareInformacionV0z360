@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { estadoObjetivo, nombreMes, porcentaje } from "@/lib/pda";
-import type { EvidenciaPda, TareaPda } from "@/lib/supabase/tipos";
+import { cargarPlanCompleto } from "@/lib/pda/datos";
 
 export const metadata: Metadata = { title: "PDA del mes" };
 
@@ -28,34 +28,15 @@ export default async function PaginaPlanPda({ params }: PageProps<"/pda/[id]">) 
 
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const { data: plan } = await supabase.from("v_pda_planes").select("*").eq("id", id).maybeSingle();
-  if (!plan) notFound();
-
-  const { data: objetivos } = await supabase.from("v_pda_objetivos").select("*").eq("plan_id", id).order("orden").order("creado_en");
-  const lista = objetivos ?? [];
-  const ids = lista.map((o) => o.id);
-  const [{ data: tareas }, { data: evidencias }] = ids.length
-    ? await Promise.all([
-        supabase.from("pda_tareas").select("*").in("objetivo_id", ids).order("orden").order("creado_en"),
-        supabase.from("pda_evidencias").select("*").in("objetivo_id", ids).order("creado_en"),
-      ])
-    : [{ data: [] as TareaPda[] }, { data: [] as EvidenciaPda[] }];
-
-  // Nombres de quien marcó o subió, para no mostrar identificadores.
-  const personas = new Set<string>();
-  for (const t of tareas ?? []) if (t.completada_por) personas.add(t.completada_por);
-  for (const e of evidencias ?? []) if (e.subido_por) personas.add(e.subido_por);
-  const nombres: Record<string, string> = {};
-  if (personas.size) {
-    const { data: perfiles } = await supabase.from("perfiles").select("id, nombre").in("id", [...personas]);
-    for (const p of perfiles ?? []) nombres[p.id] = p.nombre;
-  }
+  const datos = await cargarPlanCompleto(supabase, id);
+  if (!datos) notFound();
+  const { plan, objetivos: lista, tareas, evidencias, nombres } = datos;
 
   const cerrado = plan.estado === "cerrado";
   const editable = puedeEditar && !cerrado;
-  const porObjetivo = <T extends { objetivo_id: string }>(filas: T[] | null) => {
+  const porObjetivo = <T extends { objetivo_id: string }>(filas: T[]) => {
     const m = new Map<string, T[]>();
-    for (const f of filas ?? []) m.set(f.objetivo_id, [...(m.get(f.objetivo_id) ?? []), f]);
+    for (const f of filas) m.set(f.objetivo_id, [...(m.get(f.objetivo_id) ?? []), f]);
     return m;
   };
   const tareasPor = porObjetivo(tareas);

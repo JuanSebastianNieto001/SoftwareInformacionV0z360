@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { llamarApi } from "@/lib/subida-cliente";
+import { llamarApi } from "@/lib/archivos/subida-cliente";
 
 /** Botón "Eliminar" (solo admin) con confirmación. Llama a DELETE /api/documentos/[id]. */
 export function AccionesDocumento({

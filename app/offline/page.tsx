@@ -1,3 +1,6 @@
+// Pantalla /offline. Vive fuera de los grupos (app) y (admin) para no heredar
+// su layout con sesión, y el proxy la trata como pública: public/sw.js la
+// precachea y debe poder mostrarse sin red, sin cookies y sin Supabase.
 import type { Metadata } from "next";
 import { WifiOff } from "lucide-react";
 

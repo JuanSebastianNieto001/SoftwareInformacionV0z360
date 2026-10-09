@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { registrarAcceso } from "@/lib/auditoria";
 import { ETIQUETA_ESTADO_EVALUACION, PESO_DEFECTO, type PerspectivaFormato } from "@/lib/evaluacion";
+import { obtenerContenidoHoja, obtenerEvaluacion } from "@/lib/evaluacion/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFechaHora } from "@/lib/formato";
 
@@ -23,24 +24,18 @@ export default async function PaginaEvaluacion({ params }: PageProps<"/evaluacio
   const { supabase, user, perfil, puedeEditar, puedeEliminar } = await exigirModulo("evaluacion");
 
   // RLS: sin permiso sobre el módulo la fila no vuelve, y la URL es un 404.
-  const { data: evaluacion } = await supabase.from("evaluaciones").select("*").eq("id", id).maybeSingle();
+  const evaluacion = await obtenerEvaluacion(supabase, id);
   if (!evaluacion) notFound();
 
-  const [{ data: cargo }, { data: criterios }, { data: calificaciones }, { data: observaciones }, { data: pesosFilas }] =
-    await Promise.all([
-      supabase.from("evaluacion_cargos").select("*").eq("id", evaluacion.cargo_id).maybeSingle(),
-      supabase.from("evaluacion_criterios").select("*").eq("cargo_id", evaluacion.cargo_id).order("orden"),
-      supabase
-        .from("evaluacion_calificaciones")
-        .select("criterio_id, perspectiva, calificacion")
-        .eq("evaluacion_id", id),
-      supabase.from("evaluacion_observaciones").select("criterio_id, observacion").eq("evaluacion_id", id),
-      supabase.from("evaluacion_pesos").select("perspectiva, peso"),
-    ]);
+  const { cargo, criterios, calificaciones, observaciones, pesos: pesosFilas } = await obtenerContenidoHoja(
+    supabase,
+    id,
+    evaluacion.cargo_id,
+  );
   if (!cargo) notFound();
 
   const pesos: Record<PerspectivaFormato, number> = { ...PESO_DEFECTO };
-  for (const p of pesosFilas ?? []) {
+  for (const p of pesosFilas) {
     if (p.perspectiva in pesos) pesos[p.perspectiva as PerspectivaFormato] = Number(p.peso);
   }
 

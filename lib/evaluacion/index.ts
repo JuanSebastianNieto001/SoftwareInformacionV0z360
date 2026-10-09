@@ -1,5 +1,5 @@
-import type { PerspectivaEvaluacion } from "./supabase/tipos";
-import { PERSPECTIVAS_FORMATO } from "./validaciones";
+import type { PerspectivaEvaluacion } from "@/lib/supabase/tipos";
+import { PERSPECTIVAS_FORMATO } from "@/lib/validaciones";
 
 /**
  * Evaluación de desempeño 360°: etiquetas, escalas y las FÓRMULAS del

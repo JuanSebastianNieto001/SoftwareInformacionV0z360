@@ -1,6 +1,9 @@
+// Alta de una evaluación por cargo (solo con nivel de edición): la cabecera de
+// la hoja; al guardar se abre la hoja para calificar.
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FormularioEvaluacionNueva } from "@/components/evaluacion/formulario-evaluacion-nueva";
+import { listarCargosParaNuevaEvaluacion } from "@/lib/evaluacion/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 
 export const metadata: Metadata = { title: "Nueva evaluación" };
@@ -11,11 +14,7 @@ export default async function PaginaNuevaEvaluacion() {
   // igualmente, pero no hay por qué mostrar un formulario que no va a funcionar.
   if (!puedeEditar) notFound();
 
-  const { data: cargos } = await supabase
-    .from("evaluacion_cargos")
-    .select("id, nombre, etiqueta_evaluado, campana_defecto")
-    .eq("activo", true)
-    .order("orden");
+  const cargos = await listarCargosParaNuevaEvaluacion(supabase);
 
   return (
     <div className="mx-auto max-w-3xl">

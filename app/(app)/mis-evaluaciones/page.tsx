@@ -11,6 +11,7 @@ import { FirmaRetro } from "@/components/calidad/firma-retro";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { ETIQUETA_ESTADO_COMPROMISO, ETIQUETA_ESTADO_RETRO, formatearPorcentaje } from "@/lib/calidad";
+import { cargarMisEvaluaciones } from "@/lib/calidad/datos";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
@@ -20,19 +21,8 @@ export const metadata: Metadata = { title: "Mis evaluaciones de calidad" };
 export default async function PaginaMisEvaluaciones() {
   const { supabase, user } = await exigirSesion();
 
-  const { data: yo } = await supabase.from("calidad_asesores").select("id, nombre, team_leader").eq("usuario_id", user.id).maybeSingle();
-  const { data: evals } = yo
-    ? await supabase.from("v_calidad_evaluaciones").select("*").eq("asesor_id", yo.id).eq("estado", "publicada").order("fecha_auditoria", { ascending: false }).limit(50)
-    : { data: [] };
+  const { yo, evals, fallas, items, retros, compromisos } = await cargarMisEvaluaciones(supabase, user.id);
   const lista = evals ?? [];
-  const ids = lista.map((e) => e.id);
-  const [{ data: fallas }, { data: items }, { data: retros }] = await Promise.all([
-    ids.length ? supabase.from("calidad_respuestas").select("evaluacion_id, item_id, hallazgo").eq("resultado", "no_cumple").in("evaluacion_id", ids) : Promise.resolve({ data: [] as { evaluacion_id: string; item_id: string; hallazgo: string | null }[] }),
-    supabase.from("calidad_items").select("id, categoria, descripcion, es_fatal"),
-    ids.length ? supabase.from("calidad_retroalimentaciones").select("*").in("evaluacion_id", ids) : Promise.resolve({ data: [] as never[] }),
-  ]);
-  const retroIds = (retros ?? []).map((r) => r.id);
-  const { data: compromisos } = retroIds.length ? await supabase.from("calidad_compromisos").select("*").in("retro_id", retroIds).order("fecha_limite") : { data: [] };
   const itemPorId = new Map((items ?? []).map((i) => [i.id, i]));
 
   return (

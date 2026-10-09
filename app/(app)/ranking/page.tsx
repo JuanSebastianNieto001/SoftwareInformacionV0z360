@@ -10,6 +10,7 @@ import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-p
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { cargarRankingDelMes } from "@/lib/calidad/datos";
 import { exigirSesion } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ export default async function PaginaRanking({ searchParams }: PageProps<"/rankin
   const tl = typeof sp.tl === "string" ? sp.tl : "";
   const { supabase } = await exigirSesion();
 
-  const { data, error } = await supabase.rpc("ranking_calidad_mes");
+  const { data, error } = await cargarRankingDelMes(supabase);
   const todos = data ?? [];
   const teamLeaders = [...new Set(todos.map((r) => r.team_leader).filter((t): t is string => !!t))].sort();
   const lista = tl ? todos.filter((r) => r.team_leader === tl) : todos;

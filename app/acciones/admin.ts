@@ -5,7 +5,7 @@
 // acepten o rechacen.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   esquemaArea,

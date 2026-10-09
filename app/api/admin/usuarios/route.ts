@@ -1,5 +1,10 @@
-import { exigirAdminApi } from "@/lib/api-admin";
-import { leerJson, mensajePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
+// API de /admin/usuarios (components/admin/gestion-usuarios.tsx): listar, crear
+// y editar cuentas. Lo que vive en Auth (alta, contraseña, bloqueo de login,
+// cierre de sesiones) se hace con la clave de servicio; lo que vive en
+// `perfiles` (rol, activo, nombre, cargo) va con la sesión del administrador,
+// para que RLS siga siendo quien autoriza la elevación de privilegios.
+import { exigirAdminApi } from "@/lib/api/admin";
+import { leerJson, mensajePostgrest, respuestaError, respuestaOk } from "@/lib/api/errores";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { NivelAcceso, Tablas } from "@/lib/supabase/tipos";
 import { esquemaUsuarioEdicion, esquemaUsuarioNuevo, primerError } from "@/lib/validaciones";

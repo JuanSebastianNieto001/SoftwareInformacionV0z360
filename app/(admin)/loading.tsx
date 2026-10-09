@@ -1,3 +1,4 @@
+// Carga del grupo (admin): Next.js la muestra mientras la página resuelve sus datos.
 import { Loader2 } from "lucide-react";
 
 /** Estado de carga instantáneo del panel de administración (ver app/(app)/loading.tsx). */

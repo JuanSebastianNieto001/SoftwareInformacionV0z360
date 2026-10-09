@@ -9,6 +9,7 @@ import ExcelJS from "exceljs";
 import { registrarAcceso } from "@/lib/auditoria";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { COLUMNAS_PDA, mesMayusculas, nombreMes } from "@/lib/pda";
+import { cargarPlanParaExcel } from "@/lib/pda/datos";
 import type { ObjetivoPda } from "@/lib/supabase/tipos";
 
 export const dynamic = "force-dynamic";
@@ -36,15 +37,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response("Identificador inválido.", { status: 400 });
 
-  const { data: plan } = await supabase.from("v_pda_planes").select("*").eq("id", id).maybeSingle();
-  if (!plan) return new Response("PDA no encontrado.", { status: 404 });
-
-  const [{ data: objetivos }, { data: tareas }, { data: evidencias }] = await Promise.all([
-    supabase.from("v_pda_objetivos").select("*").eq("plan_id", id).order("orden").order("creado_en"),
-    supabase.from("pda_tareas").select("*").eq("area_id", plan.area_id).order("orden").order("creado_en"),
-    supabase.from("pda_evidencias").select("*").eq("area_id", plan.area_id).order("creado_en"),
-  ]);
-  const lista = objetivos ?? [];
+  const datos = await cargarPlanParaExcel(supabase, id);
+  if (!datos) return new Response("PDA no encontrado.", { status: 404 });
+  const { plan, objetivos: lista, tareas, evidencias } = datos;
   const ids = new Set(lista.map((o) => o.id));
   const numero = new Map(lista.map((o, i) => [o.id, i + 1]));
 
@@ -115,7 +110,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   ];
   chequeo.getRow(1).font = { bold: true, name: "Arial", size: 9 };
   chequeo.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: GRIS } };
-  for (const t of (tareas ?? []).filter((t) => ids.has(t.objetivo_id))) {
+  for (const t of tareas.filter((t) => ids.has(t.objetivo_id))) {
     const o = lista.find((x) => x.id === t.objetivo_id);
     chequeo
       .addRow({
@@ -129,8 +124,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       })
       .font = { name: "Arial", size: 9 };
   }
-  const hechas = (tareas ?? []).filter((t) => ids.has(t.objetivo_id) && t.completada).length;
-  const total = (tareas ?? []).filter((t) => ids.has(t.objetivo_id)).length;
+  const hechas = tareas.filter((t) => ids.has(t.objetivo_id) && t.completada).length;
+  const total = tareas.filter((t) => ids.has(t.objetivo_id)).length;
   if (total) {
     const r = chequeo.addRow({ descripcion: `CUMPLIMIENTO DE ACTIVIDADES: ${hechas} de ${total} (${Math.round((100 * hechas) / total)} %)` });
     r.font = { bold: true, name: "Arial", size: 9 };
@@ -148,7 +143,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   ];
   idx.getRow(1).font = { bold: true, name: "Arial", size: 9 };
   idx.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: GRIS } };
-  for (const e of (evidencias ?? []).filter((e) => ids.has(e.objetivo_id))) {
+  for (const e of evidencias.filter((e) => ids.has(e.objetivo_id))) {
     const o = lista.find((x) => x.id === e.objetivo_id);
     idx
       .addRow({

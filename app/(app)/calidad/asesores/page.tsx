@@ -9,6 +9,7 @@ import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cargarEstructuraOperativa } from "@/lib/calidad/datos";
 import { nombreComparable } from "@/lib/cumpleanos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
@@ -27,10 +28,7 @@ export default async function PaginaAsesores({ searchParams }: PageProps<"/calid
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const verInactivos = sp.inactivos === "1";
 
-  const [{ data: asesores }, { data: perfiles }] = await Promise.all([
-    supabase.from("calidad_asesores").select("*").order("team_leader").order("nombre"),
-    supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
-  ]);
+  const { asesores, perfiles } = await cargarEstructuraOperativa(supabase);
   const todos = asesores ?? [];
   const teamLeaders = [...new Set(todos.map((a) => a.team_leader).filter((t): t is string => !!t))].sort();
   const nombrePerfil = new Map((perfiles ?? []).map((p) => [p.id, p.nombre]));

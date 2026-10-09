@@ -2,7 +2,7 @@ import {
   EXTENSIONES_PERMITIDAS,
   MIME_PERMITIDOS,
   type MimePermitido,
-} from "./validaciones";
+} from "@/lib/validaciones";
 
 /**
  * Convierte un nombre de archivo cualquiera en uno seguro para Storage:

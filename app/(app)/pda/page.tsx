@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { CARGOS_PDA, estadoObjetivo, mesActual, nombreMes, porcentaje } from "@/lib/pda";
+import { listarPlanes } from "@/lib/pda/datos";
 import type { PlanPda } from "@/lib/supabase/tipos";
 
 export const metadata: Metadata = { title: "PDA" };
@@ -36,9 +37,8 @@ function etiquetaPlan(p: PlanPda): string {
 export default async function PaginaPda() {
   const { supabase, puedeEditar, perfil } = await exigirModulo("pda");
 
-  const { data: planes, error } = await supabase.from("v_pda_planes").select("*").order("periodo", { ascending: false }).order("cargo").limit(240);
+  const { planes: todos, error } = await listarPlanes(supabase);
 
-  const todos = planes ?? [];
   const mes = mesActual();
   const delMes = todos.filter((p) => p.periodo.startsWith(mes));
   const cargosSinPlan = CARGOS_PDA.filter((c) => !delMes.some((p) => p.cargo === c));

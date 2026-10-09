@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { registrarAcceso } from "@/lib/auditoria";
 import { ETIQUETA_CANAL, ETIQUETA_ESTADO_EVALUACION_CALIDAD, formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { cargarDetalleAuditoria, obtenerAuditoria, puedeEliminarAuditorias } from "@/lib/calidad/datos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import type { CANALES } from "@/lib/calidad";
@@ -27,23 +28,14 @@ export default async function PaginaAuditoria({ params }: PageProps<"/calidad/ev
   const { id } = await params;
   const { supabase, user, perfil, puedeEditar } = await exigirModulo("calidad");
 
-  const [{ data: ev }, { data: puedeEliminar }] = await Promise.all([
-    supabase.from("v_calidad_evaluaciones").select("*").eq("id", id).maybeSingle(),
+  const [ev, puedeEliminar] = await Promise.all([
+    obtenerAuditoria(supabase, id),
     // Eliminar es solo para quien tiene Total explícito (coordinación de Formación).
-    supabase.rpc("calidad_puede_eliminar"),
+    puedeEliminarAuditorias(supabase),
   ]);
   if (!ev) notFound();
 
-  const [{ data: items }, { data: respuestas }, { data: retro }, { data: matrices }, { data: asesores }] = await Promise.all([
-    supabase.from("calidad_items").select("*").eq("matriz_id", ev.matriz_id).order("orden"),
-    supabase.from("calidad_respuestas").select("item_id, resultado, hallazgo").eq("evaluacion_id", id),
-    supabase.from("calidad_retroalimentaciones").select("*").eq("evaluacion_id", id).maybeSingle(),
-    supabase.from("calidad_matrices").select("id, nombre, activa").order("nombre"),
-    supabase.from("calidad_asesores").select("id, nombre, team_leader, activo").order("nombre"),
-  ]);
-  const { data: compromisos } = retro
-    ? await supabase.from("calidad_compromisos").select("*").eq("retro_id", retro.id).order("fecha_limite")
-    : { data: [] };
+  const { items, respuestas, retro, matrices, asesores, compromisos } = await cargarDetalleAuditoria(supabase, { id, matrizId: ev.matriz_id });
 
   await registrarAcceso(supabase, user, {
     accion: "abrir",

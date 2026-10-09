@@ -12,6 +12,12 @@ import {
   nivelFormato,
   varianteNota,
 } from "@/lib/evaluacion";
+import {
+  listarEvaluaciones,
+  listarNotasDeEvaluaciones,
+  listarPeriodos,
+  listarTodosLosCargos,
+} from "@/lib/evaluacion/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { formatearFecha } from "@/lib/formato";
 import { ESTADOS_EVALUACION } from "@/lib/validaciones";
@@ -34,28 +40,18 @@ export default async function PaginaFormatos({ searchParams }: PageProps<"/evalu
     ? (estadoParam as EstadoEvaluacion)
     : "";
 
-  let consulta = supabase
-    .from("evaluaciones")
-    .select("id, cargo_id, periodo, evaluado_nombre, evaluador_nombre, fecha_evaluacion, estado, actualizado_en")
-    .order("actualizado_en", { ascending: false })
-    .limit(300);
-  if (cargoId) consulta = consulta.eq("cargo_id", cargoId);
-  if (periodo) consulta = consulta.eq("periodo", periodo);
-  if (estado) consulta = consulta.eq("estado", estado);
-
-  const [{ data: cargos }, { data: evaluaciones, error }, { data: filasPeriodo }] = await Promise.all([
-    supabase.from("evaluacion_cargos").select("id, nombre").order("orden"),
-    consulta,
-    supabase.from("evaluaciones").select("periodo").limit(1000),
+  const [cargos, { evaluaciones, error }, periodos] = await Promise.all([
+    listarTodosLosCargos(supabase),
+    listarEvaluaciones(supabase, { cargoId, periodo, estado }),
+    listarPeriodos(supabase),
   ]);
 
-  const ids = (evaluaciones ?? []).map((e) => e.id);
-  const { data: resultados } = ids.length
-    ? await supabase.from("v_evaluacion_resultados").select("evaluacion_id, nota_final, n_calificaciones").in("evaluacion_id", ids)
-    : { data: [] };
-  const resultadoPorId = new Map((resultados ?? []).map((r) => [r.evaluacion_id, r]));
-  const nombreCargo = new Map((cargos ?? []).map((c) => [c.id, c.nombre]));
-  const periodos = [...new Set((filasPeriodo ?? []).map((f) => f.periodo))].sort().reverse();
+  const resultados = await listarNotasDeEvaluaciones(
+    supabase,
+    evaluaciones.map((e) => e.id),
+  );
+  const resultadoPorId = new Map(resultados.map((r) => [r.evaluacion_id, r]));
+  const nombreCargo = new Map(cargos.map((c) => [c.id, c.nombre]));
   const hayFiltro = !!(cargoId || periodo || estado);
 
   return (

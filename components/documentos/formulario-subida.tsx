@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { construirRutaStorage, sanitizarNombreArchivo } from "@/lib/archivos";
 import { finDeDiaIso, hoyIso, inicioDeDiaIso, sumarADia } from "@/lib/formato";
 import { crearClienteNavegador } from "@/lib/supabase/client";
-import { llamarApi, normalizarArchivo, subirArchivoConProgreso } from "@/lib/subida-cliente";
+import { llamarApi, normalizarArchivo, subirArchivoConProgreso } from "@/lib/archivos/subida-cliente";
 import { esquemaSubida, primerError } from "@/lib/validaciones";
 
 type AreaOpcion = { id: string; nombre: string };

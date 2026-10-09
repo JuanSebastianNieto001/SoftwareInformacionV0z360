@@ -7,6 +7,14 @@ import Link from "next/link";
 import { MatrizPermisos } from "@/components/admin/matriz-permisos";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Button } from "@/components/ui/button";
+import {
+  listarAreasConEstado,
+  listarGruposConEstado,
+  listarMiembrosDeGrupos,
+  listarPerfilesConRol,
+  listarPermisosDeGrupos,
+  listarPermisosPorPersona,
+} from "@/lib/admin/datos";
 import { exigirAdmin } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Permisos" };
@@ -15,20 +23,13 @@ export default async function PaginaPermisos({ searchParams }: PageProps<"/admin
   const sp = await searchParams;
   const { supabase } = await exigirAdmin();
 
-  const [
-    { data: perfiles },
-    { data: areas },
-    { data: permisos },
-    { data: grupos },
-    { data: miembros },
-    { data: permisosGrupo },
-  ] = await Promise.all([
-    supabase.from("perfiles").select("id, nombre, cargo, rol, activo").order("nombre"),
-    supabase.from("areas").select("id, nombre, activa").order("nombre"),
-    supabase.from("permisos_area").select("usuario_id, area_id, nivel"),
-    supabase.from("grupos").select("id, nombre, activo").order("nombre"),
-    supabase.from("grupos_usuarios").select("grupo_id, usuario_id"),
-    supabase.from("permisos_grupo").select("grupo_id, area_id, nivel"),
+  const [perfiles, areas, permisos, grupos, miembros, permisosGrupo] = await Promise.all([
+    listarPerfilesConRol(supabase),
+    listarAreasConEstado(supabase),
+    listarPermisosPorPersona(supabase),
+    listarGruposConEstado(supabase),
+    listarMiembrosDeGrupos(supabase),
+    listarPermisosDeGrupos(supabase),
   ]);
 
   const usuarioInicial = typeof sp.usuario === "string" ? sp.usuario : null;

@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { ShieldAlert, Trash2 } from "lucide-react";
 import { EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
+import { listarFeedbackEliminado, puedeEliminarFeedback } from "@/lib/feedback/datos";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 
@@ -15,11 +16,10 @@ export const metadata: Metadata = { title: "Feedback eliminado" };
 
 export default async function PaginaFeedbackEliminado() {
   const { supabase, perfil } = await exigirModulo("feedback");
-  const { data: puedeEliminar } = await supabase.rpc("feedback_puede_eliminar");
+  const puedeEliminar = await puedeEliminarFeedback(supabase);
   if (perfil.rol !== "admin" && !puedeEliminar) notFound();
 
-  const { data } = await supabase.from("feedback_eliminaciones").select("*").order("eliminado_en", { ascending: false }).limit(500);
-  const lista = data ?? [];
+  const lista = await listarFeedbackEliminado(supabase);
 
   return (
     <div className="space-y-4">

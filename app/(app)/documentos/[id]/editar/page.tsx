@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { FormularioEdicion } from "@/components/documentos/formulario-edicion";
 import { Button } from "@/components/ui/button";
+import { buscarDocumentoParaEditar, nivelEnArea } from "@/lib/documentos/datos";
 import { isoADia } from "@/lib/formato";
 import { exigirSesion } from "@/lib/sesion";
 
@@ -18,18 +19,12 @@ export default async function PaginaEditarDocumento({ params }: PageProps<"/docu
   const { id } = await params;
   const { supabase } = await exigirSesion();
 
-  const { data: doc } = await supabase
-    .from("documentos")
-    .select(
-      "id, area_id, titulo, descripcion, etiquetas, nombre_archivo, mime, tamano_bytes, version, vigente_desde, vigente_hasta, purgado_en, areas(nombre)",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const doc = await buscarDocumentoParaEditar(supabase, id);
   if (!doc) notFound();
 
   // Guardia de UI: sin nivel de edición se vuelve al detalle. RLS haría
   // fallar cualquier PATCH de todos modos.
-  const { data: nivel } = await supabase.rpc("nivel_en_area", { a: doc.area_id });
+  const nivel = await nivelEnArea(supabase, doc.area_id);
   if (nivel !== "edicion") redirect(`/documentos/${doc.id}`);
 
   return (

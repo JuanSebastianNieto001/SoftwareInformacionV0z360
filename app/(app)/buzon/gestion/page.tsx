@@ -9,6 +9,7 @@ import { BandejaBuzon } from "@/components/buzon/bandeja-buzon";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { TableroBuzon } from "@/components/buzon/tablero-buzon";
 import { Button } from "@/components/ui/button";
+import { listarCasosDelBuzon, listarPersonasActivas } from "@/lib/buzon/datos";
 import { exigirGestorBuzon } from "@/lib/sesion";
 
 export const metadata: Metadata = { title: "Buzón" };
@@ -17,9 +18,9 @@ export default async function PaginaBuzonGestion() {
   const { supabase } = await exigirGestorBuzon();
 
   // Las dos consultas son independientes: van en paralelo.
-  const [{ data: casos }, { data: personas }] = await Promise.all([
-    supabase.from("sugerencias").select("*").order("creado_en", { ascending: false }).limit(500),
-    supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
+  const [casos, personas] = await Promise.all([
+    listarCasosDelBuzon(supabase),
+    listarPersonasActivas(supabase),
   ]);
 
   return (

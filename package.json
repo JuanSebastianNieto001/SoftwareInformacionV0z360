@@ -9,7 +9,10 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "prueba:rls": "node pruebas/rls.test.mjs",
+    "prueba:logica": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./pruebas/cargador-ts.mjs --test \"pruebas/logica/*.test.ts\"",
     "prueba:bundle": "node pruebas/bundle-sin-secretos.mjs",
+    "db:aplicar": "node --env-file=.env.local scripts/aplicar-migracion.mjs",
+    "usuarios:alta": "node --env-file=.env.local scripts/alta-usuarios.mjs",
     "codigo-muerto": "knip"
   },
   "dependencies": {
@@ -38,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "knip": "^5.88.1",
+    "pg": "^8.23.1",
     "shadcn": "^4.21.2",
     "tailwindcss": "^4",
     "typescript": "^5"

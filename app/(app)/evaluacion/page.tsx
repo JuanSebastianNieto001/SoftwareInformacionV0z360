@@ -19,6 +19,13 @@ import {
   nivelDashboard,
   varianteNota,
 } from "@/lib/evaluacion";
+import {
+  listarCargosActivosConArea,
+  listarEvaluacionesDelPeriodo,
+  listarPeriodos,
+  listarPromedios360,
+  listarResultadosDeEvaluaciones,
+} from "@/lib/evaluacion/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
 import { PERSPECTIVAS_360 } from "@/lib/validaciones";
@@ -47,42 +54,24 @@ export default async function PaginaDashboardEvaluacion({
   const todos = periodo === "todos";
   const esAnio = /^\d{4}$/.test(periodo);
 
-  let consultaEvaluaciones = supabase
-    .from("evaluaciones")
-    .select("id, cargo_id, periodo, estado")
-    .limit(1000);
-  if (!todos) consultaEvaluaciones = consultaEvaluaciones.eq("periodo", periodo);
+  const [cargos, evaluaciones, periodos, respuestas] = await Promise.all([
+    listarCargosActivosConArea(supabase),
+    listarEvaluacionesDelPeriodo(supabase, todos ? null : periodo),
+    listarPeriodos(supabase),
+    listarPromedios360(supabase, esAnio ? periodo : null),
+  ]);
 
-  let consulta360 = supabase
-    .from("v_evaluacion_360")
-    .select("perspectiva, promedio, liderazgo, trabajo_equipo, calidad_resultados, adaptabilidad")
-    .limit(2000);
-  if (esAnio) consulta360 = consulta360.gte("fecha", `${periodo}-01-01`).lte("fecha", `${periodo}-12-31`);
+  const resultados = await listarResultadosDeEvaluaciones(
+    supabase,
+    evaluaciones.map((e) => e.id),
+  );
+  const resultadoPorId = new Map(resultados.map((r) => [r.evaluacion_id, r]));
 
-  const [{ data: cargos }, { data: evaluaciones }, { data: filasPeriodo }, { data: r360 }] =
-    await Promise.all([
-      supabase
-        .from("evaluacion_cargos")
-        .select("id, codigo, nombre, area_departamento")
-        .eq("activo", true)
-        .order("orden"),
-      consultaEvaluaciones,
-      supabase.from("evaluaciones").select("periodo").limit(1000),
-      consulta360,
-    ]);
-
-  const ids = (evaluaciones ?? []).map((e) => e.id);
-  const { data: resultados } = ids.length
-    ? await supabase.from("v_evaluacion_resultados").select("*").in("evaluacion_id", ids)
-    : { data: [] };
-  const resultadoPorId = new Map((resultados ?? []).map((r) => [r.evaluacion_id, r]));
-
-  const periodos = [...new Set((filasPeriodo ?? []).map((f) => f.periodo))].sort().reverse();
   if (!periodos.includes(anioActual())) periodos.unshift(anioActual());
 
   // ---- Dashboard: una fila por cargo (E7..K21) ----
-  const filas = (cargos ?? []).map((c) => {
-    const propias = (evaluaciones ?? [])
+  const filas = cargos.map((c) => {
+    const propias = evaluaciones
       .filter((e) => e.cargo_id === c.id)
       .map((e) => resultadoPorId.get(e.id))
       .filter((r): r is NonNullable<typeof r> => !!r);
@@ -108,7 +97,6 @@ export default async function PaginaDashboardEvaluacion({
   const conformidad = conformidadGeneral(general.nota);
 
   // ---- Resumen General: lo que sale de la matriz 360 ----
-  const respuestas = r360 ?? [];
   const promedioGlobal = media(respuestas.map((r) => r.promedio));
   const porPerspectiva = PERSPECTIVAS_360.map((p) => {
     const propias = respuestas.filter((r) => r.perspectiva === p);

@@ -12,6 +12,7 @@ import { FiltrosDocumentos, limpiarBusqueda } from "@/components/documentos/filt
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buscarAreaPorSlug, listarDocumentos, nivelEnArea } from "@/lib/documentos/datos";
 import { MODULOS, esModulo } from "@/lib/modulos";
 import { ETIQUETA_NIVEL } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
@@ -28,17 +29,13 @@ export default async function PaginaArea({ params, searchParams }: PageProps<"/a
   const { supabase, perfil } = await exigirSesion();
 
   // RLS: si el usuario no tiene permiso sobre el área, no existe para él.
-  const { data: area } = await supabase
-    .from("areas")
-    .select("id, nombre, slug, descripcion, activa, modulo")
-    .eq("slug", slug)
-    .maybeSingle();
+  const area = await buscarAreaPorSlug(supabase, slug);
   if (!area) notFound();
   // Un cuadro-módulo no lista documentos: abre su propia pantalla. El
   // permiso ya quedó comprobado arriba (sin él, la fila no vuelve).
   if (esModulo(area.modulo)) redirect(MODULOS[area.modulo].href);
 
-  const { data: nivel } = await supabase.rpc("nivel_en_area", { a: area.id });
+  const nivel = await nivelEnArea(supabase, area.id);
   const puedeEditar = nivel === "edicion";
 
   const q = limpiarBusqueda(typeof sp.q === "string" ? sp.q : "");
@@ -47,19 +44,12 @@ export default async function PaginaArea({ params, searchParams }: PageProps<"/a
     ? (estadoParam as EstadoDocumento)
     : "";
 
-  let consulta = supabase
-    .from("v_documentos_estado")
-    .select(
-      "id, titulo, nombre_archivo, tamano_bytes, vigente_desde, vigente_hasta, estado, area_nombre, version, veces_consultado, usuarios_distintos, actualizado_en",
-    )
-    .eq("area_id", area.id)
-    .order("creado_en", { ascending: false })
-    .limit(300);
-
-  if (q) consulta = consulta.or(`titulo.ilike.%${q}%,descripcion.ilike.%${q}%`);
-  if (estado) consulta = consulta.eq("estado", estado);
-
-  const { data: documentos, error } = await consulta;
+  const { documentos, error } = await listarDocumentos(supabase, {
+    areaId: area.id,
+    q,
+    estado,
+    limite: 300,
+  });
 
   return (
     <>

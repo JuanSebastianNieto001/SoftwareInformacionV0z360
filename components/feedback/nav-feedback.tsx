@@ -1,5 +1,8 @@
 "use client";
 
+// Barra de pestañas de /feedback (la pinta app/(app)/feedback/layout.tsx) y la
+// clase compartida de los select del módulo. Ocultar una pestaña no protege la
+// ruta: /feedback/nuevo y /feedback/eliminados vuelven a comprobar y dan 404.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, ListChecks, Plus, Trash2 } from "lucide-react";

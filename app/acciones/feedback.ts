@@ -6,7 +6,7 @@
 // de la base; aquí solo se valida la forma y se traducen los errores.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { exigirSesion } from "@/lib/sesion";
 import {
   esquemaConformidadFeedback,

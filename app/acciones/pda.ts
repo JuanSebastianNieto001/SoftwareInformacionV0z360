@@ -5,7 +5,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { registrarAcceso } from "@/lib/auditoria";
 import { exigirSesion } from "@/lib/sesion";
 import { rutaEvidenciaPda } from "@/lib/pda";

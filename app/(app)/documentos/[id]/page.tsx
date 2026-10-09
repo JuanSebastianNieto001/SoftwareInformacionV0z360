@@ -26,6 +26,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extensionVisible } from "@/lib/archivos";
+import {
+  buscarDocumento,
+  buscarSlugDeArea,
+  listarAccesosDelDocumento,
+  listarPendientesDeLeer,
+  nivelEnArea,
+} from "@/lib/documentos/datos";
 import { describirVencimiento, formatearBytes, formatearFecha, formatearFechaHora, usuarioVisible } from "@/lib/formato";
 import { puedeDescargar, puedeEditarArea, puedeEliminarArea } from "@/lib/permisos";
 import { exigirSesion } from "@/lib/sesion";
@@ -43,29 +50,21 @@ export default async function PaginaDocumento({ params }: PageProps<"/documentos
   const { supabase, perfil } = await exigirSesion();
 
   // RLS: si no tiene permiso (o está vencido y es lector), no existe.
-  const { data: doc } = await supabase
-    .from("v_documentos_estado")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const doc = await buscarDocumento(supabase, id);
   if (!doc) notFound();
 
   const esAdmin = perfil.rol === "admin";
 
-  const [{ data: nivel }, { data: area }, accesos, pendientes] = await Promise.all([
-    supabase.rpc("nivel_en_area", { a: doc.area_id }),
-    supabase.from("areas").select("slug").eq("id", doc.area_id).maybeSingle(),
-    esAdmin
-      ? supabase
-          .from("accesos")
-          .select("id, usuario_nombre, usuario_email, accion, ocurrio_en, ip")
-          .eq("documento_id", doc.id)
-          .in("accion", ["abrir", "descargar"])
-          .order("ocurrio_en", { ascending: false })
-          .limit(100)
-      : Promise.resolve({ data: null }),
-    esAdmin ? supabase.rpc("pendientes_de_leer", { doc: doc.id }) : Promise.resolve({ data: null }),
+  const [nivel, area, accesosDelDocumento, pendientesDeLeer] = await Promise.all([
+    nivelEnArea(supabase, doc.area_id),
+    buscarSlugDeArea(supabase, doc.area_id),
+    esAdmin ? listarAccesosDelDocumento(supabase, doc.id) : null,
+    esAdmin ? listarPendientesDeLeer(supabase, doc.id) : null,
   ]);
+  // La trazabilidad es solo del admin: para los demás no se consulta y
+  // `data` queda en null.
+  const accesos = { data: accesosDelDocumento };
+  const pendientes = { data: pendientesDeLeer };
 
   const puedeEditar = puedeEditarArea(nivel);
   const puedeBajar = puedeDescargar(nivel);

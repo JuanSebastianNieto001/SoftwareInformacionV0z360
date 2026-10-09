@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearPorcentaje, varianteNotaCalidad } from "@/lib/calidad";
+import { cargarDashboardCalidad } from "@/lib/calidad/datos";
 import { media } from "@/lib/evaluacion";
 import { hoyIso } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
@@ -45,50 +46,12 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
     meses.push(d.toISOString().slice(0, 7));
   }
 
-  let consulta = supabase
-    .from("v_calidad_evaluaciones")
-    .select("id, asesor_id, asesor_nombre, team_leader, nota_final, nota_sin_ic, nota_minima, aprobada, n_fatales_fallados, retro_estado, canal, tipo")
-    .eq("estado", "publicada")
-    .limit(5000);
-  // Rango [día 1, día 1 del mes siguiente): "-31" era una fecha inválida en
-  // los meses de 30 días y la consulta entera fallaba (septiembre vacío).
-  const inicioSiguiente = new Date(Date.UTC(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 1)).toISOString().slice(0, 10);
-  if (!todos) consulta = consulta.gte("fecha_auditoria", `${mes}-01`).lt("fecha_auditoria", inicioSiguiente);
-  if (tl) consulta = consulta.eq("team_leader", tl);
-  if (auditor) consulta = consulta.eq("analista_nombre", auditor);
-
-  const [{ data: evals }, { data: tls }, { data: items }, { data: auditores }, { data: conteos }] = await Promise.all([
-    consulta,
-    supabase.from("calidad_asesores").select("team_leader").not("team_leader", "is", null),
-    supabase.from("calidad_items").select("id, categoria, descripcion, es_fatal").eq("activo", true),
-    supabase.rpc("calidad_auditores"),
-    supabase.rpc("calidad_conteo_meses", { p_auditor: auditor || null, p_team_leader: tl || null }),
-  ]);
+  const { evals, teamLeaders, items, auditores, conteos, fallas, compromisos } = await cargarDashboardCalidad(supabase, { mes, todos, tl, auditor });
   // Auditorías publicadas por mes (con los filtros de auditor y team leader).
   const porMes = new Map((conteos ?? []).map((c) => [c.mes, c.auditorias]));
   const totalAuditorias = (conteos ?? []).reduce((s, c) => s + c.auditorias, 0);
   const lista = evals ?? [];
-  // Las fallas se filtran con un join embebido (mismos filtros del periodo):
-  // pasar cientos de ids por la URL rompía la petición con «mes: todo». El
-  // servidor corta cada respuesta en 1000 filas, así que se pagina.
-  const fallas: { item_id: string }[] = [];
-  for (let pagina = 0; pagina < 20; pagina++) {
-    let consultaFallas = supabase
-      .from("calidad_respuestas")
-      .select("item_id, calidad_evaluaciones!inner(id)")
-      .eq("resultado", "no_cumple")
-      .eq("calidad_evaluaciones.estado", "publicada")
-      .range(pagina * 1000, pagina * 1000 + 999);
-    if (!todos) consultaFallas = consultaFallas.gte("calidad_evaluaciones.fecha_auditoria", `${mes}-01`).lt("calidad_evaluaciones.fecha_auditoria", inicioSiguiente);
-    if (tl) consultaFallas = consultaFallas.eq("calidad_evaluaciones.team_leader", tl);
-    if (auditor) consultaFallas = consultaFallas.eq("calidad_evaluaciones.analista_nombre", auditor);
-    const { data: tramo } = await consultaFallas.returns<{ item_id: string }[]>();
-    fallas.push(...(tramo ?? []));
-    if (!tramo || tramo.length < 1000) break;
-  }
-  const { data: compromisos } = await supabase.from("calidad_compromisos").select("estado, fecha_limite").limit(5000);
 
-  const teamLeaders = [...new Set((tls ?? []).map((t) => t.team_leader as string))].sort();
   const notas = lista.map((e) => (e.nota_final === null ? null : Number(e.nota_final)));
   const promedio = media(notas);
   // Calidad operativa: promedia la nota sin anular por crítico (el "desempeño neto de proceso" del informe gerencial).

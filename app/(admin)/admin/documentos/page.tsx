@@ -10,6 +10,8 @@ import { ETIQUETA_ESTADO } from "@/components/documentos/estado-badge";
 import { FiltrosDocumentos, limpiarBusqueda } from "@/components/documentos/filtros-documentos";
 import { ListaDocumentos } from "@/components/documentos/lista-documentos";
 import { Button } from "@/components/ui/button";
+import { listarAreasParaFiltro } from "@/lib/admin/datos";
+import { contarDocumentosPorEstado, listarDocumentos } from "@/lib/documentos/datos";
 import { exigirAdmin } from "@/lib/sesion";
 import type { EstadoDocumento } from "@/lib/supabase/tipos";
 import { ESTADOS } from "@/lib/validaciones";
@@ -26,23 +28,11 @@ export default async function PaginaDocumentosAdmin({ searchParams }: PageProps<
   const estado = (ESTADOS as readonly string[]).includes(estadoParam) ? (estadoParam as EstadoDocumento) : "";
   const area = typeof sp.area === "string" && /^[0-9a-f-]{36}$/i.test(sp.area) ? sp.area : "";
 
-  let consulta = supabase
-    .from("v_documentos_estado")
-    .select(
-      "id, titulo, nombre_archivo, tamano_bytes, vigente_desde, vigente_hasta, estado, area_nombre, version, veces_consultado, usuarios_distintos, actualizado_en",
-    )
-    .order("creado_en", { ascending: false })
-    .limit(500);
-  if (q) consulta = consulta.or(`titulo.ilike.%${q}%,descripcion.ilike.%${q}%`);
-  if (estado) consulta = consulta.eq("estado", estado);
-  if (area) consulta = consulta.eq("area_id", area);
-
-  const [{ data: documentos, error }, { data: areas }, ...conteos] = await Promise.all([
-    consulta,
-    supabase.from("areas").select("id, nombre").order("nombre"),
-    ...ESTADOS.map((e) =>
-      supabase.from("v_documentos_estado").select("id", { count: "exact", head: true }).eq("estado", e),
-    ),
+  const [{ documentos, error }, areas, conteos] = await Promise.all([
+    listarDocumentos(supabase, { q, estado, areaId: area, limite: 500 }),
+    listarAreasParaFiltro(supabase),
+    // Uno por estado, en el orden de ESTADOS: conteos[i] es el de ESTADOS[i].
+    contarDocumentosPorEstado(supabase),
   ]);
 
   return (

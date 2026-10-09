@@ -4,8 +4,8 @@
  * promedio) viven en las vistas v_pda_*, para que la pantalla, el histórico
  * y el Excel exportado digan siempre lo mismo.
  */
-import type { MimePda } from "./validaciones";
-import type { ObjetivoPda } from "./supabase/tipos";
+import type { MimePda } from "@/lib/validaciones";
+import type { ObjetivoPda } from "@/lib/supabase/tipos";
 
 /** Cargos habituales del área; el campo admite cualquier otro. */
 export const CARGOS_PDA = ["Líder de TI", "Soporte TI"] as const;

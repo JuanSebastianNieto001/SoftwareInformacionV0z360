@@ -1,5 +1,9 @@
+// Escritura del registro de auditoría (tabla `accesos`, que /admin/auditoria
+// lee con lib/auditoria/consulta.ts). Lo comparten Route Handlers, acciones de
+// servidor y páginas; por eso recibe un cliente ya creado y cualquier objeto
+// con cabeceras, en lugar de exigir un Request.
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import type { Accion, Database } from "./supabase/tipos";
+import type { Accion, Database } from "@/lib/supabase/tipos";
 
 type Cliente = SupabaseClient<Database>;
 

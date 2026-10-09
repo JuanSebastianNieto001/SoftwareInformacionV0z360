@@ -1,3 +1,8 @@
+// Piezas comunes de las pantallas: EncabezadoPagina (antetítulo, título,
+// descripción y acciones) y EstadoVacio para cuando una lista no tiene nada.
+// Concentran la tipografía y el espaciado para que todas las pantallas se vean
+// iguales. Sin "use client" ni estado: sirven en layouts y páginas de servidor
+// sin enviar JavaScript, y también dentro de paneles de cliente (admin).
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 

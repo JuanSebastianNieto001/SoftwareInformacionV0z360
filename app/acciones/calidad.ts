@@ -1,9 +1,15 @@
 "use server";
 
+// Acciones de servidor de Calidad (QualityCore): auditorías y su pauta,
+// retroalimentación con compromisos, matriz de ítems y estructura de asesores.
+// Aquí solo se escribe; las lecturas de las pantallas viven en
+// lib/calidad/datos.ts. Lo delicado (publicar en lote, eliminar una auditoría,
+// firmar la retro) pasa por funciones de la base, que validan quién y qué en
+// la misma transacción, en lugar de por un update suelto.
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { registrarAcceso } from "@/lib/auditoria";
 import { exigirSesion } from "@/lib/sesion";
 import type { Accion } from "@/lib/supabase/tipos";

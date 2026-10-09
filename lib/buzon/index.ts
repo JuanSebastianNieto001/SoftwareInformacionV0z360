@@ -1,4 +1,4 @@
-import type { EstadoSugerencia, TipoSugerencia } from "./supabase/tipos";
+import type { EstadoSugerencia, TipoSugerencia } from "@/lib/supabase/tipos";
 
 /**
  * Etiquetas y ayudas del buzón de sugerencias.

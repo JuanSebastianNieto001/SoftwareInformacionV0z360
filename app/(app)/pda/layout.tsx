@@ -1,3 +1,5 @@
+// Marco de todas las rutas de /pda: el guardia del cuadro, el regreso a
+// «Mis áreas» y el encabezado con el nivel de acceso de quien navega.
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";

@@ -7,6 +7,7 @@ import { Layers } from "lucide-react";
 import { FormularioArea, InterruptorArea } from "@/components/admin/gestion-areas";
 import { EncabezadoPagina, EstadoVacio } from "@/components/comunes/encabezado-pagina";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { listarAreasConConteos } from "@/lib/admin/datos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirAdmin } from "@/lib/sesion";
 
@@ -15,10 +16,7 @@ export const metadata: Metadata = { title: "Áreas" };
 export default async function PaginaAreasAdmin() {
   const { supabase } = await exigirAdmin();
 
-  const { data: areas } = await supabase
-    .from("areas")
-    .select("id, nombre, slug, descripcion, activa, creado_en, documentos(count), permisos_area(count)")
-    .order("nombre");
+  const areas = await listarAreasConConteos(supabase);
 
   return (
     <>

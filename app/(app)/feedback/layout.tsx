@@ -1,3 +1,6 @@
+// Marco común de /feedback: guardia del módulo, encabezado con el nivel de
+// quien entra y la navegación del cuadro (la bitácora de eliminados solo se
+// enlaza para administradores y quien puede eliminar).
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -5,14 +8,15 @@ import { NavFeedback } from "@/components/feedback/nav-feedback";
 import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { puedeEliminarFeedback } from "@/lib/feedback/datos";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { ETIQUETA_NIVEL } from "@/lib/permisos";
 
 /** El guardia va aquí: sin permiso sobre el cuadro, ninguna ruta de /feedback se renderiza (404). */
 export default async function LayoutFeedback({ children }: { children: ReactNode }) {
   const { area, nivel, puedeEditar, supabase, perfil } = await exigirModulo("feedback");
-  const { data: puedeEliminar } = await supabase.rpc("feedback_puede_eliminar");
-  const verEliminados = perfil.rol === "admin" || puedeEliminar === true;
+  const puedeEliminar = await puedeEliminarFeedback(supabase);
+  const verEliminados = perfil.rol === "admin" || puedeEliminar;
   return (
     <>
       <div className="mb-3">

@@ -4,7 +4,7 @@
 // respuesta a quien reporta). Sin comprobaciones de permiso en TypeScript:
 // decide RLS.
 import { revalidatePath } from "next/cache";
-import { mensajePostgrest } from "@/lib/api-errores";
+import { mensajePostgrest } from "@/lib/api/errores";
 import { rutaEvidencia } from "@/lib/buzon";
 import { exigirSesion } from "@/lib/sesion";
 import { crearClienteServidor } from "@/lib/supabase/server";

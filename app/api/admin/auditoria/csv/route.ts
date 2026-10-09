@@ -1,13 +1,13 @@
 // Exporta la auditoría a CSV con los mismos filtros de la pantalla. Solo
 // administradores (exigirAdminApi).
-import { exigirAdminApi } from "@/lib/api-admin";
-import { respuestaError } from "@/lib/api-errores";
+import { exigirAdminApi } from "@/lib/api/admin";
+import { respuestaError } from "@/lib/api/errores";
 import {
   consultaAuditoria,
   ETIQUETA_ACCION,
   filtrosDesdeParams,
   miembrosDelGrupo,
-} from "@/lib/auditoria-consulta";
+} from "@/lib/auditoria/consulta";
 import { formatearFechaHora } from "@/lib/formato";
 
 export const dynamic = "force-dynamic";

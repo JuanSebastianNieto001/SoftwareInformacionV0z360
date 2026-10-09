@@ -1,5 +1,9 @@
+// Ruta del cron diario de purga (vercel.json: "0 8 * * *", hora UTC), que
+// retira del almacenamiento los documentos vencidos. El proxy la deja pasar
+// sin sesión (RUTAS_API_SIN_SESION), así que su única credencial es
+// CRON_SECRET; por eso la comparación del secreto se cuida tanto.
 import { timingSafeEqual } from "node:crypto";
-import { respuestaError } from "@/lib/api-errores";
+import { respuestaError } from "@/lib/api/errores";
 import { urlSupabase } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";

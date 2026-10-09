@@ -21,6 +21,7 @@ import {
   varianteEstadoFeedback,
   varianteGravedad,
 } from "@/lib/feedback";
+import { obtenerFeedbackDetalle, puedeEliminarFeedback } from "@/lib/feedback/datos";
 import { formatearFecha, formatearFechaHora } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 
@@ -30,10 +31,10 @@ export default async function PaginaFeedbackDetalle({ params }: PageProps<"/feed
   const { id } = await params;
   const { supabase, user, perfil, puedeEditar } = await exigirModulo("feedback");
   // Eliminar es solo para quien tiene Total explícito (coordinación de Formación).
-  const { data: puedeEliminar } = await supabase.rpc("feedback_puede_eliminar");
+  const puedeEliminar = await puedeEliminarFeedback(supabase);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const { data: f } = await supabase.from("v_feedback").select("*").eq("id", id).maybeSingle();
+  const f = await obtenerFeedbackDetalle(supabase, id);
   if (!f) notFound();
 
   await registrarAcceso(supabase, user, {

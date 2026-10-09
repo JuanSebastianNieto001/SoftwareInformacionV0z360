@@ -1,7 +1,7 @@
-import type { ClienteNavegador } from "./supabase/client";
-import { clavePublicaSupabase } from "./supabase/env";
-import { esMimePermitido, mimePorExtension } from "./archivos";
-import { TAMANO_MAXIMO_BYTES, type MimePermitido } from "./validaciones";
+import type { ClienteNavegador } from "@/lib/supabase/client";
+import { clavePublicaSupabase } from "@/lib/supabase/env";
+import { esMimePermitido, mimePorExtension } from "@/lib/archivos";
+import { TAMANO_MAXIMO_BYTES, type MimePermitido } from "@/lib/validaciones";
 
 /**
  * Normaliza el File antes de subir: algunos navegadores móviles no

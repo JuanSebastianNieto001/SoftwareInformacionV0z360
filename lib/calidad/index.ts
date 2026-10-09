@@ -4,14 +4,14 @@
  * pantalla de auditoría muestre la nota mientras el analista marca ítems;
  * si las dos discrepan, manda la vista.
  */
-import type { CalidadResultado } from "./supabase/tipos";
+import type { CalidadResultado } from "@/lib/supabase/tipos";
 import {
   CANALES_AUDITORIA,
   ESTADOS_COMPROMISO,
   ETAPAS_AUDITORIA,
   RESULTADOS_CALIDAD,
   TIPOS_AUDITORIA,
-} from "./validaciones";
+} from "@/lib/validaciones";
 
 // Las listas viven en validaciones.ts (las usa el esquema); aquí se reexportan.
 export { CANALES_AUDITORIA as CANALES, ESTADOS_COMPROMISO, ETAPAS_AUDITORIA, RESULTADOS_CALIDAD as RESULTADOS, TIPOS_AUDITORIA };

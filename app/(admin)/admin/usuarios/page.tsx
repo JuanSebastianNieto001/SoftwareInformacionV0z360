@@ -1,3 +1,7 @@
+/**
+ * Panel · Usuarios: alta y gestión de cuentas. La página no lee nada en el
+ * servidor (ver la nota de PaginaUsuarios).
+ */
 import type { Metadata } from "next";
 import { GestionUsuarios } from "@/components/admin/gestion-usuarios";
 import { EncabezadoPagina } from "@/components/comunes/encabezado-pagina";

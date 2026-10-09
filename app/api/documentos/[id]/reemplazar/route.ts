@@ -1,7 +1,11 @@
+// POST /api/documentos/[id]/reemplazar, desde el formulario de edición del
+// documento. Sigue el mismo patrón de dos pasos que /subir (binario directo a
+// Storage, metadatos aquí con la sesión) y, como allí, ningún binario debe
+// quedar sin una fila que lo referencie.
 import { construirRutaStorage } from "@/lib/archivos";
-import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
+import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api/errores";
 import { registrarAcceso } from "@/lib/auditoria";
-import { eliminarHuerfano } from "@/lib/limpieza-storage";
+import { eliminarHuerfano } from "@/lib/archivos/limpieza-storage";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { esquemaReemplazo, primerError } from "@/lib/validaciones";
 

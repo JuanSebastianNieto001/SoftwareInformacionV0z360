@@ -11,13 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { listarGruposParaFiltro, listarPerfilesParaFiltro } from "@/lib/admin/datos";
 import {
   consultaAuditoria,
   ETIQUETA_ACCION,
   filtrosAQuery,
   filtrosDesdeParams,
   miembrosDelGrupo,
-} from "@/lib/auditoria-consulta";
+} from "@/lib/auditoria/consulta";
 import { formatearFechaHora } from "@/lib/formato";
 import { exigirAdmin } from "@/lib/sesion";
 import { ACCIONES } from "@/lib/validaciones";
@@ -38,10 +39,10 @@ export default async function PaginaAuditoria({ searchParams }: PageProps<"/admi
   // de ids ya hecha para poder filtrar por ella.
   const miembros = await miembrosDelGrupo(supabase, filtros.grupo);
 
-  const [{ data: filas, count, error }, { data: perfiles }, { data: grupos }] = await Promise.all([
+  const [{ data: filas, count, error }, perfiles, grupos] = await Promise.all([
     consultaAuditoria(supabase, filtros, { limite: LIMITE, conteo: true, miembros }),
-    supabase.from("perfiles").select("id, nombre").order("nombre"),
-    supabase.from("grupos").select("id, nombre").order("nombre"),
+    listarPerfilesParaFiltro(supabase),
+    listarGruposParaFiltro(supabase),
   ]);
 
   const hayFiltros = Object.values(filtros).some(Boolean);

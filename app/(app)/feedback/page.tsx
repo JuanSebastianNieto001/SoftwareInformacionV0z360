@@ -16,6 +16,7 @@ import {
   varianteEstadoFeedback,
   varianteGravedad,
 } from "@/lib/feedback";
+import { listarFeedback } from "@/lib/feedback/datos";
 import { formatearFecha } from "@/lib/formato";
 import { exigirModulo } from "@/lib/modulos-acceso";
 import { cn } from "@/lib/utils";
@@ -29,11 +30,7 @@ export default async function PaginaFeedback({ searchParams }: PageProps<"/feedb
   const ESTADOS = ["abierto", "en_seguimiento", "cerrado", "reincidente"] as const;
   const estado = ESTADOS.find((e) => e === sp.estado) ?? "";
 
-  let consulta = supabase.from("v_feedback").select("*").order("fecha", { ascending: false }).limit(2000);
-  if (tipo) consulta = consulta.eq("tipo", tipo);
-  if (estado) consulta = consulta.eq("estado", estado);
-  const { data } = await consulta;
-  const lista = data ?? [];
+  const lista = await listarFeedback(supabase, { tipo, estado });
 
   const abiertos = lista.filter((f) => f.estado === "abierto" || f.estado === "en_seguimiento").length;
   const vencidos = lista.filter((f) => f.seguimiento_vencido).length;

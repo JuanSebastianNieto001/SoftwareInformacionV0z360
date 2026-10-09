@@ -1,7 +1,11 @@
+// POST /api/documentos/subir: da de alta un documento nuevo. El binario viaja
+// del navegador a Storage (lib/archivos/subida-cliente.ts) y esta ruta solo
+// registra la fila, con la sesión de quien sube: así el permiso de edición lo
+// deciden las políticas del bucket y de `documentos`, no este código.
 import { construirRutaStorage } from "@/lib/archivos";
-import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api-errores";
+import { leerJson, respuestaDesdePostgrest, respuestaError, respuestaOk } from "@/lib/api/errores";
 import { registrarAcceso } from "@/lib/auditoria";
-import { eliminarHuerfano } from "@/lib/limpieza-storage";
+import { eliminarHuerfano } from "@/lib/archivos/limpieza-storage";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { esquemaSubida, primerError } from "@/lib/validaciones";
 

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { crearClienteAdmin } from "./supabase/admin";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
 
 /**
  * Borra un objeto de Storage SOLO si ninguna fila de `documentos` lo

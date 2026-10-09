@@ -1,3 +1,7 @@
+// GET /api/documentos/[id]/abrir[?descargar=1]: los botones Abrir y Descargar
+// de la ficha del documento apuntan aquí. Responde sin caché y con URLs de
+// 60 s para que ni el navegador ni un enlace reenviado conserven el acceso
+// cuando cambien el permiso o la vigencia.
 import { registrarAcceso } from "@/lib/auditoria";
 import { puedeDescargar } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/server";

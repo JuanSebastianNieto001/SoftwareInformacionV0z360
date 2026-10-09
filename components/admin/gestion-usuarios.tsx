@@ -34,7 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatearFechaHora } from "@/lib/formato";
 import { DESCRIPCION_ROL, ETIQUETA_NIVEL, ETIQUETA_ROL, nivelEfectivo } from "@/lib/permisos";
-import { llamarApi } from "@/lib/subida-cliente";
+import { llamarApi } from "@/lib/archivos/subida-cliente";
 import type { NivelAcceso, RolGlobal } from "@/lib/supabase/tipos";
 import { NIVELES, ROLES } from "@/lib/validaciones";
 import { cn } from "@/lib/utils";
