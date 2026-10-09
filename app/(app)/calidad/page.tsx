@@ -85,6 +85,10 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
     .sort((a, b) => b.n - a.n)
     .slice(0, 10);
 
+  // Volumen (Q): lo primero que miran el informe gerencial y el consolidado de la plantilla.
+  const venta = lista.filter((e) => e.tipo === "Venta").length;
+  const noVenta = lista.filter((e) => e.tipo === "No venta").length;
+
   const comp = compromisos ?? [];
   const compPend = comp.filter((c) => c.estado === "pendiente" || c.estado === "en_seguimiento");
   const compVenc = compPend.filter((c) => c.fecha_limite < hoy).length;
@@ -168,8 +172,9 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
         <EstadoVacio icono={<ClipboardList />} titulo={todos ? "Todavía no hay auditorías publicadas" : `Sin auditorías publicadas en ${etiquetaMes(mes)}`} descripcion="El dashboard se calcula solo con lo que se publique." />
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Indicador etiqueta="Calidad con IC" valor={formatearPorcentaje(promedio)} detalle={`${lista.length} ${lista.length === 1 ? "auditoría" : "auditorías"} · anula si falla un crítico`} />
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <IndicadorTotal periodo={todos ? "Todo" : etiquetaMes(mes)} total={lista.length} venta={venta} noVenta={noVenta} asesores={porAsesor.size} />
+        <Indicador etiqueta="Calidad con IC" valor={formatearPorcentaje(promedio)} detalle="Promedio final ponderado · anula si falla un crítico" />
         <Indicador etiqueta="Calidad operativa (sin IC)" valor={formatearPorcentaje(promedioOperativo)} detalle="Desempeño del proceso, sin anular por crítico" />
         <Indicador etiqueta="Con error crítico" valor={lista.length ? `${pctCritico} %` : "—"} detalle={`${conCritico} de ${lista.length} ${conCritico === 1 ? "auditoría" : "auditorías"}`} tono={conCritico > 0 ? "alerta" : "neutro"} />
         <Indicador etiqueta="Aprobadas" valor={lista.length ? `${Math.round((aprobadas / lista.length) * 100)} %` : "—"} detalle={`${aprobadas} de ${lista.length}`} tono={lista.length && aprobadas / lista.length >= 0.8 ? "bien" : lista.length ? "alerta" : "neutro"} />
@@ -260,6 +265,52 @@ export default async function PaginaDashboardCalidad({ searchParams }: PageProps
         </div>
       </section>
     </div>
+  );
+}
+
+/**
+ * El volumen de auditorías publicadas del periodo y los filtros elegidos
+ * (mes, auditor, team leader), con el reparto Venta / No venta y la
+ * cobertura de asesores, como el «Volumen total (Q)» de la plantilla.
+ * Ocupa dos columnas: es la cifra con la que empieza la lectura.
+ */
+function IndicadorTotal({ periodo, total, venta, noVenta, asesores }: { periodo: string; total: number; venta: number; noVenta: number; asesores: number }) {
+  const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);
+  const porAsesor = asesores ? (total / asesores).toLocaleString("es-CO", { maximumFractionDigits: 1 }) : null;
+  return (
+    <Card className="rounded-[20px] sm:col-span-2">
+      <CardContent className="flex h-full flex-col justify-between gap-3 px-[18px] py-4">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">Total de auditorías · {periodo}</p>
+            <p className="mt-1 text-[34px] leading-tight font-semibold text-primary tabular-nums">{total}</p>
+          </div>
+          <dl className="flex gap-6 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">Venta</dt>
+              <dd className="font-semibold tabular-nums">
+                {venta} <span className="text-xs font-normal text-muted-foreground">({pct(venta)} %)</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">No venta</dt>
+              <dd className="font-semibold tabular-nums">
+                {noVenta} <span className="text-xs font-normal text-muted-foreground">({pct(noVenta)} %)</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+        {total > 0 && (
+          <div className="flex h-2 overflow-hidden rounded-full bg-tinte" role="img" aria-label={`${pct(venta)} % venta, ${pct(noVenta)} % no venta`}>
+            <div className="h-full bg-primary" style={{ width: `${pct(venta)}%` }} />
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {asesores} {asesores === 1 ? "asesor auditado" : "asesores auditados"}
+          {porAsesor && ` · ${porAsesor} auditorías por asesor`}
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
